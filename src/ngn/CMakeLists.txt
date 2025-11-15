@@ -1,0 +1,62 @@
+add_library(ngn STATIC
+    gfx/Buffer.hpp gfx/Buffer.cpp
+    gfx/CommandBuffer.hpp gfx/CommandBuffer.cpp
+    gfx/Image.hpp gfx/Image.cpp
+    gfx/Pipeline.hpp gfx/Pipeline.cpp
+    gfx/Renderer.hpp gfx/Renderer.cpp
+    gfx/SpritePipeline.cpp gfx/SpritePipeline.hpp
+    gfx/Uniforms.hpp
+    Application.cpp Application.hpp
+    Assets.hpp.in
+    Logging.hpp
+    Macros.hpp
+    Pch.hpp
+    Types.hpp
+)
+
+target_precompile_headers(ngn PRIVATE Pch.hpp)
+
+target_include_directories(ngn PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+target_include_directories(ngn PUBLIC .)
+
+target_link_libraries(ngn PRIVATE compile_options)
+
+target_link_libraries(ngn PUBLIC
+    ext
+    spdlog::spdlog
+    glfw::glfw
+    glm::configured
+    vulkan::vulkan
+)
+
+if(NGN_ENABLE_GRAPHICS_DEBUG_LAYER)
+    target_compile_definitions(ngn PUBLIC NGN_ENABLE_GRAPHICS_DEBUG_LAYER)
+endif()
+
+set(VULKAN_SHADER_SOURCES
+    assets/shader/Sprite.frag
+    assets/shader/Sprite.geom
+    assets/shader/Sprite.vert
+)
+
+target_sources(ngn PRIVATE
+    ${VULKAN_SHADER_SOURCES}
+)
+
+compile_shader_files(
+    VAR COMPILED_SHADER_FILES
+    SHADER_FILES ${VULKAN_SHADER_SOURCES}
+)
+
+target_assets(ngn
+    NAMESPACE ngn::assets
+    DECLARATIONS_VAR NGN_ASSET_BUNDLE_DECLARATIONS
+    STRIP
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+        "${CMAKE_CURRENT_BINARY_DIR}/assets"
+    ASSET_FILES
+        ${COMPILED_SHADER_FILES}
+)
+
+configure_file(Assets.hpp.in Assets.hpp)

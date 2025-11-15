@@ -1,0 +1,12 @@
+// Copyright 2025, Daniel Volk <mail@volkarts.com>
+// SPDX-License-Identifier: MIT
+
+#pragma once
+
+#include "Types.hpp"
+
+namespace ngn::assets {
+
+@NGN_ASSET_BUNDLE_DECLARATIONS@
+
+} // namespace ngn::assets
