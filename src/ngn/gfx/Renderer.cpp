@@ -383,7 +383,7 @@ void Renderer::createDescriptorPool()
         },
         vk::DescriptorPoolSize{
             .type = vk::DescriptorType::eCombinedImageSampler,
-            .descriptorCount = MaxFramesInFlight * 10,
+            .descriptorCount = MaxFramesInFlight * MaxSpritePipelineTextures,
         },
     };
 

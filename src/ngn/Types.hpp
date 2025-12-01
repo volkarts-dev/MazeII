@@ -20,5 +20,6 @@ using BufferView = std::span<uint8_t>;
 constexpr auto InvalidIndex = std::numeric_limits<uint32_t>::max();
 
 constexpr uint32_t MaxFramesInFlight = 2;
+constexpr uint32_t MaxSpritePipelineTextures = 8;
 
 } // namespace ngn

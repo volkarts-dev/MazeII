@@ -16,8 +16,8 @@ class Renderer;
 class ImageLoader
 {
 public:
-    static ImageLoader createFromBitmap(Renderer* renderer, uint32_t width, uint32_t height, BufferView buffer);
-    static ImageLoader loadFromBuffer(Renderer* renderer, BufferView buffer);
+    static ImageLoader createFromBitmap(Renderer* renderer, uint32_t width, uint32_t height, const BufferView buffer);
+    static ImageLoader loadFromBuffer(Renderer* renderer, const BufferView buffer);
 
     ~ImageLoader();
 
@@ -62,7 +62,7 @@ private:
 class ImageView
 {
 public:
-    ImageView(Image* image);
+    ImageView(const Image* image);
     ImageView(Renderer* renderer, vk::Format format, vk::Image image);
     ~ImageView();
 
@@ -83,7 +83,7 @@ private:
 class Sampler
 {
 public:
-    Sampler(Renderer* renderer, vk::Filter filter, vk::SamplerAddressMode mode);
+    Sampler(Renderer* renderer, vk::Filter filter, vk::SamplerAddressMode mode, bool unnormalizedCoords = false);
     ~Sampler();
 
     const vk::Sampler& handle() const { return sampler_; }

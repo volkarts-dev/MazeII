@@ -32,7 +32,7 @@ SpritePipeline::SpritePipeline(Renderer* renderer) :
         vk::DescriptorSetLayoutBinding{
             .binding = 1,
             .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-            .descriptorCount = 10,
+            .descriptorCount = MaxSpritePipelineTextures,
             .stageFlags = vk::ShaderStageFlagBits::eFragment,
         },
     };
