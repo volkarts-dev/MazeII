@@ -9,7 +9,7 @@
 
 namespace ngn {
 
-ImageLoader ImageLoader::createFromBitmap(Renderer* renderer, uint32_t width, uint32_t height, BufferView buffer)
+ImageLoader ImageLoader::createFromBitmap(Renderer* renderer, uint32_t width, uint32_t height, const BufferView buffer)
 {
     ImageLoader loader;
     loader.renderer_ = renderer;
@@ -33,7 +33,7 @@ ImageLoader ImageLoader::createFromBitmap(Renderer* renderer, uint32_t width, ui
     return loader;
 }
 
-ImageLoader ImageLoader::loadFromBuffer(Renderer* renderer, BufferView buffer)
+ImageLoader ImageLoader::loadFromBuffer(Renderer* renderer, const BufferView buffer)
 {
     int texWidth{};
     int texHeight{};
@@ -120,7 +120,7 @@ Image::~Image()
 
 // *********************************************************************************************************************
 
-ImageView::ImageView(Image* image) :
+ImageView::ImageView(const Image* image) :
     ImageView{image->renderer(), image->format(), image->handle()}
 {
 }
@@ -159,25 +159,25 @@ ImageView::~ImageView()
 
 // *********************************************************************************************************************
 
-Sampler::Sampler(Renderer* renderer, vk::Filter filter, vk::SamplerAddressMode mode) :
+Sampler::Sampler(Renderer* renderer, vk::Filter filter, vk::SamplerAddressMode mode, bool unnormalizedCoords) :
     renderer_{renderer}
 {
     vk::SamplerCreateInfo createInfo{
         .magFilter = filter,
         .minFilter = filter,
-        .mipmapMode = vk::SamplerMipmapMode::eLinear,
+        .mipmapMode = unnormalizedCoords ? vk::SamplerMipmapMode::eNearest : vk::SamplerMipmapMode::eLinear,
         .addressModeU = mode,
         .addressModeV = mode,
         .addressModeW = mode,
         .mipLodBias = 0.0f,
-        .anisotropyEnable = true,
+        .anisotropyEnable = !unnormalizedCoords,
         .maxAnisotropy = renderer_->physicalDeviceProperties().limits.maxSamplerAnisotropy,
         .compareEnable = false,
         .compareOp = vk::CompareOp::eAlways,
         .minLod = 0.0f,
         .maxLod = 0.0f,
         .borderColor = vk::BorderColor::eIntOpaqueBlack,
-        .unnormalizedCoordinates = false,
+        .unnormalizedCoordinates = unnormalizedCoords,
     };
 
     sampler_ = renderer_->device().createSampler(createInfo);

@@ -1,10 +1,14 @@
 add_library(ngn STATIC
     gfx/Buffer.hpp gfx/Buffer.cpp
     gfx/CommandBuffer.hpp gfx/CommandBuffer.cpp
+    gfx/FontCollection.hpp gfx/FontCollection.cpp
+    gfx/FontMaker.hpp gfx/FontMaker.cpp
+    gfx/FontRenderer.hpp gfx/FontRenderer.cpp
     gfx/Image.hpp gfx/Image.cpp
     gfx/Pipeline.hpp gfx/Pipeline.cpp
     gfx/Renderer.hpp gfx/Renderer.cpp
     gfx/SpritePipeline.cpp gfx/SpritePipeline.hpp
+    gfx/SpriteRenderer.hpp gfx/SpriteRenderer.cpp
     gfx/Uniforms.hpp
     Application.cpp Application.hpp
     Assets.hpp.in
@@ -24,9 +28,10 @@ target_link_libraries(ngn PRIVATE compile_options)
 
 target_link_libraries(ngn PUBLIC
     ext
-    spdlog::spdlog
+    Freetype::Freetype
     glfw::glfw
     glm::configured
+    spdlog::spdlog
     vulkan::vulkan
 )
 

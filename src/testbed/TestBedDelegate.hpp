@@ -4,15 +4,14 @@
 #pragma once
 
 #include "Application.hpp"
-#include "Types.hpp"
+#include "gfx/SpritePipeline.hpp"
 #include <chrono>
 
 namespace ngn {
 class Buffer;
+class FontRenderer;
 class Renderer;
-class Pipeline;
-class Sampler;
-class SpritePipeline;
+class SpriteRenderer;
 } // namespace nng
 
 class TestBedDelegate : public ngn::ApplicationDelegate
@@ -29,19 +28,10 @@ public:
 private:
     ngn::Renderer* renderer_;
 
-    ngn::SpritePipeline* spritePipeline_;
+    ngn::SpriteRenderer* spriteRenderer_;
+    ngn::FontRenderer* fontRenderer_;
 
-    std::array<ngn::Buffer*, ngn::MaxFramesInFlight> uniformBuffers_;
-
-    ngn::Image* blackTexture_;
-    ngn::ImageView* blackTextureView_;
-    ngn::Sampler* blackTextureSampler_;
-
-    ngn::Image* textureAtlas_;
-    ngn::ImageView* textureAtlasView_;
-    ngn::Sampler* textureAtlasSampler_;
-
-    ngn::Buffer* spriteBuffer_;
+    std::vector<ngn::SpriteVertex> sprites_;
 
     uint64_t frameCount_;
     std::chrono::high_resolution_clock::time_point frameCounterLastCheck_;

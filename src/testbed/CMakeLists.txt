@@ -18,6 +18,8 @@ target_assets(testbed
         "${CMAKE_CURRENT_BINARY_DIR}/assets"
     ASSET_FILES
         assets/player.png
+        assets/liberation-mono.ttf
+        assets/liberation-sans.ttf
 )
 
 configure_file(TestBedAssets.hpp.in TestBedAssets.hpp)
