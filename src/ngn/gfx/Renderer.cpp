@@ -65,7 +65,8 @@ constexpr std::array DeviceExtensions{
 
 Renderer::Renderer(GLFWwindow* window) :
     window_{window},
-    currentFrame_{}
+    currentFrame_{},
+    framebufferResized_{false}
 {
     createInstance();
     createSurface();

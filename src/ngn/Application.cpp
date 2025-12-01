@@ -38,6 +38,8 @@ Application::Application(ApplicationDelegate* delegate) :
 {
     assert(!gApplication);
 
+    log::set_level(log::level::trace);
+
     if (!glfwInit())
         throw std::runtime_error("Failed to init glfw");
 
