@@ -11,8 +11,6 @@ struct GLFWwindow;
 namespace ngn {
 
 class Application;
-class CommandBuffer;
-class Pipeline;
 
 class ApplicationDelegate
 {
