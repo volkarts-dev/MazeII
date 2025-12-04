@@ -14,6 +14,10 @@
 #include "glm/ext/matrix_transform.hpp"
 #include <glm/gtc/constants.hpp>
 
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+#include "gfx/DebugRenderer.hpp"
+#endif
+
 TestBedDelegate::TestBedDelegate()
 {
 }
@@ -35,6 +39,12 @@ bool TestBedDelegate::onInit(ngn::Application* app)
     fontMaker.addFont(testbed::assets::liberation_mono_ttf(), 20);
 
     fontRenderer_ = new ngn::FontRenderer{spriteRenderer_, fontMaker.compile()};
+
+    // ****************************************************
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    debugRenderer_ = new ngn::DebugRenderer{renderer_, 1024};
+#endif
 
     // ****************************************************
 
@@ -98,6 +108,10 @@ void TestBedDelegate::onDone(ngn::Application* app)
 {
     NGN_UNUSED(app);
 
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    delete debugRenderer_;
+#endif
+
     delete fontRenderer_;
     delete spriteRenderer_;
 }
@@ -143,6 +157,24 @@ void TestBedDelegate::onUpdate(ngn::Application* app, float deltaTime)
     // ****************************************************
 
     fontRenderer_->drawText(0, "Hello MazeII", 400, 50);
+
+    // ****************************************************
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    debugRenderer_->updateView(
+                glm::lookAt(
+                    glm::vec3(0.0f, 0.0f, -10.0f),
+                    glm::vec3(0.0f, 0.0f, 0.0f),
+                    glm::vec3(0.0f, 1.0f, 0.0f)
+                ));
+
+    debugRenderer_->drawLine({.point = {50, 50}}, {.point = {100, 100}});
+    debugRenderer_->drawTriangle({.point = {150, 50}}, {.point = {200, 100}}, {.point = {170, 200}});
+    debugRenderer_->drawCircle({.point = {400, 50}}, 50);
+
+    debugRenderer_->fillTriangle({.point = {150, 350}}, {.point = {200, 400}}, {.point = {170, 500}});
+    debugRenderer_->fillCircle({.point = {400, 350}}, 50);
+#endif
 }
 
 void TestBedDelegate::onDraw(ngn::Application* app, float deltaTime)
@@ -160,6 +192,9 @@ void TestBedDelegate::onDraw(ngn::Application* app, float deltaTime)
 
     spriteRenderer_->draw(commandBuffer);
 
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    debugRenderer_->draw(commandBuffer);
+#endif
     commandBuffer->end();
 
     renderer_->submit(commandBuffer);

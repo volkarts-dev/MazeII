@@ -12,6 +12,10 @@ class Buffer;
 class FontRenderer;
 class Renderer;
 class SpriteRenderer;
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+class DebugRenderer;
+#endif
 } // namespace nng
 
 class TestBedDelegate : public ngn::ApplicationDelegate
@@ -30,6 +34,10 @@ private:
 
     ngn::SpriteRenderer* spriteRenderer_;
     ngn::FontRenderer* fontRenderer_;
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    ngn::DebugRenderer* debugRenderer_;
+#endif
 
     std::vector<ngn::SpriteVertex> sprites_;
 

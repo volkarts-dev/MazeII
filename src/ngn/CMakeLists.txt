@@ -18,6 +18,31 @@ add_library(ngn STATIC
     Types.hpp
 )
 
+set(VULKAN_SHADER_SOURCES
+    assets/shader/Sprite.frag
+    assets/shader/Sprite.geom
+    assets/shader/Sprite.vert
+)
+
+if(NGN_ENABLE_GRAPHICS_DEBUG_LAYER)
+    target_compile_definitions(ngn PUBLIC NGN_ENABLE_GRAPHICS_DEBUG_LAYER)
+endif()
+
+if(NGN_ENABLE_VISUAL_DEBUGGING)
+    target_compile_definitions(ngn PUBLIC NGN_ENABLE_VISUAL_DEBUGGING)
+
+    target_sources(ngn PRIVATE
+        gfx/DebugPipeline.hpp gfx/DebugPipeline.cpp
+        gfx/DebugRenderer.hpp gfx/DebugRenderer.cpp
+    )
+
+    set(VULKAN_SHADER_SOURCES
+        ${VULKAN_SHADER_SOURCES}
+        assets/shader/Debug.frag
+        assets/shader/Debug.vert
+    )
+endif()
+
 target_precompile_headers(ngn PRIVATE Pch.hpp)
 
 target_include_directories(ngn PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
@@ -33,16 +58,6 @@ target_link_libraries(ngn PUBLIC
     glm::configured
     spdlog::spdlog
     vulkan::vulkan
-)
-
-if(NGN_ENABLE_GRAPHICS_DEBUG_LAYER)
-    target_compile_definitions(ngn PUBLIC NGN_ENABLE_GRAPHICS_DEBUG_LAYER)
-endif()
-
-set(VULKAN_SHADER_SOURCES
-    assets/shader/Sprite.frag
-    assets/shader/Sprite.geom
-    assets/shader/Sprite.vert
 )
 
 target_sources(ngn PRIVATE

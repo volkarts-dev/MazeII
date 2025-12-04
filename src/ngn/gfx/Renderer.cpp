@@ -380,16 +380,18 @@ void Renderer::createDescriptorPool()
     std::array poolSizes{
         vk::DescriptorPoolSize{
             .type = vk::DescriptorType::eUniformBuffer,
-            .descriptorCount = MaxFramesInFlight,
+            .descriptorCount = (MaxFramesInFlight + MaxFramesInFlight) * 2, // why *2?
+            // QFS: spritePipeline descriptor count + debugPipeline descriptor count
         },
         vk::DescriptorPoolSize{
             .type = vk::DescriptorType::eCombinedImageSampler,
             .descriptorCount = MaxFramesInFlight * MaxSpritePipelineTextures,
+            // QFS: spritePipeline descriptor count * max texture count
         },
     };
 
     vk::DescriptorPoolCreateInfo createInfo{
-        .maxSets = MaxFramesInFlight,
+        .maxSets = MaxFramesInFlight + MaxFramesInFlight,
     };
     createInfo.setPoolSizes(poolSizes);
 

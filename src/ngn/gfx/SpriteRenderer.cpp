@@ -1,5 +1,5 @@
 // Copyright 2025, Daniel Volk <mail@volkarts.com>
-// SPDX-License-Identifier: <LICENSE>
+// SPDX-License-Identifier: MIT
 
 #include "SpriteRenderer.hpp"
 
@@ -18,7 +18,7 @@ SpriteRenderer::SpriteRenderer(Renderer* renderer, uint32_t batchSize) :
     BufferConfig uniformBufferConfig{
         renderer_,
         vk::BufferUsageFlagBits::eUniformBuffer,
-        sizeof(SpriteUniform)
+        sizeof(ViewProjection)
     };
     uniformBufferConfig.hostVisible = true;
 
@@ -26,12 +26,12 @@ SpriteRenderer::SpriteRenderer(Renderer* renderer, uint32_t batchSize) :
     for (uint32_t i = 0; i < MaxFramesInFlight; i++)
     {
         uniformBuffers_[i].buffer = new Buffer{uniformBufferConfig};
-        uniformBuffers_[i].mapped = uniformBuffers_[i].buffer->map<SpriteUniform>();
+        uniformBuffers_[i].mapped = uniformBuffers_[i].buffer->map<ViewProjection>();
 
         vk::DescriptorBufferInfo bufferInfo{
             .buffer = uniformBuffers_[i].buffer->handle(),
             .offset = 0,
-            .range = sizeof(SpriteUniform),
+            .range = sizeof(ViewProjection),
         };
         spritePipeline_->updateDescriptorSet(bufferInfo, i, 0);
     }
@@ -144,8 +144,8 @@ void SpriteRenderer::updateView(const glm::mat4& view)
 
     auto& ubo = uniformBuffers_[renderer_->currentFrame()];
 
-    ubo.mapped[0].viewProj.view = view;
-    ubo.mapped[0].viewProj.proj = glm::ortho(
+    ubo.mapped[0].view = view;
+    ubo.mapped[0].proj = glm::ortho(
                 0.0f, static_cast<float>(screenSize.width),
                 0.0f, static_cast<float>(screenSize.height)
                 );
@@ -173,13 +173,13 @@ void SpriteRenderer::renderSprite(const SpriteVertex& vertex)
 {
     static_assert(std::is_trivially_copyable_v<SpriteVertex>, "SpriteVertex is not trivially copyable");
 
-    auto& buffer = batches_[renderer_->currentFrame()];
+    auto& batch = batches_[renderer_->currentFrame()];
 
-    assert(buffer.count < buffer.buffer->size() / sizeof(SpriteVertex));
+    assert(batch.count < batch.buffer->size() / sizeof(SpriteVertex));
 
-    std::memcpy(&buffer.mapped[buffer.count], &vertex, sizeof(SpriteVertex));
+    std::memcpy(&batch.mapped[batch.count], &vertex, sizeof(SpriteVertex));
 
-    buffer.count++;
+    batch.count++;
 }
 
 void SpriteRenderer::draw(CommandBuffer* commandBuffer)

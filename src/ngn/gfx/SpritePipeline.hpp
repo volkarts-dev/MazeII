@@ -4,7 +4,6 @@
 #pragma once
 
 #include "Macros.hpp"
-#include "Uniforms.hpp"
 #include <glm/glm.hpp>
 
 namespace ngn {
@@ -13,11 +12,6 @@ class Buffer;
 class CommandBuffer;
 class Pipeline;
 class Renderer;
-
-struct SpriteUniform
-{
-    ViewProjection viewProj;
-};
 
 class SpritePipeline
 {
@@ -30,7 +24,6 @@ public:
     void updateDescriptorSet(vk::DescriptorBufferInfo bufferInfo, uint32_t set, uint32_t binding, uint32_t arrayIndex = 0);
     void updateDescriptorSet(vk::DescriptorImageInfo imageInfo, uint32_t set, uint32_t binding, uint32_t arrayIndex = 0);
     vk::DescriptorSet descriptorSet(uint32_t frame);
-
 
 private:
     Renderer* renderer_;

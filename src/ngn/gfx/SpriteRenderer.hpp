@@ -6,6 +6,7 @@
 #include "Macros.hpp"
 #include "Types.hpp"
 #include "SpritePipeline.hpp"
+#include "Uniforms.hpp"
 
 namespace ngn {
 
@@ -34,7 +35,7 @@ private:
     struct UniformBuffer
     {
         Buffer* buffer;
-        std::span<SpriteUniform> mapped;
+        std::span<ViewProjection> mapped;
     };
 
     struct Texture
@@ -42,7 +43,7 @@ private:
         const Image* image{};
         const ImageView* view{};
         const Sampler* sampler{};
-        bool owning;
+        bool owning{};
     };
 
     struct Batch
