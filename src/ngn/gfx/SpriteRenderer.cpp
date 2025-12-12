@@ -4,14 +4,18 @@
 #include "SpriteRenderer.hpp"
 
 #include "Buffer.hpp"
+#include "CommonComponents.hpp"
 #include "CommandBuffer.hpp"
 #include "Image.hpp"
+#include "gfx/GFXComponents.hpp"
 #include "gfx/Renderer.hpp"
+#include <entt/entt.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace ngn {
 
-SpriteRenderer::SpriteRenderer(Renderer* renderer, uint32_t batchSize) :
+SpriteRenderer::SpriteRenderer(entt::registry* registry, Renderer* renderer, uint32_t batchSize) :
+    registry_{registry},
     renderer_{renderer},
     spritePipeline_{new SpritePipeline{renderer_}}
 {
@@ -180,6 +184,27 @@ void SpriteRenderer::renderSprite(const SpriteVertex& vertex)
     std::memcpy(&batch.mapped[batch.count], &vertex, sizeof(SpriteVertex));
 
     batch.count++;
+}
+
+void SpriteRenderer::renderSprites()
+{
+    auto& batch = batches_[renderer_->currentFrame()];
+
+    auto sprites = registry_->view<Position, Rotation, Scale, Sprite>();
+    for (auto [e, pos, rot, sca, spr] : sprites.each())
+    {
+        assert(batch.count < batch.buffer->size() / sizeof(SpriteVertex));
+
+        auto& v = batch.mapped[batch.count];
+        v.position = pos.value;
+        v.rotation = rot.angle;
+        v.scale = spr.size * sca.value;
+        v.color = spr.color;
+        v.texCoords = spr.texCoords;
+        v.texIndex = spr.texture;
+
+        batch.count++;
+    }
 }
 
 void SpriteRenderer::draw(CommandBuffer* commandBuffer)

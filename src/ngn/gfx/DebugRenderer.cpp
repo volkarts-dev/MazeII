@@ -115,72 +115,106 @@ void DebugRenderer::updateView(const glm::mat4& view)
                 );
 }
 
-void DebugRenderer::drawLine(const DebugVertex& start, const DebugVertex& end)
+void DebugRenderer::drawLine(const glm::vec2& start, const glm::vec2& end, const glm::vec4 color)
 {
     auto& batch = lineBatches_[renderer_->currentFrame()];
 
     assert(batch.count + 1 < batch.buffer->size() / sizeof(DebugVertex));
 
-    std::memcpy(&batch.mapped[batch.count], &start, sizeof(DebugVertex));
+    DebugVertex v = {start, color};
+    batch.mapped[batch.count] = v;
     batch.count++;
 
-    std::memcpy(&batch.mapped[batch.count], &end, sizeof(DebugVertex));
+    v.point = end;
+    batch.mapped[batch.count] = v;
     batch.count++;
 }
 
-void DebugRenderer::drawTriangle(const DebugVertex& edge1, const DebugVertex& edge2, const DebugVertex& edge3)
+void DebugRenderer::drawTriangle(const glm::vec2& edge1, const glm::vec2& edge2, const glm::vec2& edge3,
+                                 const glm::vec4 color)
 {
-    drawLine(edge1, edge2);
-    drawLine(edge2, edge3);
-    drawLine(edge3, edge1);
+    drawLine(edge1, edge2, color);
+    drawLine(edge2, edge3, color);
+    drawLine(edge3, edge1, color);
 }
 
-void DebugRenderer::drawCircle(const DebugVertex& center, float radius)
+void DebugRenderer::drawCircle(const glm::vec2& center, float radius, const glm::vec4 color)
 {
     for (std::size_t i = 0; i < gCircleValues.size(); i++)
     {
         const auto idx0 = i;
         const auto idx1 = (i + 1) % gCircleValues.size();
 
-        auto pos0 = center;
-        pos0.point += gCircleValues[idx0] * radius;
-        auto pos1 = center;
-        pos1.point += gCircleValues[idx1] * radius;
+        auto pos0 = center + gCircleValues[idx0] * radius;
+        auto pos1 = center + gCircleValues[idx1] * radius;
 
-        drawLine(pos0, pos1);
+        drawLine(pos0, pos1, color);
     }
 }
 
-void DebugRenderer::fillTriangle(const DebugVertex& edge1, const DebugVertex& edge2, const DebugVertex& edge3)
+void DebugRenderer::drawAABB(const glm::vec2& topLeft, const glm::vec2& bottomRight, const glm::vec4 color)
+{
+    glm::vec2 pos0 = topLeft;
+    glm::vec2 pos1 = {bottomRight.x, topLeft.y};
+    drawLine(pos0, pos1, color);
+
+    pos0 = pos1;
+    pos1 = bottomRight;
+    drawLine(pos0, pos1, color);
+
+    pos0 = pos1;
+    pos1 = {topLeft.x, bottomRight.y};
+    drawLine(pos0, pos1, color);
+
+    pos0 = pos1;
+    pos1 = topLeft;
+    drawLine(pos0, pos1, color);
+}
+
+void DebugRenderer::fillTriangle(const glm::vec2& edge1, const glm::vec2& edge2, const glm::vec2& edge3,
+                                 const glm::vec4 color)
 {
     auto& batch = triangleBatches_[renderer_->currentFrame()];
 
     assert(batch.count + 2 < batch.buffer->size() / sizeof(DebugVertex));
 
-    std::memcpy(&batch.mapped[batch.count], &edge1, sizeof(DebugVertex));
+    DebugVertex v = {edge1, color};
+    batch.mapped[batch.count] = v;
     batch.count++;
 
-    std::memcpy(&batch.mapped[batch.count], &edge2, sizeof(DebugVertex));
+    v.point = edge2;
+    batch.mapped[batch.count] = v;
     batch.count++;
 
-    std::memcpy(&batch.mapped[batch.count], &edge3, sizeof(DebugVertex));
+    v.point = edge3;
+    batch.mapped[batch.count] = v;
     batch.count++;
 }
 
-void DebugRenderer::fillCircle(const DebugVertex& center, float radius)
+void DebugRenderer::fillCircle(const glm::vec2& center, float radius, const glm::vec4 color)
 {
     for (std::size_t i = 0; i < gCircleValues.size(); i++)
     {
         const auto idx0 = i;
         const auto idx1 = (i + 1) % gCircleValues.size();
 
-        auto pos0 = center;
-        pos0.point += gCircleValues[idx0] * radius;
-        auto pos1 = center;
-        pos1.point += gCircleValues[idx1] * radius;
+        auto pos0 = center + gCircleValues[idx0] * radius;
+        auto pos1 = center + gCircleValues[idx1] * radius;
 
-        fillTriangle(center, pos1, pos0);
+        fillTriangle(center, pos1, pos0, color);
     }
+}
+
+void DebugRenderer::fillAABB(const glm::vec2& topLeft, const glm::vec2& bottomRight, const glm::vec4 color)
+{
+    glm::vec2 pos0 = topLeft;
+    glm::vec2 pos1 = {bottomRight.x, topLeft.y};
+    glm::vec2 pos2 = bottomRight;
+    glm::vec2 pos3 = {topLeft.x, bottomRight.y};
+
+    fillTriangle(pos0, pos1, pos2, color);
+
+    fillTriangle(pos2, pos1, pos3, color);
 }
 
 void DebugRenderer::draw(CommandBuffer* commandBuffer)

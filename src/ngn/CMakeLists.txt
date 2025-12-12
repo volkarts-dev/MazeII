@@ -1,19 +1,36 @@
 add_library(ngn STATIC
     gfx/Buffer.hpp gfx/Buffer.cpp
     gfx/CommandBuffer.hpp gfx/CommandBuffer.cpp
+    gfx/Colors.hpp gfx/Colors.cpp
     gfx/FontCollection.hpp gfx/FontCollection.cpp
     gfx/FontMaker.hpp gfx/FontMaker.cpp
     gfx/FontRenderer.hpp gfx/FontRenderer.cpp
+    gfx/GFXComponents.hpp
     gfx/Image.hpp gfx/Image.cpp
     gfx/Pipeline.hpp gfx/Pipeline.cpp
     gfx/Renderer.hpp gfx/Renderer.cpp
     gfx/SpritePipeline.cpp gfx/SpritePipeline.hpp
     gfx/SpriteRenderer.hpp gfx/SpriteRenderer.cpp
     gfx/Uniforms.hpp
+
+    phys/Collision.hpp
+    phys/DynamicTree.hpp phys/DynamicTree.cpp
+    phys/Functions.hpp phys/Functions.cpp
+    phys/PhysComponents.hpp
+    phys/SATDetector.hpp phys/SATDetector.cpp
+    phys/Shapes.hpp phys/Shapes.cpp
+    phys/Solver.hpp phys/Solver.cpp
+    phys/World.hpp phys/World.cpp
+
+    util/Vector.hpp
+
+    Allocators.hpp Allocators.cpp
     Application.cpp Application.hpp
     Assets.hpp.in
+    CommonComponents.hpp
     Logging.hpp
     Macros.hpp
+    Math.hpp Math.cpp
     Pch.hpp
     Types.hpp
 )
@@ -53,6 +70,7 @@ target_link_libraries(ngn PRIVATE compile_options)
 
 target_link_libraries(ngn PUBLIC
     ext
+    entt::configured
     Freetype::Freetype
     glfw::glfw
     glm::configured

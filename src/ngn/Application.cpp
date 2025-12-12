@@ -6,10 +6,12 @@
 #include "gfx/CommandBuffer.hpp"
 #include "gfx/Pipeline.hpp"
 #include "gfx/Renderer.hpp"
+#include "phys/World.hpp"
+#include "Allocators.hpp"
 #include "Logging.hpp"
 #include "Types.hpp"
 #include <GLFW/glfw3.h>
-
+#include <entt/entt.hpp>
 #include <cassert>
 #include <cstdlib>
 
@@ -28,15 +30,19 @@ void errorCallback(int error, const char* description)
 
 Application* Application::get()
 {
+    assert(gApplication);
     return gApplication;
 }
 
 Application::Application(ApplicationDelegate* delegate) :
     delegate_{delegate},
     window_{},
-    renderer_{}
+    renderer_{},
+    frameAllocator_{},
+    world_{}
 {
     assert(!gApplication);
+    gApplication = this;
 
     log::set_level(log::level::trace);
 
@@ -56,6 +62,12 @@ Application::Application(ApplicationDelegate* delegate) :
 
     renderer_ = new Renderer{window_};
 
+    frameAllocator_ = new LinearAllocator{delegate_->requiredFrameMemeory()};
+
+    registry_ = new entt::registry{};
+
+    world_ = new World(registry_);
+
     glfwSetFramebufferSizeCallback(window_, framebufferResizeCallback);
     glfwSetKeyCallback(window_, keyCallback);
 
@@ -65,13 +77,40 @@ Application::Application(ApplicationDelegate* delegate) :
 
 Application::~Application()
 {
+    delete world_;
+
     delegate_->onDone(this);
+
+    delete frameAllocator_;
 
     delete renderer_;
 
     glfwDestroyWindow(window_);
 
     glfwTerminate();
+
+    gApplication = nullptr;
+}
+
+entt::entity Application::createActor(Position pos, Rotation rot, Scale sca)
+{
+    const auto entity = registry_->create();
+
+    registry_->emplace<Position>(entity, std::move(pos));
+    registry_->emplace<Rotation>(entity, std::move(rot));
+    registry_->emplace<Scale>(entity, std::move(sca));
+
+    return entity;
+}
+
+bool Application::isKeyDown(int key) const
+{
+    return glfwGetKey(window_, key) == GLFW_PRESS;
+}
+
+bool Application::isKeyUp(int key) const
+{
+    return glfwGetKey(window_, key) == GLFW_RELEASE;
 }
 
 void Application::exec()
@@ -86,10 +125,12 @@ void Application::exec()
 
         const auto currentTime = clock.now();
         const Duration<float> deltaTime = currentTime - lastIterationTime;
+        const float dt = deltaTime.count();
         lastIterationTime = currentTime;
 
-        update(deltaTime.count());
-        draw(deltaTime.count());
+        update(dt);
+
+        draw(dt);
     }
 
     renderer_->waitForDevice();
@@ -98,6 +139,8 @@ void Application::exec()
 void Application::update(float deltaTime)
 {
     delegate_->onUpdate(this, deltaTime);
+
+    world_->update(deltaTime);
 }
 
 void Application::draw(float deltaTime)

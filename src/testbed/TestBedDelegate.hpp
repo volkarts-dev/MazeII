@@ -24,20 +24,30 @@ public:
     TestBedDelegate();
     ~TestBedDelegate() override = default;
 
+    std::size_t requiredFrameMemeory() override;
+
     bool onInit(ngn::Application* app) override;
     void onDone(ngn::Application* app) override;
+
+    void onKeyEvent(ngn::Application* app, int action, int key) override;
+
     void onUpdate(ngn::Application* app, float deltaTime) override;
     void onDraw(ngn::Application* app, float deltaTime) override;
 
 private:
     ngn::Renderer* renderer_;
+    entt::registry* registry_;
 
+    // TODO move these renderers  to application
     ngn::SpriteRenderer* spriteRenderer_;
     ngn::FontRenderer* fontRenderer_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     ngn::DebugRenderer* debugRenderer_;
 #endif
+
+    entt::entity player_;
+    entt::entity enemy_;
 
     std::vector<ngn::SpriteVertex> sprites_;
 

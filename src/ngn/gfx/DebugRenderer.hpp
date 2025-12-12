@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "Colors.hpp"
 #include "DebugPipeline.hpp"
 #include "Types.hpp"
 #include "Uniforms.hpp"
@@ -21,12 +22,16 @@ public:
 
     void updateView(const glm::mat4& view);
 
-    void drawLine(const DebugVertex& start, const DebugVertex& end);
-    void drawTriangle(const DebugVertex& edge1, const DebugVertex& edge2, const DebugVertex& edge3);
-    void drawCircle(const DebugVertex& center, float radius);
+    void drawLine(const glm::vec2& start, const glm::vec2& end, const glm::vec4 color = Colors::White);
+    void drawTriangle(const glm::vec2& edge1, const glm::vec2& edge2, const glm::vec2& edge3,
+                      const glm::vec4 color = Colors::White);
+    void drawCircle(const glm::vec2& center, float radius, const glm::vec4 color = Colors::White);
+    void drawAABB(const glm::vec2& topLeft, const glm::vec2& bottomRight, const glm::vec4 color = Colors::White);
 
-    void fillTriangle(const DebugVertex& edge1, const DebugVertex& edge2, const DebugVertex& edge3);
-    void fillCircle(const DebugVertex& center, float radius);
+    void fillTriangle(const glm::vec2& edge1, const glm::vec2& edge2, const glm::vec2& edge3,
+                      const glm::vec4 color = Colors::White);
+    void fillCircle(const glm::vec2& center, float radius, const glm::vec4 color = Colors::White);
+    void fillAABB(const glm::vec2& topLeft, const glm::vec2& bottomRight, const glm::vec4 color = Colors::White);
 
     void draw(CommandBuffer* commandBuffer);
 

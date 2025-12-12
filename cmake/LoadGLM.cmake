@@ -11,6 +11,7 @@ target_compile_definitions(glm_configured INTERFACE
     GLM_FORCE_INLINE
     GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
     GLM_FORCE_INTRINSICS
+    GLM_ENABLE_EXPERIMENTAL
 )
 
 target_link_libraries(glm_configured INTERFACE

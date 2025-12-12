@@ -29,6 +29,7 @@ enable_avx2(compile_options)
 
 # dependencies
 include(LoadCLI11)
+include(LoadEnTT)
 include(LoadFreetype)
 include(LoadGLFW)
 include(LoadGLM)

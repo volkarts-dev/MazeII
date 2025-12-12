@@ -3,15 +3,21 @@
 
 #include "TestBedDelegate.hpp"
 
+#include "phys/PhysComponents.hpp"
+#include "phys/World.hpp"
 #include "gfx/Buffer.hpp"
 #include "gfx/CommandBuffer.hpp"
 #include "gfx/FontMaker.hpp"
 #include "gfx/FontRenderer.hpp"
+#include "gfx/GFXComponents.hpp"
 #include "gfx/Image.hpp"
 #include "gfx/SpriteRenderer.hpp"
+#include "CommonComponents.hpp"
 #include "Logging.hpp"
 #include "TestBedAssets.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include <entt/entt.hpp>
+#include <GLFW/glfw3.h>
 #include <glm/gtc/constants.hpp>
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
@@ -22,13 +28,19 @@ TestBedDelegate::TestBedDelegate()
 {
 }
 
+std::size_t TestBedDelegate::requiredFrameMemeory()
+{
+    return 100 * 1024 * 1024;
+}
+
 bool TestBedDelegate::onInit(ngn::Application* app)
 {
     renderer_ = app->renderer();
+    registry_ = app->registry();
 
     // ****************************************************
 
-    spriteRenderer_ = new ngn::SpriteRenderer{renderer_, 1024};
+    spriteRenderer_ = new ngn::SpriteRenderer{registry_, renderer_, 1024};
 
     spriteRenderer_->addImages({{testbed::assets::player_png()}});
 
@@ -57,19 +69,44 @@ bool TestBedDelegate::onInit(ngn::Application* app)
 
 
 
-
-
-
     // TEMP
+    player_ = app->createActor({.value = {400, 300}});
+
+    registry_->emplace<ngn::Sprite>(player_, ngn::Sprite{
+                                        .texCoords = {0, 0, 64, 64},
+                                        .size{64, 64},
+                                        .texture = 1
+                                    });
+
+    ngn::BodyCreateInfo createInfo;
+    createInfo.restitution = 1.5f;
+    createInfo.invMass = 1.f / 10.f;
+    app->world()->createBody(player_, createInfo, ngn::Shape{ngn::Circle{.radius = 32}});
+
+
+    enemy_ = app->createActor({.value = {600, 300}});
+
+    registry_->emplace<ngn::Sprite>(enemy_, ngn::Sprite{
+                                        .texCoords = {0, 0, 64, 64},
+                                        .size{64, 64},
+                                        .texture = 1
+                                    });
+
+    createInfo.restitution = 1.5f;
+    createInfo.invMass = 1.f / 1.f;
+    app->world()->createBody(enemy_, createInfo, ngn::Shape{ngn::Circle{.radius = 32}});
+
+
+
     sprites_.resize(4);
 
     sprites_[0] = {
         .position = {150, 150},
-        .rotation = glm::pi<float>() / 7.0f,
-        .scale = {100, 100},
+        .rotation = 0,
+        .scale = {64, 64},
         .color = {1.0, 1.0, 1.0, 1.0},
-        .texIndex = 1,
-        .texCoords = {0.0, 0.0, 64.0, 64.0},
+        .texIndex = 0,
+        .texCoords = {0, 0, 0, 0},
     };
 
     sprites_[1] = {
@@ -116,6 +153,13 @@ void TestBedDelegate::onDone(ngn::Application* app)
     delete spriteRenderer_;
 }
 
+void TestBedDelegate::onKeyEvent(ngn::Application* app, int action, int key)
+{
+    NGN_UNUSED(app);
+    NGN_UNUSED(action);
+    NGN_UNUSED(key);
+}
+
 void TestBedDelegate::onUpdate(ngn::Application* app, float deltaTime)
 {
     NGN_UNUSED(app);
@@ -144,7 +188,31 @@ void TestBedDelegate::onUpdate(ngn::Application* app, float deltaTime)
 
     // ****************************************************
 
-    sprites_[0].rotation += glm::pi<float>() / 10.0f * deltaTime;
+    if (app->isKeyDown(GLFW_KEY_LEFT))
+    {
+        auto& force = registry_->get<ngn::AngularForce>(player_).value;
+        force += 20.f;
+    }
+    if (app->isKeyDown(GLFW_KEY_RIGHT))
+    {
+        auto& force = registry_->get<ngn::AngularForce>(player_).value;
+        force -= 20.f;
+    }
+    if (app->isKeyDown(GLFW_KEY_UP))
+    {
+        auto [force, rot] = registry_->get<ngn::LinearForce, ngn::Rotation>(player_);
+        force.value -= rot.dir * 1200.f;
+
+    }
+    if (app->isKeyDown(GLFW_KEY_DOWN))
+    {
+        auto [force, rot] = registry_->get<ngn::LinearForce, ngn::Rotation>(player_);
+        force.value += rot.dir * 1200.f;
+    }
+
+    // ****************************************************
+
+    sprites_[0].rotation += glm::pi<float>() / 5.0f * deltaTime;
     sprites_[1].rotation += -glm::pi<float>() / 50.0f * deltaTime;
     sprites_[2].rotation += glm::pi<float>() / 20.0f * deltaTime;
     sprites_[3].rotation += -glm::pi<float>() / 2.0f * deltaTime;
@@ -153,6 +221,8 @@ void TestBedDelegate::onUpdate(ngn::Application* app, float deltaTime)
     {
         spriteRenderer_->renderSprite(sprites_[i]);
     }
+
+    spriteRenderer_->renderSprites();
 
     // ****************************************************
 
@@ -168,12 +238,7 @@ void TestBedDelegate::onUpdate(ngn::Application* app, float deltaTime)
                     glm::vec3(0.0f, 1.0f, 0.0f)
                 ));
 
-    debugRenderer_->drawLine({.point = {50, 50}}, {.point = {100, 100}});
-    debugRenderer_->drawTriangle({.point = {150, 50}}, {.point = {200, 100}}, {.point = {170, 200}});
-    debugRenderer_->drawCircle({.point = {400, 50}}, 50);
-
-    debugRenderer_->fillTriangle({.point = {150, 350}}, {.point = {200, 400}}, {.point = {170, 500}});
-    debugRenderer_->fillCircle({.point = {400, 350}}, 50);
+    app->world()->debugDrawState(debugRenderer_);
 #endif
 }
 
