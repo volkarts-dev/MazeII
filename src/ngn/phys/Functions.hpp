@@ -1,5 +1,5 @@
 // Copyright 2025, Daniel Volk <mail@volkarts.com>
-// SPDX-License-Identifier: <LICENSE>
+// SPDX-License-Identifier: MIT
 
 #pragma once
 
@@ -19,6 +19,7 @@ bool intersects(const AABB& lhs, const AABB& rhs);
 AABB combine(const AABB& one, const AABB& two);
 float area(const AABB& aabb);
 
+glm::vec2 rotate(const glm::vec2& vec, const glm::vec2& dir);
 glm::vec2 transform(glm::vec2 vec, const Position& pos, const Rotation& rot, const Scale& sca);
 Shape transform(Shape shape, const Position& pos, const Rotation& rot, const Scale& sca);
 

@@ -186,7 +186,7 @@ void SpriteRenderer::renderSprite(const SpriteVertex& vertex)
     batch.count++;
 }
 
-void SpriteRenderer::renderSprites()
+void SpriteRenderer::renderSpriteComponents()
 {
     auto& batch = batches_[renderer_->currentFrame()];
 

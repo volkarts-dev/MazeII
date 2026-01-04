@@ -1,11 +1,12 @@
 // Copyright 2025, Daniel Volk <mail@volkarts.com>
-// SPDX-License-Identifier: <LICENSE>
+// SPDX-License-Identifier: MIT
 
 #include "DebugRenderer.hpp"
 
 #include "Buffer.hpp"
 #include "CommandBuffer.hpp"
 #include "DebugPipeline.hpp"
+#include "Math.hpp"
 #include "Renderer.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -19,8 +20,8 @@ struct CircleValues
     {
         for (std::size_t i = 0; i < values.size(); i++)
         {
-            const auto val = glm::pi<float>() * 2.f / static_cast<float>(values.size()) * static_cast<float>(i);
-            values[i] = {std::sin(val), std::cos(val)};
+            const auto val = TwoPI / static_cast<float>(values.size()) * static_cast<float>(i);
+            values[i] = {std::cos(val), -std::sin(val)};
         }
     }
 
@@ -152,6 +153,57 @@ void DebugRenderer::drawCircle(const glm::vec2& center, float radius, const glm:
     }
 }
 
+void DebugRenderer::drawCapsule(const glm::vec2& start, const glm::vec2& end, float radius, const glm::vec4 color)
+{
+    const auto ab = end - start;
+    const auto perp = glm::vec2{ab.y, -ab.x};
+    const auto norm = perp / glm::length(perp);
+
+    const auto start2 = start + norm * radius;
+    const auto end2 = end + norm * radius;
+
+    const auto start3 = start - norm * radius;
+    const auto end3 = end - norm * radius;
+
+    drawLine(start2, end2, color);
+    drawLine(start3, end3, color);
+
+    auto theta = atan2(-norm.y, norm.x);
+
+    std::size_t startIndex = 0;
+    for ( ; startIndex < gCircleValues.size(); startIndex++)
+    {
+        const auto t = TwoPI / static_cast<float>(gCircleValues.size()) * static_cast<float>(startIndex);
+        if (t > theta)
+            break;
+    }
+
+    glm::vec2 r0 = start2;
+    glm::vec2 r1;
+    std::size_t i = startIndex;
+
+    for ( ; i < startIndex + gCircleValues.size() / 2; i++)
+    {
+        r1 = start + gCircleValues[i % gCircleValues.size()] * radius;
+        drawLine(r0, r1, color);
+        r0 = r1;
+    }
+
+    r1 = start3;
+    drawLine(r0, r1, color);
+    r0 = end3;
+
+    for ( ; i < startIndex + gCircleValues.size(); i++)
+    {
+        r1 = end + gCircleValues[i % gCircleValues.size()] * radius;
+        drawLine(r0, r1, color);
+        r0 = r1;
+    }
+
+    r1 = end2;
+    drawLine(r0, r1, color);
+}
+
 void DebugRenderer::drawAABB(const glm::vec2& topLeft, const glm::vec2& bottomRight, const glm::vec4 color)
 {
     glm::vec2 pos0 = topLeft;
@@ -203,6 +255,57 @@ void DebugRenderer::fillCircle(const glm::vec2& center, float radius, const glm:
 
         fillTriangle(center, pos1, pos0, color);
     }
+}
+
+void DebugRenderer::fillCapsule(const glm::vec2& start, const glm::vec2& end, float radius, const glm::vec4 color)
+{
+    const auto ab = end - start;
+    const auto perp = glm::vec2{ab.y, -ab.x};
+    const auto norm = perp / glm::length(perp);
+
+    const auto start2 = start + norm * radius;
+    const auto end2 = end + norm * radius;
+
+    const auto start3 = start - norm * radius;
+    const auto end3 = end - norm * radius;
+
+    fillTriangle(start2, end2, end3, color);
+    fillTriangle(start2, end3, start3, color);
+
+    auto theta = atan2(-norm.y, norm.x);
+
+    std::size_t startIndex = 0;
+    for ( ; startIndex < gCircleValues.size(); startIndex++)
+    {
+        const auto t = TwoPI / static_cast<float>(gCircleValues.size()) * static_cast<float>(startIndex);
+        if (t > theta)
+            break;
+    }
+
+    glm::vec2 r0 = start2;
+    glm::vec2 r1;
+    std::size_t i = startIndex;
+
+    for ( ; i < startIndex + gCircleValues.size() / 2; i++)
+    {
+        r1 = start + gCircleValues[i % gCircleValues.size()] * radius;
+        fillTriangle(start, r1, r0, color);
+        r0 = r1;
+    }
+
+    r1 = start3;
+    fillTriangle(start, r1, r0, color);
+    r0 = end3;
+
+    for ( ; i < startIndex + gCircleValues.size(); i++)
+    {
+        r1 = end + gCircleValues[i % gCircleValues.size()] * radius;
+        fillTriangle(end, r1, r0, color);
+        r0 = r1;
+    }
+
+    r1 = end2;
+    fillTriangle(end, r1, r0, color);
 }
 
 void DebugRenderer::fillAABB(const glm::vec2& topLeft, const glm::vec2& bottomRight, const glm::vec4 color)

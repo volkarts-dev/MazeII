@@ -1,5 +1,5 @@
 // Copyright 2025, Daniel Volk <mail@volkarts.com>
-// SPDX-License-Identifier: <LICENSE>
+// SPDX-License-Identifier: MIT
 
 #pragma once
 
@@ -29,6 +29,13 @@ class Scale
 {
 public:
     glm::vec2 value{1, 1};
+};
+
+
+class TransformChanged
+{
+public:
+    bool value;
 };
 
 } // namespace

@@ -362,7 +362,8 @@ uint32_t DynamicTree::balance(uint32_t index)
 
 AABB DynamicTree::enlargeAABB(AABB aabb) const
 {
-    aabb.extend(glm::vec2(glm::max(aabb.width(), aabb.height()) * 0.1f));
+    // aabb.extend(glm::vec2{glm::max(aabb.width(), aabb.height()) * 0.1f});
+    aabb.extend(glm::vec2{10.f});
     return aabb;
 }
 

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "Allocators.hpp"
 #include "CommonComponents.hpp"
 #include "gfx/Renderer.hpp"
 #include "Macros.hpp"
@@ -13,23 +14,60 @@ struct GLFWwindow;
 namespace ngn {
 
 class Application;
-class LinearAllocator;
+class FontRenderer;
+class FontMaker;
+class MemoryArena;
+class SpriteRenderer;
 class World;
 
-class ApplicationDelegate
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+class DebugRenderer;
+#endif
+
+class ApplicationStage
 {
 public:
-    virtual ~ApplicationDelegate() = default;
+    virtual ~ApplicationStage();
 
-    virtual std::size_t requiredFrameMemeory() = 0;
-    virtual bool onInit(Application* app) { NGN_UNUSED(app); return true; };
-    virtual void onDone(Application* app) { NGN_UNUSED(app); };
+    virtual void onActivate(Application* app) { NGN_UNUSED(app); }
+    virtual void onDeactivate(Application* app) { NGN_UNUSED(app); }
 
-    virtual void onKeyEvent(ngn::Application* app, int action, int key) {  NGN_UNUSED(app); NGN_UNUSED(action); NGN_UNUSED(key); }
+    virtual void onKeyEvent(Application* app, int action, int key) {  NGN_UNUSED(app); NGN_UNUSED(action); NGN_UNUSED(key); }
 
     virtual void onUpdate(Application* app, float deltaTime) { NGN_UNUSED(app); NGN_UNUSED(deltaTime); };
     virtual void onDraw(Application* app, float deltaTime) { NGN_UNUSED(app); NGN_UNUSED(deltaTime); };
 };
+
+// *********************************************************************************************************************
+
+class ApplicationDelegate
+{
+public:
+    virtual ~ApplicationDelegate();
+
+    virtual std::size_t requiredFrameMemeory() = 0;
+
+    virtual ApplicationStage* onInit(Application* app) = 0;
+    virtual void onDone(Application* app) { NGN_UNUSED(app); };
+};
+
+// *********************************************************************************************************************
+
+class RendererCreateInfo
+{
+public:
+    bool spriteRenderer;
+    uint32_t spriteBatchCount;
+    bool fontRenderer;
+    FontMaker* fontMaker;
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    bool debugRenderer;
+    uint32_t debugBatchCount;
+#endif
+};
+
+// *********************************************************************************************************************
 
 class Application
 {
@@ -41,16 +79,33 @@ public:
     ~Application();
 
     Renderer* renderer() const { return renderer_; }
-    LinearAllocator* frameAllocator() const { return frameAllocator_; }
+    MemoryArena* frameMemoryArena() const { return frameMemoryArena_; }
     entt::registry* registry() const { return registry_; }
     World* world() const { return world_; }
+
+    SpriteRenderer* spriteRenderer() const { return spriteRenderer_; }
+    FontRenderer* fontRenderer() const { return fontRenderer_; }
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    DebugRenderer* debugRenderer() const { return debugRenderer_; }
+#endif
+
+    void createRenderers(const RendererCreateInfo& createInfo);
+
+    void activateStage(ApplicationStage* stage);
+    void quit(int exitCode = 0);
+
+    template<typename T>
+    LinearAllocator<T> createFrameAllocator()
+    {
+        return LinearAllocator<T>{frameMemoryArena_};
+    }
 
     entt::entity createActor(Position pos, Rotation rot = {}, Scale sca= {});
 
     bool isKeyDown(int key) const;
     bool isKeyUp(int key) const;
 
-    void exec();
+    int exec();
 
 private:
     void update(float deltaTime);
@@ -66,9 +121,22 @@ private:
     ApplicationDelegate* delegate_;
     GLFWwindow* window_;
     Renderer* renderer_;
-    LinearAllocator* frameAllocator_;
+    MemoryArena* frameMemoryArena_;
+
+    SpriteRenderer* spriteRenderer_;
+    FontRenderer* fontRenderer_;
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    DebugRenderer* debugRenderer_;
+#endif
+
     entt::registry* registry_;
     World* world_;
+
+    ApplicationStage* stage_;
+    ApplicationStage* nextStage_;
+
+    int exitCode_;
 
     NGN_DISABLE_COPY_MOVE(Application)
 };

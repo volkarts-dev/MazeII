@@ -18,6 +18,7 @@ public:
     float invMass{1.f};
     float friction{0.f};
     float restitution{1.f};
+    bool dynamic{true};
 };
 
 class World
@@ -42,8 +43,8 @@ public:
 private:
     void integrate(float deltaTime);
     MovedList updateTree();
-    CollisionPairList findPossibleCollisions(const MovedList& moved);
-    CollisionList findActualCollsions(const CollisionPairList& collisionPairs);
+    CollisionPairSet findPossibleCollisions(const MovedList& moved);
+    CollisionList findActualCollsions(const CollisionPairSet& collisionPairs);
     void solveCollisions(const CollisionList& collisions);
 
 private:
@@ -57,8 +58,13 @@ private:
     entt::sigh<void(const Collision&)> collisionSignal_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    std::unordered_map<entt::entity, AABB> debugPossibleCollisions_;
-    std::unordered_map<entt::entity, Collision> debugCollisions_;
+    struct AABBPair
+    {
+        AABB aabb1;
+        AABB aabb2;
+    };
+    std::unordered_map<CollisionPair, AABBPair> debugPossibleCollisions_;
+    std::unordered_map<CollisionPair, Collision> debugCollisions_;
 #endif
 
     NGN_DISABLE_COPY_MOVE(World)

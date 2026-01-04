@@ -1,5 +1,5 @@
 // Copyright 2025, Daniel Volk <mail@volkarts.com>
-// SPDX-License-Identifier: <LICENSE>
+// SPDX-License-Identifier: MIT
 
 #include "Functions.hpp"
 
@@ -82,13 +82,18 @@ float area(const AABB& aabb)
     return (aabb.bottomRight.x - aabb.topLeft.x) * (aabb.bottomRight.y - aabb.topLeft.y);
 }
 
+glm::vec2 rotate(const glm::vec2& vec, const glm::vec2& dir)
+{
+    return {
+        vec.x * dir.y - vec.y * dir.x,
+        vec.x * dir.x + vec.y * dir.y,
+    };
+}
+
 glm::vec2 transform(glm::vec2 vec, const Position& pos, const Rotation& rot, const Scale& sca)
 {
     vec *= sca.value;
-    vec = {
-        vec.x * rot.dir.y - vec.y * rot.dir.x,
-        vec.x * rot.dir.x + vec.y * rot.dir.y,
-    };
+    vec = rotate(vec, rot.dir);
     vec += pos.value;
     return vec;
 }

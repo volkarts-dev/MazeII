@@ -1,5 +1,5 @@
 // Copyright 2025, Daniel Volk <mail@volkarts.com>
-// SPDX-License-Identifier: <LICENSE>
+// SPDX-License-Identifier: MIT
 
 #pragma once
 
@@ -26,11 +26,13 @@ public:
     void drawTriangle(const glm::vec2& edge1, const glm::vec2& edge2, const glm::vec2& edge3,
                       const glm::vec4 color = Colors::White);
     void drawCircle(const glm::vec2& center, float radius, const glm::vec4 color = Colors::White);
+    void drawCapsule(const glm::vec2& start, const glm::vec2& end, float radius, const glm::vec4 color = Colors::White);
     void drawAABB(const glm::vec2& topLeft, const glm::vec2& bottomRight, const glm::vec4 color = Colors::White);
 
     void fillTriangle(const glm::vec2& edge1, const glm::vec2& edge2, const glm::vec2& edge3,
                       const glm::vec4 color = Colors::White);
     void fillCircle(const glm::vec2& center, float radius, const glm::vec4 color = Colors::White);
+    void fillCapsule(const glm::vec2& start, const glm::vec2& end, float radius, const glm::vec4 color = Colors::White);
     void fillAABB(const glm::vec2& topLeft, const glm::vec2& bottomRight, const glm::vec4 color = Colors::White);
 
     void draw(CommandBuffer* commandBuffer);

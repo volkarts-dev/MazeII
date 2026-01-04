@@ -30,7 +30,7 @@ public:
     void updateView(const glm::mat4& view);
     void renderSprite(const SpriteVertex& vertex);
 
-    void renderSprites();
+    void renderSpriteComponents();
 
     void draw(CommandBuffer* commandBuffer);
 

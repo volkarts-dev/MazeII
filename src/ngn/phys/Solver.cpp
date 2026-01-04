@@ -1,5 +1,5 @@
 // Copyright 2025, Daniel Volk <mail@volkarts.com>
-// SPDX-License-Identifier: <LICENSE>
+// SPDX-License-Identifier: MIT
 
 #include "CommonComponents.hpp"
 #include "Solver.hpp"
@@ -18,32 +18,40 @@ void Solver::resolveCollisions(entt::registry* registry, const CollisionList& co
 
 void Solver::resolveCollision(entt::registry* registry, const Collision& collision)
 {
-    const auto [bodyA, posA, velocityA] =
-            registry->get<Body, Position, LinearVelocity>(collision.pair.bodyA);
-    const auto [bodyB, posB, velocityB] =
-            registry->get<Body, Position, LinearVelocity>(collision.pair.bodyB);
+    auto [bodyA, posA, velA, tcA] =
+            registry->try_get<Body, Position, LinearVelocity, TransformChanged>(collision.pair.bodyA);
+    auto [bodyB, posB, velB, tcB] =
+            registry->try_get<Body, Position, LinearVelocity, TransformChanged>(collision.pair.bodyB);
 
-    const auto vd = velocityB.value - velocityA.value;
+    LinearVelocity nullVel{};
+
+    if (!velA)
+        velA = &nullVel;
+    if (!velB)
+        velB = &nullVel;
+
+    const auto vd = velB->value - velA->value;
 
     float r = glm::dot(vd, collision.direction);
     if (r > 0.0f) // bodies are separating
         r = -r;
 
-    float e = glm::max(1.0f, glm::max(bodyA.restitution, bodyB.restitution));
+    float e = glm::max(1.0f, glm::max(bodyA->restitution, bodyB->restitution));
 
-    float invMassSum = bodyA.invMass + bodyB.invMass;
+    float invMassSum = bodyA->invMass + bodyB->invMass;
 
     glm::vec2 impulse = (-e * r) * collision.direction;
 
     // apply impulse (TODO use force?)
-    velocityA.value -= (bodyA.invMass / invMassSum) * impulse;
-    velocityB.value += (bodyB.invMass / invMassSum)  * impulse;
+    velA->value -= (bodyA->invMass / invMassSum) * impulse;
+    velB->value += (bodyB->invMass / invMassSum)  * impulse;
 
     // position correction
     constexpr float percent = 0.2f;
     glm::vec2 correction = (collision.penetration / invMassSum) * percent * collision.direction;
-    posA.value -= bodyA.invMass * correction;
-    posB.value += bodyB.invMass * correction;
+    posA->value -= bodyA->invMass * correction;
+    posB->value += bodyB->invMass * correction;
+    tcA->value = tcB->value = true;
 }
 
 } // namespace ngn

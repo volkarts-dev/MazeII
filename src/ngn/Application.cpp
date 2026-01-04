@@ -3,8 +3,12 @@
 
 #include "Application.hpp"
 
+#include "Timer.hpp"
 #include "gfx/CommandBuffer.hpp"
+#include "gfx/FontMaker.hpp"
+#include "gfx/FontRenderer.hpp"
 #include "gfx/Pipeline.hpp"
+#include "gfx/SpriteRenderer.hpp"
 #include "gfx/Renderer.hpp"
 #include "phys/World.hpp"
 #include "Allocators.hpp"
@@ -14,6 +18,10 @@
 #include <entt/entt.hpp>
 #include <cassert>
 #include <cstdlib>
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+#include "gfx/DebugRenderer.hpp"
+#endif
 
 namespace ngn {
 
@@ -28,6 +36,10 @@ void errorCallback(int error, const char* description)
 
 } // namespace
 
+ApplicationStage::~ApplicationStage() = default;
+
+ApplicationDelegate::~ApplicationDelegate() = default;
+
 Application* Application::get()
 {
     assert(gApplication);
@@ -38,8 +50,16 @@ Application::Application(ApplicationDelegate* delegate) :
     delegate_{delegate},
     window_{},
     renderer_{},
-    frameAllocator_{},
-    world_{}
+    frameMemoryArena_{},
+    spriteRenderer_{},
+    fontRenderer_{},
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    debugRenderer_{},
+#endif
+    world_{},
+    stage_{},
+    nextStage_{},
+    exitCode_{0}
 {
     assert(!gApplication);
     gApplication = this;
@@ -62,7 +82,7 @@ Application::Application(ApplicationDelegate* delegate) :
 
     renderer_ = new Renderer{window_};
 
-    frameAllocator_ = new LinearAllocator{delegate_->requiredFrameMemeory()};
+    frameMemoryArena_ = new MemoryArena{delegate_->requiredFrameMemeory()};
 
     registry_ = new entt::registry{};
 
@@ -71,17 +91,32 @@ Application::Application(ApplicationDelegate* delegate) :
     glfwSetFramebufferSizeCallback(window_, framebufferResizeCallback);
     glfwSetKeyCallback(window_, keyCallback);
 
-    if (!delegate_->onInit(this))
+    stage_ = delegate_->onInit(this);
+    if (!stage_)
         throw std::runtime_error("Failed to initialize app.");
+
+    stage_->onActivate(this);
 }
 
 Application::~Application()
 {
-    delete world_;
+    stage_->onDeactivate(this);
 
     delegate_->onDone(this);
 
-    delete frameAllocator_;
+    delete world_;
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    if (debugRenderer_)
+        delete debugRenderer_;
+#endif
+
+    if (fontRenderer_)
+        delete fontRenderer_;
+    if (spriteRenderer_)
+        delete spriteRenderer_;
+
+    delete frameMemoryArena_;
 
     delete renderer_;
 
@@ -92,13 +127,55 @@ Application::~Application()
     gApplication = nullptr;
 }
 
+void Application::createRenderers(const RendererCreateInfo& createInfo)
+{
+    if (createInfo.spriteRenderer)
+    {
+        spriteRenderer_ = new SpriteRenderer{registry_, renderer_, createInfo.spriteBatchCount};
+
+        if (createInfo.fontRenderer)
+        {
+            if (!createInfo.fontMaker)
+                throw std::runtime_error("The FontRenderer requires a FontMaker");
+
+            fontRenderer_ = new ngn::FontRenderer{spriteRenderer_, createInfo.fontMaker->compile()};
+        }
+    }
+    else if (createInfo.fontRenderer)
+    {
+        throw std::runtime_error("The FontRenderer requires a SpriteRenderer");
+    }
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    if (createInfo.debugRenderer)
+    {
+        debugRenderer_ = new ngn::DebugRenderer{renderer_, createInfo.debugBatchCount};
+    }
+#endif
+}
+
+void Application::activateStage(ApplicationStage* stage)
+{
+    nextStage_ = stage;
+}
+
+void Application::quit(int exitCode)
+{
+    exitCode_ = exitCode;
+
+    glfwSetWindowShouldClose(window_, GLFW_TRUE);
+}
+
 entt::entity Application::createActor(Position pos, Rotation rot, Scale sca)
 {
     const auto entity = registry_->create();
 
     registry_->emplace<Position>(entity, std::move(pos));
-    registry_->emplace<Rotation>(entity, std::move(rot));
+    auto& rotation = registry_->emplace<Rotation>(entity, std::move(rot));
     registry_->emplace<Scale>(entity, std::move(sca));
+    registry_->emplace<TransformChanged>(entity, true);
+
+    rotation.update();
 
     return entity;
 }
@@ -113,39 +190,67 @@ bool Application::isKeyUp(int key) const
     return glfwGetKey(window_, key) == GLFW_RELEASE;
 }
 
-void Application::exec()
+int Application::exec()
 {
-    Clock clock;
-
-    auto lastIterationTime = clock.now();
+    Timer fpsTimer;
+    Timer fpsStatTimer;
+    Timer memStatTimer;
+    double frameCount{};
 
     while (!glfwWindowShouldClose(window_))
     {
+        frameMemoryArena_->reset();
+
+        if (nextStage_)
+        {
+            stage_->onDeactivate(this);
+            stage_ = nextStage_;
+            nextStage_ = nullptr;
+            stage_->onActivate(this);
+        }
+
         glfwPollEvents();
 
-        const auto currentTime = clock.now();
-        const Duration<float> deltaTime = currentTime - lastIterationTime;
-        const float dt = deltaTime.count();
-        lastIterationTime = currentTime;
+        const auto tick = fpsTimer.elapsed();
+        const auto deltaTime = Duration<float>{tick.second}.count();
 
-        update(dt);
+        if (const auto fpsStat = fpsStatTimer.elapsed(Duration<double>{5.0}); fpsStat.first)
+        {
+            const auto fps = frameCount / fpsStat.second.count();
+            frameCount = 0;
 
-        draw(dt);
+            ngn::log::info("FPS: {:.1f}", fps);
+        }
+        frameCount += 1.0;
+
+        update(deltaTime);
+
+        draw(deltaTime);
+
+        if (const auto memStat = memStatTimer.elapsed(Duration<double>{5.0}); memStat.first)
+        {
+            ngn::log::info("F-MEM: {}/{}, alloc: {} ({}), dealloc: {} ({})",
+                           Bytes{frameMemoryArena_->allocated()}, Bytes{frameMemoryArena_->capacity()},
+                           Bytes{frameMemoryArena_->statAllocatedSize()}, frameMemoryArena_->statAllocatedCount(),
+                           Bytes{frameMemoryArena_->statDeallocatedSize()}, frameMemoryArena_->statDeallocatedCount());
+        }
     }
 
     renderer_->waitForDevice();
+
+    return exitCode_;
 }
 
 void Application::update(float deltaTime)
 {
-    delegate_->onUpdate(this, deltaTime);
+    stage_->onUpdate(this, deltaTime);
 
     world_->update(deltaTime);
 }
 
 void Application::draw(float deltaTime)
 {
-    delegate_->onDraw(this, deltaTime);
+    stage_->onDraw(this, deltaTime);
 }
 
 void Application::framebufferResizeCallback(GLFWwindow* window, int width, int height)
@@ -176,15 +281,15 @@ void Application::handleKeyPress(int key, int scancode, int mods)
     NGN_UNUSED(scancode);
     NGN_UNUSED(mods);
 
-    if (key == GLFW_KEY_ESCAPE)
-        glfwSetWindowShouldClose(window_, GLFW_TRUE);
+    stage_->onKeyEvent(this, GLFW_PRESS, key);
 }
 
 void Application::handleKeyRelease(int key, int scancode, int mods)
 {
-    NGN_UNUSED(key);
     NGN_UNUSED(scancode);
     NGN_UNUSED(mods);
+
+    stage_->onKeyEvent(this, GLFW_RELEASE, key);
 }
 
 } // namespace ngn

@@ -22,16 +22,15 @@ add_library(ngn STATIC
     phys/Solver.hpp phys/Solver.cpp
     phys/World.hpp phys/World.cpp
 
-    util/Vector.hpp
-
+    CommonComponents.hpp
     Allocators.hpp Allocators.cpp
     Application.cpp Application.hpp
     Assets.hpp.in
-    CommonComponents.hpp
-    Logging.hpp
+    Logging.cpp Logging.hpp
     Macros.hpp
     Math.hpp Math.cpp
     Pch.hpp
+    Timer.hpp Timer.cpp
     Types.hpp
 )
 

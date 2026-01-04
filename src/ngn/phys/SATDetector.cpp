@@ -60,9 +60,9 @@ void SATDetector::testCollision(Collision& collision, const Circle& lhs, const C
     const auto dist = glm::length(c2c);
     const auto diff = (lhs.radius + rhs.radius) - dist;
 
-    collision.point = lhs.center + c2c / 2.0f;
+    collision.point = lhs.center + c2c / dist * lhs.radius;
     collision.direction = c2c / dist;
-    collision.penetration = diff / 2.0f;
+    collision.penetration = diff;
     collision.colliding = diff > 0.0f;
 }
 
@@ -90,13 +90,13 @@ void SATDetector::testCollision(Collision& collision,
 
     const auto closest = rhsStart + ab * t;
 
-    const auto l2c = lhs.center - closest;
+    const auto l2c = closest - lhs.center;
     const auto dist = glm::length(l2c);
     const auto diff = (rhsRadius + lhs.radius) - dist;
 
-    collision.point = closest + l2c / 2.0f;
+    collision.point = lhs.center + l2c / dist * lhs.radius;
     collision.direction = l2c / dist;
-    collision.penetration = -diff / 2.0f;
+    collision.penetration = diff;
     collision.colliding = diff > 0.0f;
 }
 
@@ -130,8 +130,8 @@ void ngn::SATDetector::testCollision(Collision& collision,
     const auto adT0 = glm::dot(ab, ad) / abLen2;
     const auto adT = glm::clamp(adT0, 0.0f, 1.0f);
 
-    const auto closestC = rhsStart + ab + acT;
-    const auto closestD = rhsEnd + ab + adT;
+    const auto closestC = lhsStart + ab + acT;
+    const auto closestD = lhsEnd + ab + adT;
 
     const auto closestC2C = rhsStart - closestC;
     const auto closestD2D = rhsEnd - closestD;
@@ -144,9 +144,9 @@ void ngn::SATDetector::testCollision(Collision& collision,
         const auto dist = glm::sqrt(distC2);
         const auto diff = (lhsRadius + rhsRadius) - dist;
 
-        collision.point = closestC + closestC2C / 2.0f;
+        collision.point = closestC + closestC2C / dist * lhsRadius;
         collision.direction = closestC2C / dist;
-        collision.penetration = -diff / 2.0f;
+        collision.penetration = diff;
         collision.colliding = diff > 0.0f;
     }
     else
@@ -154,9 +154,9 @@ void ngn::SATDetector::testCollision(Collision& collision,
         const auto dist = glm::sqrt(distD2);
         const auto diff = (lhsRadius + rhsRadius) - dist;
 
-        collision.point = closestD + closestD2D / 2.0f;
+        collision.point = closestD + closestD2D / dist * lhsRadius;
         collision.direction = closestD2D / dist;
-        collision.penetration = -diff / 2.0f;
+        collision.penetration = diff;
         collision.colliding = diff > 0.0f;
     }
 }

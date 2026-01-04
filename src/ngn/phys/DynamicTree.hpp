@@ -134,7 +134,7 @@ void DynamicTree::query(const AABB& aabb, const Callback& callback) const
         {
             if (node.isLeaf())
             {
-                if (!callback(node.entity))
+                if (!callback(node.entity, node.aabb))
                     return;
             }
             else

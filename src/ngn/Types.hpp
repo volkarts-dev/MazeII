@@ -11,7 +11,7 @@
 namespace ngn {
 
 using Clock = std::chrono::high_resolution_clock;
-using Timpoint = Clock::time_point;
+using Timepoint = Clock::time_point;
 template<typename Rep>
 using Duration = std::chrono::duration<Rep>;
 

@@ -2,6 +2,7 @@ add_executable(testbed
     Main.cpp
     TestBedAssets.hpp.in
     TestBedDelegate.hpp TestBedDelegate.cpp
+    TestBedStage.hpp TestBedStage.cpp
 )
 
 target_include_directories(testbed PRIVATE . ${CMAKE_CURRENT_BINARY_DIR})

@@ -3,23 +3,29 @@
 
 #include "Allocators.hpp"
 
+//#include "Logging.hpp"
+
 namespace ngn {
 
-LinearAllocator::LinearAllocator(std::size_t size) :
+MemoryArena::MemoryArena(std::size_t size) :
     data_{new Byte[size]},
     capacity_{size},
     top_{},
     lastTop_{},
-    lastAlloc_{}
+    lastAlloc_{},
+    statAllocatedCount_{},
+    statAllocatedSize_{},
+    statDeallocatedCount_{},
+    statDeallocatedSize_{}
 {
 }
 
-LinearAllocator::~LinearAllocator()
+MemoryArena::~MemoryArena()
 {
     delete[] data_;
 }
 
-void* LinearAllocator::allocate(std::size_t size, std::size_t alignment)
+void* MemoryArena::allocate(std::size_t size, std::size_t alignment)
 {
     const auto start = align(top_, alignment);
     const auto end = start + size;
@@ -32,31 +38,42 @@ void* LinearAllocator::allocate(std::size_t size, std::size_t alignment)
 
     top_ = end;
 
+    //log::debug("lastTop: {}, lastAlloc: {}, top: {}, size: {}, ptr: {}", lastTop_, lastAlloc_, top_, size, reinterpret_cast<void*>(data_ + start));
+    statAllocatedCount_++;
+    statAllocatedSize_ += size;
+
     return data_ + start;
 }
 
-void LinearAllocator::deallocate(void* ptr)
+void MemoryArena::deallocate(void* ptr, std::size_t size)
 {
-    NGN_UNUSED(ptr);
-    // Do nothing per design
-}
-
-void* LinearAllocator::reallocate(void* ptr, std::size_t size, std::size_t alignment)
-{
+    // deallocate last block, ignore other pointers
     if (data_ + (top_ - lastAlloc_) == ptr)
     {
         top_ = lastTop_;
     }
 
+    statDeallocatedCount_++;
+    statDeallocatedSize_ += size;
+}
+
+void* MemoryArena::reallocate(void* ptr, std::size_t size, std::size_t alignment)
+{
+    deallocate(ptr, lastAlloc_);
     return allocate(size, alignment);
 }
 
-void LinearAllocator::Reset()
+void MemoryArena::reset()
 {
     top_ = 0;
+
+    statAllocatedCount_ = 0;
+    statAllocatedSize_ = 0;
+    statDeallocatedCount_ = 0;
+    statDeallocatedSize_ = 0;
 }
 
-std::size_t LinearAllocator::align(std::size_t pos, std::size_t alignment)
+std::size_t MemoryArena::align(std::size_t pos, std::size_t alignment)
 {
     return (pos + (alignment - 1)) & ~(alignment - 1);
 }
