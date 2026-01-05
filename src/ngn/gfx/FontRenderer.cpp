@@ -9,16 +9,23 @@
 
 namespace ngn {
 
-FontRenderer::FontRenderer(SpriteRenderer* spriteRenderer, FontCollection* fontCollection) :
+FontRenderer::FontRenderer(SpriteRenderer* spriteRenderer) :
     spriteRenderer_{spriteRenderer},
-    fontCollection_{fontCollection}
+    fontCollection_{},
+    fontIndex_{InvalidIndex}
 {
-    fontIndex_ = spriteRenderer_->addImages({{fontCollection_->image()}});
 }
 
 FontRenderer::~FontRenderer()
 {
     delete fontCollection_;
+}
+
+void FontRenderer::setFontCollection(FontCollection* fontCollection)
+{
+    fontCollection_ = fontCollection;
+
+    fontIndex_ = spriteRenderer_->addImages({{fontCollection_->image()}});
 }
 
 void FontRenderer::drawText(uint32_t font, std::string_view text, uint32_t x, uint32_t y)

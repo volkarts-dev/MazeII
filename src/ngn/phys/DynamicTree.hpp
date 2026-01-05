@@ -118,7 +118,7 @@ void DynamicTree::walkTree(const Callback& callback) const
 template<typename Callback>
 void DynamicTree::query(const AABB& aabb, const Callback& callback) const
 {
-// TODO do not use vector with dynamic allocations for this
+    // TODO do not use vector with dynamic allocations for this
     std::vector<uint32_t> stack;
 
     stack.emplace_back(rootIndex_);

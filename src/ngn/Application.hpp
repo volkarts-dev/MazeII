@@ -5,6 +5,7 @@
 
 #include "Allocators.hpp"
 #include "CommonComponents.hpp"
+#include "Input.hpp"
 #include "gfx/Renderer.hpp"
 #include "Macros.hpp"
 #include <entt/fwd.hpp>
@@ -24,18 +25,57 @@ class World;
 class DebugRenderer;
 #endif
 
+// *********************************************************************************************************************
+
+class ApplicationConfig
+{
+public:
+    int windowWidth{};
+    int windowHeight{};
+    const char* windowTitle{};
+
+    std::size_t requiredMemory{};
+
+    bool spriteRenderer{};
+    uint32_t spriteBatchCount{};
+    bool fontRenderer{};
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    bool debugRenderer{};
+    uint32_t debugBatchCount{};
+#endif
+};
+
+// *********************************************************************************************************************
+
 class ApplicationStage
 {
 public:
     virtual ~ApplicationStage();
 
-    virtual void onActivate(Application* app) { NGN_UNUSED(app); }
-    virtual void onDeactivate(Application* app) { NGN_UNUSED(app); }
+    virtual void onActivate(Application* app)
+    {
+        NGN_UNUSED(app);
+    }
 
-    virtual void onKeyEvent(Application* app, int action, int key) {  NGN_UNUSED(app); NGN_UNUSED(action); NGN_UNUSED(key); }
+    virtual void onDeactivate(Application* app)
+    {
+        NGN_UNUSED(app);
+    }
 
-    virtual void onUpdate(Application* app, float deltaTime) { NGN_UNUSED(app); NGN_UNUSED(deltaTime); };
-    virtual void onDraw(Application* app, float deltaTime) { NGN_UNUSED(app); NGN_UNUSED(deltaTime); };
+    virtual void onKeyEvent(Application* app, InputAction action, int key, InputMods mods)
+    {
+        NGN_UNUSED(app);
+        NGN_UNUSED(action);
+        NGN_UNUSED(key);
+        NGN_UNUSED(mods);
+    }
+
+    virtual void onUpdate(Application* app, float deltaTime)
+    {
+        NGN_UNUSED(app);
+        NGN_UNUSED(deltaTime);
+    };
 };
 
 // *********************************************************************************************************************
@@ -45,7 +85,7 @@ class ApplicationDelegate
 public:
     virtual ~ApplicationDelegate();
 
-    virtual std::size_t requiredFrameMemeory() = 0;
+    virtual ApplicationConfig applicationConfig(Application* app) = 0;
 
     virtual ApplicationStage* onInit(Application* app) = 0;
     virtual void onDone(Application* app) { NGN_UNUSED(app); };
@@ -53,27 +93,8 @@ public:
 
 // *********************************************************************************************************************
 
-class RendererCreateInfo
-{
-public:
-    bool spriteRenderer;
-    uint32_t spriteBatchCount;
-    bool fontRenderer;
-    FontMaker* fontMaker;
-
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    bool debugRenderer;
-    uint32_t debugBatchCount;
-#endif
-};
-
-// *********************************************************************************************************************
-
 class Application
 {
-public:
-    static Application* get();
-
 public:
     Application(ApplicationDelegate* delegate);
     ~Application();
@@ -88,8 +109,6 @@ public:
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer() const { return debugRenderer_; }
 #endif
-
-    void createRenderers(const RendererCreateInfo& createInfo);
 
     void activateStage(ApplicationStage* stage);
     void quit(int exitCode = 0);
@@ -114,8 +133,7 @@ private:
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-    void handleKeyPress(int key, int scancode, int mods);
-    void handleKeyRelease(int key, int scancode, int mods);
+    void handleKeyEvent(int action, int key, int scancode, int mods);
 
 private:
     ApplicationDelegate* delegate_;

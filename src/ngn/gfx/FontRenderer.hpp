@@ -13,8 +13,10 @@ class SpriteRenderer;
 class FontRenderer
 {
 public:
-    FontRenderer(SpriteRenderer* spriteRenderer, FontCollection* fontCollection);
+    FontRenderer(SpriteRenderer* spriteRenderer);
     ~FontRenderer();
+
+    void setFontCollection(FontCollection* fontCollection);
 
     void drawText(uint32_t font, std::string_view text, uint32_t x, uint32_t y);
 

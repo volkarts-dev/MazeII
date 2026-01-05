@@ -30,8 +30,9 @@ public:
 
 } // namespace
 
-World::World(entt::registry* registry) :
-    registry_{registry},
+World::World(Application* app) :
+    app_{app},
+    registry_{app->registry()},
     dynamicTree_{new DynamicTree{registry_}},
     linearDamping_{0.07f},
     angularDamping_{1.5f},
@@ -77,7 +78,7 @@ void World::update(float deltaTime)
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
 
-void World::debugDrawState(DebugRenderer* debugRenderer)
+void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool boundingBoxes, bool tree, bool collisions)
 {
     auto drawShape = [](DebugRenderer* renderer, const Shape& shape, const glm::vec4& color)
     {
@@ -119,32 +120,45 @@ void World::debugDrawState(DebugRenderer* debugRenderer)
         }
     };
 
-    for (auto [e, shape]: registry_->view<Shape>().each())
+    if (shapes)
     {
-        fillShape(debugRenderer, shape, {0, 1, 0, 0.1});
+        for (auto [e, shape]: registry_->view<Shape>().each())
+        {
+            fillShape(debugRenderer, shape, {0, 1, 0, 0.1});
+        }
     }
 
-    dynamicTree_->walkTree([debugRenderer](const TreeNode& node)
+    if (boundingBoxes)
     {
-        debugRenderer->drawAABB(node.aabb.topLeft, node.aabb.bottomRight, {1, 0, 1, 0.3});
-    });
-
-    for (const auto& col : debugPossibleCollisions_)
-    {
-        debugRenderer->drawAABB(col.second.aabb1.topLeft, col.second.aabb1.bottomRight, {1, 1, 0, 0.6});
-        debugRenderer->drawAABB(col.second.aabb2.topLeft, col.second.aabb2.bottomRight, {1, 1, 0, 0.6});
+        dynamicTree_->walkTree([debugRenderer, tree](const TreeNode& node)
+        {
+            if (node.isLeaf() || tree)
+                debugRenderer->drawAABB(node.aabb.topLeft, node.aabb.bottomRight, {1, 0, 1, 0.3});
+        });
     }
 
-    for (const auto& col : debugCollisions_)
+    if (collisions)
     {
-        drawShape(debugRenderer, registry_->get<Shape>(col.first.bodyA), {1, 0, 0, 0.9});
-        drawShape(debugRenderer, registry_->get<Shape>(col.first.bodyB), {1, 0, 0, 0.9});
-        const auto penVec = col.second.direction * col.second.penetration;
-        const auto start = col.second.point - penVec / 2.f;
-        const auto end = start + penVec;
-        debugRenderer->drawCircle(col.second.point, 2.f, {1, 0, 0, 0.9});
-        debugRenderer->drawCircle(start, 1.f, {1, 0, 0, 0.9});
-        debugRenderer->drawLine(start, end, {1, 0, 0, 0.9});
+        if (boundingBoxes)
+        {
+            for (const auto& col : debugPossibleCollisions_)
+            {
+                debugRenderer->drawAABB(col.second.aabb1.topLeft, col.second.aabb1.bottomRight, {1, 1, 0, 0.6});
+                debugRenderer->drawAABB(col.second.aabb2.topLeft, col.second.aabb2.bottomRight, {1, 1, 0, 0.6});
+            }
+        }
+
+        for (const auto& col : debugCollisions_)
+        {
+            drawShape(debugRenderer, registry_->get<Shape>(col.first.bodyA), {1, 0, 0, 0.9});
+            drawShape(debugRenderer, registry_->get<Shape>(col.first.bodyB), {1, 0, 0, 0.9});
+            const auto penVec = col.second.direction * col.second.penetration;
+            const auto start = col.second.point - penVec / 2.f;
+            const auto end = start + penVec;
+            debugRenderer->drawCircle(col.second.point, 2.f, {1, 0, 0, 0.9});
+            debugRenderer->drawCircle(start, 1.f, {1, 0, 0, 0.9});
+            debugRenderer->drawLine(start, end, {1, 0, 0, 0.9});
+        }
     }
 }
 
@@ -200,7 +214,7 @@ void World::integrate(float deltaTime)
         }
     }
 
-    auto angVelocities = registry_->view<AngularVelocity, Rotation, TransformChanged>();
+    auto angVelocities = app_->registry()->view<AngularVelocity, Rotation, TransformChanged>();
     for (auto [e, velocity, rotation, tc] : angVelocities.each())
     {
         const auto newRot = rotation.angle + velocity.value * deltaTime;
@@ -216,7 +230,7 @@ void World::integrate(float deltaTime)
 
 MovedList World::updateTree()
 {
-    MovedList moved{Application::get()->createFrameAllocator<uint32_t>()};
+    MovedList moved{app_->createFrameAllocator<uint32_t>()};
 
     auto view = registry_->view<Position, Rotation, Scale, TransformChanged, Body, Shape, NodeInfo>().each();
     for (auto [e, pos, rot, sca, tc, body, shape, nodeInfo] : view)
@@ -241,7 +255,7 @@ MovedList World::updateTree()
 
 CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
 {
-    CollisionPairSet collisionPairs{Application::get()->createFrameAllocator<CollisionPair>()};
+    CollisionPairSet collisionPairs{app_->createFrameAllocator<CollisionPair>()};
     collisionPairs.reserve(moved.size());
 
     for (const auto index : moved)
@@ -294,7 +308,7 @@ CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
 
 CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
 {
-    CollisionList collisions{Application::get()->createFrameAllocator<Collision>()};
+    CollisionList collisions{app_->createFrameAllocator<Collision>()};
     collisions.reserve(collisionPairs.size());
 
     for (const auto& col : collisionPairs)

@@ -28,21 +28,12 @@
 
 TestBedStage::TestBedStage(ngn::Application* app)
 {
+    app->spriteRenderer()->addImages({{testbed::assets::player_png()}});
+
     ngn::FontMaker fontMaker{app->renderer(), 256};
     fontMaker.addFont(testbed::assets::liberation_mono_ttf(), 20);
+    app->fontRenderer()->setFontCollection(fontMaker.compile());
 
-    app->createRenderers({
-                             .spriteRenderer = true,
-                             .spriteBatchCount = 1024,
-                             .fontRenderer = true,
-                             .fontMaker = &fontMaker,
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-                             .debugRenderer = true,
-                             .debugBatchCount = 1204
-#endif
-                         });
-
-    app->spriteRenderer()->addImages({{testbed::assets::player_png()}});
 
 
 
@@ -87,7 +78,7 @@ TestBedStage::TestBedStage(ngn::Application* app)
     registry->emplace<ngn::Sprite>(player_, ngn::Sprite{
                                         .texCoords = {0, 0, 64, 64},
                                         .size{64, 64},
-                                        .texture = 2
+                                        .texture = 1,
                                     });
 
     createInfo.restitution = 1.5f;
@@ -100,7 +91,7 @@ TestBedStage::TestBedStage(ngn::Application* app)
     registry->emplace<ngn::Sprite>(enemy_, ngn::Sprite{
                                         .texCoords = {0, 0, 64, 64},
                                         .size{64, 64},
-                                        .texture = 2
+                                        .texture = 1,
                                     });
 
     createInfo.restitution = 1.5f;
@@ -131,9 +122,11 @@ void TestBedStage::onDeactivate(ngn::Application* app)
     NGN_UNUSED(app);
 }
 
-void TestBedStage::onKeyEvent(ngn::Application* app, int action, int key)
+void TestBedStage::onKeyEvent(ngn::Application* app, ngn::InputAction action, int key, ngn::InputMods mods)
 {
-    if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
+    NGN_UNUSED(mods);
+
+    if (action == ngn::InputAction::Press && key == GLFW_KEY_ESCAPE)
         app->quit();
 }
 
@@ -194,32 +187,6 @@ void TestBedStage::onUpdate(ngn::Application* app, float deltaTime)
                     glm::vec3(0.0f, 1.0f, 0.0f)
                 ));
 
-    app->world()->debugDrawState(app->debugRenderer());
+    app->world()->debugDrawState(app->debugRenderer(), true, true, true, true);
 #endif
-}
-
-void TestBedStage::onDraw(ngn::Application* app, float deltaTime)
-{
-    NGN_UNUSED(deltaTime);
-
-    auto* renderer = app->renderer();
-
-    const auto imageIndex = renderer->startFrame();
-    if (imageIndex == ngn::InvalidIndex)
-        return;
-
-    auto* commandBuffer = renderer->currentCommandBuffer();
-
-    commandBuffer->begin(imageIndex);
-
-    app->spriteRenderer()->draw(commandBuffer);
-
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    app->debugRenderer()->draw(commandBuffer);
-#endif
-    commandBuffer->end();
-
-    renderer->submit(commandBuffer);
-
-    renderer->endFrame(imageIndex);
 }

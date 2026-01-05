@@ -24,7 +24,7 @@ public:
     TestBedDelegate();
     ~TestBedDelegate() override = default;
 
-    std::size_t requiredFrameMemeory() override;
+    ngn::ApplicationConfig applicationConfig(ngn::Application* app) override;
 
     ngn::ApplicationStage* onInit(ngn::Application* app) override;
     void onDone(ngn::Application* app) override;

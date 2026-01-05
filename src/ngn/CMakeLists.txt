@@ -26,6 +26,7 @@ add_library(ngn STATIC
     Allocators.hpp Allocators.cpp
     Application.cpp Application.hpp
     Assets.hpp.in
+    Input.hpp
     Logging.cpp Logging.hpp
     Macros.hpp
     Math.hpp Math.cpp

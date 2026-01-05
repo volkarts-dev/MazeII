@@ -9,9 +9,26 @@ TestBedDelegate::TestBedDelegate()
 {
 }
 
-std::size_t TestBedDelegate::requiredFrameMemeory()
+ngn::ApplicationConfig TestBedDelegate::applicationConfig(ngn::Application* app)
 {
-    return 100 * 1024 * 1024;
+    NGN_UNUSED(app);
+
+    return {
+        .windowWidth = 800,
+        .windowHeight = 600,
+        .windowTitle = "Maze][ - TestBed",
+
+        .requiredMemory = 100 * 1024 * 1024,
+
+        .spriteRenderer = true,
+        .spriteBatchCount = 1024,
+        .fontRenderer = true,
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+        .debugRenderer = true,
+        .debugBatchCount = 1204
+#endif
+    };
 }
 
 ngn::ApplicationStage* TestBedDelegate::onInit(ngn::Application* app)

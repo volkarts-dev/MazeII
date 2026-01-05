@@ -19,10 +19,9 @@ public:
     void onActivate(ngn::Application* app) override;
     void onDeactivate(ngn::Application* app) override;
 
-    void onKeyEvent(ngn::Application* app, int action, int key) override;
+    void onKeyEvent(ngn::Application* app, ngn::InputAction action, int key, ngn::InputMods mods) override;
 
     void onUpdate(ngn::Application* app, float deltaTime) override;
-    void onDraw(ngn::Application* app, float deltaTime) override;
 
 private:
     std::vector<entt::entity> walls_;

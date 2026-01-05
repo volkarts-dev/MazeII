@@ -40,12 +40,6 @@ ApplicationStage::~ApplicationStage() = default;
 
 ApplicationDelegate::~ApplicationDelegate() = default;
 
-Application* Application::get()
-{
-    assert(gApplication);
-    return gApplication;
-}
-
 Application::Application(ApplicationDelegate* delegate) :
     delegate_{delegate},
     window_{},
@@ -74,7 +68,9 @@ Application::Application(ApplicationDelegate* delegate) :
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    window_ = glfwCreateWindow(800, 600, "MazeII", nullptr, nullptr);
+    const auto config = delegate->applicationConfig(this);
+
+    window_ = glfwCreateWindow(config.windowWidth, config.windowHeight, config.windowTitle, nullptr, nullptr);
     if (!window_)
         throw std::runtime_error("Failed to create window");
 
@@ -82,14 +78,36 @@ Application::Application(ApplicationDelegate* delegate) :
 
     renderer_ = new Renderer{window_};
 
-    frameMemoryArena_ = new MemoryArena{delegate_->requiredFrameMemeory()};
+
+    frameMemoryArena_ = new MemoryArena{config.requiredMemory};
 
     registry_ = new entt::registry{};
 
-    world_ = new World(registry_);
+    world_ = new World{this};
 
     glfwSetFramebufferSizeCallback(window_, framebufferResizeCallback);
     glfwSetKeyCallback(window_, keyCallback);
+
+    if (config.spriteRenderer)
+    {
+        spriteRenderer_ = new SpriteRenderer{registry_, renderer_, config.spriteBatchCount};
+
+        if (config.fontRenderer)
+        {
+            fontRenderer_ = new ngn::FontRenderer{spriteRenderer_};
+        }
+    }
+    else if (config.fontRenderer)
+    {
+        throw std::runtime_error("The FontRenderer requires a SpriteRenderer");
+    }
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    if (config.debugRenderer)
+    {
+        debugRenderer_ = new ngn::DebugRenderer{renderer_, config.debugBatchCount};
+    }
+#endif
 
     stage_ = delegate_->onInit(this);
     if (!stage_)
@@ -125,33 +143,6 @@ Application::~Application()
     glfwTerminate();
 
     gApplication = nullptr;
-}
-
-void Application::createRenderers(const RendererCreateInfo& createInfo)
-{
-    if (createInfo.spriteRenderer)
-    {
-        spriteRenderer_ = new SpriteRenderer{registry_, renderer_, createInfo.spriteBatchCount};
-
-        if (createInfo.fontRenderer)
-        {
-            if (!createInfo.fontMaker)
-                throw std::runtime_error("The FontRenderer requires a FontMaker");
-
-            fontRenderer_ = new ngn::FontRenderer{spriteRenderer_, createInfo.fontMaker->compile()};
-        }
-    }
-    else if (createInfo.fontRenderer)
-    {
-        throw std::runtime_error("The FontRenderer requires a SpriteRenderer");
-    }
-
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    if (createInfo.debugRenderer)
-    {
-        debugRenderer_ = new ngn::DebugRenderer{renderer_, createInfo.debugBatchCount};
-    }
-#endif
 }
 
 void Application::activateStage(ApplicationStage* stage)
@@ -250,7 +241,28 @@ void Application::update(float deltaTime)
 
 void Application::draw(float deltaTime)
 {
-    stage_->onDraw(this, deltaTime);
+    NGN_UNUSED(deltaTime);
+
+    const auto imageIndex = renderer_->startFrame();
+    if (imageIndex == ngn::InvalidIndex)
+        return;
+
+    auto* commandBuffer = renderer_->currentCommandBuffer();
+
+    commandBuffer->begin(imageIndex);
+
+    if (spriteRenderer_)
+        spriteRenderer_->draw(commandBuffer);
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    if (debugRenderer_)
+        debugRenderer_->draw(commandBuffer);
+#endif
+    commandBuffer->end();
+
+    renderer_->submit(commandBuffer);
+
+    renderer_->endFrame(imageIndex);
 }
 
 void Application::framebufferResizeCallback(GLFWwindow* window, int width, int height)
@@ -267,29 +279,15 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
 {
     auto* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
 
-    if (action == GLFW_PRESS)
-        app->handleKeyPress(key, scancode, mods);
-    else if (action == GLFW_RELEASE)
-        app->handleKeyRelease(key, scancode, mods);
-
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    app->handleKeyEvent(action, key, scancode, mods);
 }
 
-void Application::handleKeyPress(int key, int scancode, int mods)
+void Application::handleKeyEvent(int action, int key, int scancode, int mods)
 {
     NGN_UNUSED(scancode);
     NGN_UNUSED(mods);
 
-    stage_->onKeyEvent(this, GLFW_PRESS, key);
-}
-
-void Application::handleKeyRelease(int key, int scancode, int mods)
-{
-    NGN_UNUSED(scancode);
-    NGN_UNUSED(mods);
-
-    stage_->onKeyEvent(this, GLFW_RELEASE, key);
+    stage_->onKeyEvent(this, action, key);
 }
 
 } // namespace ngn

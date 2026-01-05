@@ -10,6 +10,7 @@
 
 namespace ngn {
 
+class Application;
 class DynamicTree;
 
 class BodyCreateInfo
@@ -24,7 +25,7 @@ public:
 class World
 {
 public:
-    World(entt::registry* registry);
+    World(Application* app);
     ~World();
 
     template<auto Callback>
@@ -37,7 +38,7 @@ public:
     void update(float deltaTime);
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    void debugDrawState(class DebugRenderer* debugRenderer);
+    void debugDrawState(class DebugRenderer* debugRenderer, bool shapes, bool boundingBoxes, bool tree, bool collisions);
 #endif
 
 private:
@@ -48,6 +49,7 @@ private:
     void solveCollisions(const CollisionList& collisions);
 
 private:
+    Application* app_;
     entt::registry* registry_;
     DynamicTree* dynamicTree_;
 
