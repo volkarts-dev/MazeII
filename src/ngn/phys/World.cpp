@@ -34,15 +34,18 @@ World::World(Application* app) :
     app_{app},
     registry_{app->registry()},
     dynamicTree_{new DynamicTree{registry_}},
-    linearDamping_{0.07f},
-    angularDamping_{1.5f},
-    gravity_{}
+    config_{}
 {
 }
 
 World::~World()
 {
     delete dynamicTree_;
+}
+
+void World::setConfig(WorldConfig config)
+{
+    config_ = std::move(config);
 }
 
 void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Shape shape)
@@ -172,13 +175,13 @@ void World::integrate(float deltaTime)
     auto linForces = registry_->view<LinearForce, LinearVelocity>();
     for (auto [e, force, velocity] : linForces.each())
     {
-        force.value += gravity_;
+        force.value += config_.gravity;
 
         const auto veloLen2 = glm::length2(velocity.value);
         if (veloLen2 > 100.f)
         {
             const auto resistance = -(velocity.value / glm::sqrt(veloLen2)) * veloLen2;
-            force.value += resistance * linearDamping_;
+            force.value += resistance * config_.linearDamping;
         }
         else if (nearZero(force.value))
         {
@@ -197,7 +200,7 @@ void World::integrate(float deltaTime)
         if (veloLen2 > 2.f)
         {
             const auto resistance = -glm::sign(velocity.value) * veloLen2;
-            force.value += resistance * angularDamping_;
+            force.value += resistance * config_.angularDamping;
         }
         else if (nearZero(force.value))
         {

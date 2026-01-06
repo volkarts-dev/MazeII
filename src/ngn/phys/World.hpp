@@ -22,11 +22,21 @@ public:
     bool dynamic{true};
 };
 
+class WorldConfig
+{
+public:
+    float linearDamping{0.07f};
+    float angularDamping{1.5f};
+    glm::vec2 gravity{};
+};
+
 class World
 {
 public:
     World(Application* app);
     ~World();
+
+    void setConfig(WorldConfig config);
 
     template<auto Callback>
     entt::connection addCollisionListener();
@@ -53,9 +63,7 @@ private:
     entt::registry* registry_;
     DynamicTree* dynamicTree_;
 
-    float linearDamping_;
-    float angularDamping_;
-    glm::vec2 gravity_;
+    WorldConfig config_;
 
     entt::sigh<void(const Collision&)> collisionSignal_;
 
