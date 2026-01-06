@@ -1,2 +1,3 @@
-.qtcreator/
-CMakeLists.txt.user*
+/.temp/
+/.qtcreator/
+/CMakeLists.txt.user*
