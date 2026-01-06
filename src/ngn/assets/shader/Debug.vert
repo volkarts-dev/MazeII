@@ -16,7 +16,7 @@ layout(location = 0) out vec4 vColor;
 
 void main()
 {
-    mat4 mvp = uViewProj.proj /* * uViewProj.view */;
+    mat4 mvp = uViewProj.proj * uViewProj.view;
 
     gl_Position = mvp * vec4(point, 0.0, 1.0);
     vColor = color;

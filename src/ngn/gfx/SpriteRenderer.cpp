@@ -149,9 +149,13 @@ void SpriteRenderer::updateView(const glm::mat4& view)
     auto& ubo = uniformBuffers_[renderer_->currentFrame()];
 
     ubo.mapped[0].view = view;
+
+    const auto halfWidth = static_cast<float>(screenSize.width) / 2.0f;
+    const auto halfHeight = static_cast<float>(screenSize.height) / 2.0f;
     ubo.mapped[0].proj = glm::ortho(
-                0.0f, static_cast<float>(screenSize.width),
-                0.0f, static_cast<float>(screenSize.height)
+                -halfWidth, halfWidth,
+                -halfHeight, halfHeight,
+                -1.0f, 1.0f
                 );
 }
 
@@ -190,15 +194,17 @@ void SpriteRenderer::renderSpriteComponents()
 {
     auto& batch = batches_[renderer_->currentFrame()];
 
-    auto sprites = registry_->view<Position, Rotation, Scale, Sprite>();
-    for (auto [e, pos, rot, sca, spr] : sprites.each())
+    auto sprites = registry_->view<const Position, const Sprite>();
+    for (auto [e, pos, spr] : sprites.each())
     {
         assert(batch.count < batch.buffer->size() / sizeof(SpriteVertex));
 
+        auto [rot, sca] = registry_->try_get<const Rotation, const Scale>(e);
+
         auto& v = batch.mapped[batch.count];
         v.position = pos.value;
-        v.rotation = rot.angle;
-        v.scale = spr.size * sca.value;
+        v.rotation = rot ? rot->angle : 0.0f;
+        v.scale = spr.size * (sca ? sca->value : glm::vec2{1, 1});
         v.color = spr.color;
         v.texCoords = spr.texCoords;
         v.texIndex = spr.texture;

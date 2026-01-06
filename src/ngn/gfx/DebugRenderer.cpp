@@ -110,9 +110,13 @@ void DebugRenderer::updateView(const glm::mat4& view)
     auto& ubo = uniformBuffers_[renderer_->currentFrame()];
 
     ubo.mapped[0].view = view;
+
+    const auto halfWidth = static_cast<float>(screenSize.width) / 2.0f;
+    const auto halfHeight = static_cast<float>(screenSize.height) / 2.0f;
     ubo.mapped[0].proj = glm::ortho(
-                0.0f, static_cast<float>(screenSize.width),
-                0.0f, static_cast<float>(screenSize.height)
+                -halfWidth, halfWidth,
+                -halfHeight, halfHeight,
+                -1.0f, 1.0f
                 );
 }
 

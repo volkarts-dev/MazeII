@@ -55,7 +55,7 @@ void main()
 
     mat4 model = translate * rotate * scale;
 
-    mat4 mvp = uViewProj.proj * /*uViewProj.view **/ model;
+    mat4 mvp = uViewProj.proj * uViewProj.view * model;
 
     gl_Position = mvp * vec4(positions[0], 0.0, 1.0);
     gColor = vColor[0];
