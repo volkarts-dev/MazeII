@@ -277,17 +277,11 @@ void Application::framebufferResizeCallback(GLFWwindow* window, int width, int h
 
 void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+    NGN_UNUSED(scancode);
+
     auto* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
 
-    app->handleKeyEvent(action, key, scancode, mods);
-}
-
-void Application::handleKeyEvent(int action, int key, int scancode, int mods)
-{
-    NGN_UNUSED(scancode);
-    NGN_UNUSED(mods);
-
-    stage_->onKeyEvent(this, action, key);
+    app->stage_->onKeyEvent(app, toInputAction(action), key, toInputMods(mods));
 }
 
 } // namespace ngn

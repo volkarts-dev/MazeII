@@ -133,8 +133,6 @@ private:
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-    void handleKeyEvent(int action, int key, int scancode, int mods);
-
 private:
     ApplicationDelegate* delegate_;
     GLFWwindow* window_;
