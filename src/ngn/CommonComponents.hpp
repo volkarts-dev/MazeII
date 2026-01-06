@@ -31,11 +31,4 @@ public:
     glm::vec2 value{1, 1};
 };
 
-
-class TransformChanged
-{
-public:
-    bool value;
-};
-
 } // namespace

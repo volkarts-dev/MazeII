@@ -39,4 +39,10 @@ public:
     float value{};
 };
 
+class TransformChanged
+{
+public:
+    bool value;
+};
+
 } // namespace

@@ -55,6 +55,11 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
         registry_->emplace<AngularForce>(entity);
     }
 
+    if (const auto* pos = registry_->try_get<Position>(entity); !pos)
+        registry_->emplace<Position>(entity, glm::vec2{});
+
+    registry_->emplace<TransformChanged>(entity, true);
+
     registry_->emplace<Body>(entity, Body{
                                  .invMass = createInfo.invMass,
                                  .friction = createInfo.friction,

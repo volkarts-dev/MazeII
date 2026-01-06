@@ -164,7 +164,6 @@ entt::entity Application::createActor(glm::vec2 pos, float rot, glm::vec2 sca)
     registry_->emplace<Position>(entity, pos);
     auto& rotation = registry_->emplace<Rotation>(entity, glm::vec2{1, 0}, rot);
     registry_->emplace<Scale>(entity, sca);
-    registry_->emplace<TransformChanged>(entity, true);
 
     rotation.update();
 
