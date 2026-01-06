@@ -51,7 +51,7 @@ TestBedStage::TestBedStage(ngn::Application* app)
 
     auto createWall = [this, app](const glm::vec2& start, const glm::vec2& end)
     {
-        walls_.push_back(app->createActor({.value = start}));
+        walls_.push_back(app->createActor(start));
 
         ngn::BodyCreateInfo createInfo;
         createInfo.restitution = 1.5f;
@@ -73,7 +73,7 @@ TestBedStage::TestBedStage(ngn::Application* app)
 
     ngn::BodyCreateInfo createInfo;
 
-    player_ = app->createActor({.value = {400, 300}});
+    player_ = app->createActor({400, 300});
 
     registry->emplace<ngn::Sprite>(player_, ngn::Sprite{
                                         .texCoords = {0, 0, 64, 64},
@@ -86,7 +86,7 @@ TestBedStage::TestBedStage(ngn::Application* app)
     app->world()->createBody(player_, createInfo, ngn::Shape{ngn::Circle{.radius = 32}});
 
 
-    enemy_ = app->createActor({.value = {600, 300}});
+    enemy_ = app->createActor({600, 300});
 
     registry->emplace<ngn::Sprite>(enemy_, ngn::Sprite{
                                         .texCoords = {0, 0, 64, 64},
@@ -99,7 +99,7 @@ TestBedStage::TestBedStage(ngn::Application* app)
     app->world()->createBody(enemy_, createInfo, ngn::Shape{ngn::Circle{.radius = 32}});
 
 
-    obstacle_ = app->createActor({.value = {300, 300}});
+    obstacle_ = app->createActor({300, 300});
 
     createInfo.restitution = 1.5f;
     createInfo.invMass = 0;
@@ -155,7 +155,6 @@ void TestBedStage::onUpdate(ngn::Application* app, float deltaTime)
     {
         auto [force, rot] = app->registry()->get<ngn::LinearForce, ngn::Rotation>(player_);
         force.value -= rot.dir * 1200.f;
-
     }
     if (app->isKeyDown(GLFW_KEY_DOWN))
     {

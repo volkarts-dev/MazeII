@@ -157,13 +157,13 @@ void Application::quit(int exitCode)
     glfwSetWindowShouldClose(window_, GLFW_TRUE);
 }
 
-entt::entity Application::createActor(Position pos, Rotation rot, Scale sca)
+entt::entity Application::createActor(glm::vec2 pos, float rot, glm::vec2 sca)
 {
     const auto entity = registry_->create();
 
-    registry_->emplace<Position>(entity, std::move(pos));
-    auto& rotation = registry_->emplace<Rotation>(entity, std::move(rot));
-    registry_->emplace<Scale>(entity, std::move(sca));
+    registry_->emplace<Position>(entity, pos);
+    auto& rotation = registry_->emplace<Rotation>(entity, glm::vec2{1, 0}, rot);
+    registry_->emplace<Scale>(entity, sca);
     registry_->emplace<TransformChanged>(entity, true);
 
     rotation.update();
