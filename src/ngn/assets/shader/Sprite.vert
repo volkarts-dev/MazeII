@@ -8,14 +8,14 @@ layout(location = 0) in vec2 position;
 layout(location = 1) in float rotation;
 layout(location = 2) in vec2 scale;
 layout(location = 3) in vec4 color;
-layout(location = 4) in uint texIndex;
-layout(location = 5) in vec4 texCoords;
+layout(location = 4) in vec4 texCoords;
+layout(location = 5) in uint texIndex;
 
 layout(location = 0) out float vRotation;
 layout(location = 1) out vec2 vScale;
 layout(location = 2) out vec4 vColor;
-layout(location = 3) out uint vTexIndex;
-layout(location = 4) out vec4 vTexCoords;
+layout(location = 3) out vec4 vTexCoords;
+layout(location = 4) out uint vTexIndex;
 
 void main()
 {

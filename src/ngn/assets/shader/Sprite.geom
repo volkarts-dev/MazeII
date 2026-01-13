@@ -12,15 +12,15 @@ layout(binding = 0) uniform ViewProjection {
     mat4 proj;
 } uViewProj;
 
-layout(location = 0) in float[] vRotation;
-layout(location = 1) in vec2[] vScale;
-layout(location = 2) in vec4[] vColor;
-layout(location = 3) in uint[] vTexIndex;
-layout(location = 4) in vec4[] vTexCoords;
+layout(location = 0) in float[] rotation;
+layout(location = 1) in vec2[] scale;
+layout(location = 2) in vec4[] color;
+layout(location = 3) in vec4[] texCoords;
+layout(location = 4) in uint[] texIndex;
 
 layout(location = 0) out vec4 gColor;
-layout(location = 1) out uint gTexIndex;
-layout(location = 2) out vec2 gTexCoords;
+layout(location = 1) out vec2 gTexCoords;
+layout(location = 2) out uint gTexIndex;
 
 vec2 positions[] = vec2[](
     vec2(-0.5, -0.5),
@@ -31,8 +31,8 @@ vec2 positions[] = vec2[](
 
 void main()
 {
-    float sinT = sin(vRotation[0]);
-    float cosT = cos(vRotation[0]);
+    float sinT = sin(rotation[0]);
+    float cosT = cos(rotation[0]);
 
     mat4 translate = mat4(
                 vec4(1.0, 0.0, 0.0, 0.0),
@@ -47,8 +47,8 @@ void main()
                 vec4(0.0, 0.0, 0.0, 1.0)
                 );
     mat4 scale = mat4(
-                vec4(vScale[0].x, 0.0, 0.0, 0.0),
-                vec4(0.0, vScale[0].y, 0.0, 0.0),
+                vec4(scale[0].x, 0.0, 0.0, 0.0),
+                vec4(0.0, scale[0].y, 0.0, 0.0),
                 vec4(0.0, 0.0, 1.0, 0.0),
                 vec4(0.0, 0.0, 0.0, 1.0)
                 );
@@ -58,27 +58,27 @@ void main()
     mat4 mvp = uViewProj.proj * uViewProj.view * model;
 
     gl_Position = mvp * vec4(positions[0], 0.0, 1.0);
-    gColor = vColor[0];
-    gTexIndex = vTexIndex[0];
-    gTexCoords = vTexCoords[0].xy;
+    gColor = color[0];
+    gTexIndex = texIndex[0];
+    gTexCoords = texCoords[0].xy;
     EmitVertex();
 
     gl_Position = mvp *vec4(positions[1], 0.0, 1.0);
-    gColor = vColor[0];
-    gTexIndex = vTexIndex[0];
-    gTexCoords = vTexCoords[0].zy;
+    gColor = color[0];
+    gTexIndex = texIndex[0];
+    gTexCoords = texCoords[0].zy;
     EmitVertex();
 
     gl_Position = mvp * vec4(positions[2], 0.0, 1.0);
-    gColor = vColor[0];
-    gTexIndex = vTexIndex[0];
-    gTexCoords = vTexCoords[0].xw;
+    gColor = color[0];
+    gTexIndex = texIndex[0];
+    gTexCoords = texCoords[0].xw;
     EmitVertex();
 
     gl_Position = mvp * vec4(positions[3], 0.0, 1.0);
-    gColor = vColor[0];
-    gTexIndex = vTexIndex[0];
-    gTexCoords = vTexCoords[0].zw;
+    gColor = color[0];
+    gTexIndex = texIndex[0];
+    gTexCoords = texCoords[0].zw;
     EmitVertex();
 
     EndPrimitive();

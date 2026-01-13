@@ -41,8 +41,8 @@ void FontRenderer::drawText(uint32_t font, std::string_view text, uint32_t x, ui
             .rotation = 0.0f,
             .scale = glyph.size,
             .color = {1.0, 1.0, 1.0, 1.0},
-            .texIndex = fontIndex_,
             .texCoords = glyph.texCoords,
+            .texIndex = fontIndex_,
         });
 
         pos.x += glyph.advance;

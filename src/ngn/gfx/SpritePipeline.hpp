@@ -42,8 +42,8 @@ public:
     float rotation;
     glm::vec2 scale;
     glm::vec4 color{0.0f, 0.0f, 0.0f, 1.0f};
-    uint32_t texIndex;
     glm::vec4 texCoords;
+    uint32_t texIndex;
 
     static auto description()
     {
@@ -81,14 +81,14 @@ public:
                 vk::VertexInputAttributeDescription{
                     .location = 4,
                     .binding = 0,
-                    .format = vk::Format::eR32Uint,
-                    .offset = offsetof(SpriteVertex, texIndex),
+                    .format = vk::Format::eR32G32B32A32Sfloat,
+                    .offset = offsetof(SpriteVertex, texCoords),
                 },
                 vk::VertexInputAttributeDescription{
                     .location = 5,
                     .binding = 0,
-                    .format = vk::Format::eR32G32B32A32Sfloat,
-                    .offset = offsetof(SpriteVertex, texCoords),
+                    .format = vk::Format::eR32Uint,
+                    .offset = offsetof(SpriteVertex, texIndex),
                 },
             },
         };

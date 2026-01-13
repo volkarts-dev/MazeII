@@ -22,10 +22,10 @@ add_library(ngn STATIC
     phys/Solver.hpp phys/Solver.cpp
     phys/World.hpp phys/World.cpp
 
-    CommonComponents.hpp
     Allocators.hpp Allocators.cpp
     Application.cpp Application.hpp
     Assets.hpp.in
+    CommonComponents.hpp
     Input.hpp
     Instrumentation.cpp Instrumentation.hpp
     Logging.cpp Logging.hpp
