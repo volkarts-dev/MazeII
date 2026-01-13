@@ -134,8 +134,8 @@ void TestBedStage::onUpdate(ngn::Application* app, float deltaTime)
 {
     app->spriteRenderer()->updateView(
                 glm::lookAt(
-                    glm::vec3(0.0f, 0.0f, -10.0f),
-                    glm::vec3(0.0f, 0.0f, 0.0f),
+                    glm::vec3(400.0f, 300.0f, 0.5f),
+                    glm::vec3(400.0f, 300.0f, 0.0f),
                     glm::vec3(0.0f, 1.0f, 0.0f)
                 ));
 
@@ -181,8 +181,8 @@ void TestBedStage::onUpdate(ngn::Application* app, float deltaTime)
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     app->debugRenderer()->updateView(
                 glm::lookAt(
-                    glm::vec3(0.0f, 0.0f, -10.0f),
-                    glm::vec3(0.0f, 0.0f, 0.0f),
+                    glm::vec3(400.0f, 300.0f, 0.5f),
+                    glm::vec3(400.0f, 300.0f, 0.0f),
                     glm::vec3(0.0f, 1.0f, 0.0f)
                 ));
 
