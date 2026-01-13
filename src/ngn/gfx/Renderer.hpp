@@ -120,7 +120,7 @@ private:
 private:
     GLFWwindow* window_;
     vk::Instance instance_;
-#if !defined(NDEBUG)
+#if defined(NGN_ENABLE_GRAPHICS_DEBUG_LAYER)
     vk::DebugUtilsMessengerEXT debugMessenger_;
 #endif
     vk::SurfaceKHR surface_;

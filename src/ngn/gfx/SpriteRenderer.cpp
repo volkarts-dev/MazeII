@@ -7,6 +7,7 @@
 #include "CommonComponents.hpp"
 #include "CommandBuffer.hpp"
 #include "Image.hpp"
+#include "Instrumentation.hpp"
 #include "gfx/GFXComponents.hpp"
 #include "gfx/Renderer.hpp"
 #include <entt/entt.hpp>
@@ -192,6 +193,8 @@ void SpriteRenderer::renderSprite(const SpriteVertex& vertex)
 
 void SpriteRenderer::renderSpriteComponents()
 {
+    NGN_INSTRUMENT_FUNCTION();
+
     auto& batch = batches_[renderer_->currentFrame()];
 
     auto sprites = registry_->view<const Position, const Sprite>();
@@ -199,7 +202,13 @@ void SpriteRenderer::renderSpriteComponents()
     {
         assert(batch.count < batch.buffer->size() / sizeof(SpriteVertex));
 
+        NGN_INSTRUMENT_BLOCK_BANDWIDTH_VAR(ls, "<load-sprite>", sizeof(Sprite));
+
         auto [rot, sca] = registry_->try_get<const Rotation, const Scale>(e);
+
+        NGN_SCOPETIMER_STOP(ls)
+
+        NGN_INSTRUMENT_BLOCK_BANDWIDTH_VAR(ps, "<push-sprite>", sizeof(SpriteVertex));
 
         auto& v = batch.mapped[batch.count];
         v.position = pos.value;
@@ -210,6 +219,8 @@ void SpriteRenderer::renderSpriteComponents()
         v.texIndex = spr.texture;
 
         batch.count++;
+
+        NGN_SCOPETIMER_STOP(ps)
     }
 }
 
@@ -228,3 +239,5 @@ void SpriteRenderer::draw(CommandBuffer* commandBuffer)
 }
 
 } // namespace ngn
+
+NGN_INSTRUMENTATION_EPILOG(SpriteRenderer)

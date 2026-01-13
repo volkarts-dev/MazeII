@@ -11,6 +11,7 @@ include(CMakeDependentOption)
 # build options
 option(NGN_ENABLE_GRAPHICS_DEBUG_LAYER "Enable debug layers in opengl and vulkan" OFF)
 option(NGN_ENABLE_VISUAL_DEBUGGING "Enable building visual debugging components" OFF)
+option(NGN_ENABLE_INSTRUMENTATION "Enable performance measurement" OFF)
 
 # include more helpers
 include(CompilerWarnings)

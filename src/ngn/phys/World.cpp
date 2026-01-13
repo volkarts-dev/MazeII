@@ -6,6 +6,7 @@
 #include "Application.hpp"
 #include "CommonComponents.hpp"
 #include "DynamicTree.hpp"
+#include "Instrumentation.hpp"
 #include "Functions.hpp"
 #include "Math.hpp"
 #include "PhysComponents.hpp"
@@ -170,8 +171,12 @@ void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool bound
     }
 }
 
+#endif
+
 void World::integrate(float deltaTime)
 {
+    NGN_INSTRUMENT_FUNCTION();
+
     auto linForces = registry_->view<LinearForce, LinearVelocity>();
     for (auto [e, force, velocity] : linForces.each())
     {
@@ -263,6 +268,8 @@ MovedList World::updateTree()
 
 CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
 {
+    NGN_INSTRUMENT_FUNCTION();
+
     CollisionPairSet collisionPairs{app_->createFrameAllocator<CollisionPair>()};
     collisionPairs.reserve(moved.size());
 
@@ -292,6 +299,8 @@ CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
 #endif
                 ](entt::entity entity, const AABB& aabb)
         {
+            NGN_UNUSED(aabb);
+
             if (entity != node.entity)
             {
                 CollisionPair pair = {
@@ -316,6 +325,8 @@ CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
 
 CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
 {
+    NGN_INSTRUMENT_FUNCTION();
+
     CollisionList collisions{app_->createFrameAllocator<Collision>()};
     collisions.reserve(collisionPairs.size());
 
@@ -349,6 +360,6 @@ void World::solveCollisions(const CollisionList& collisions)
     }
 }
 
-#endif
-
 } // namespace ngn
+
+NGN_INSTRUMENTATION_EPILOG(World)

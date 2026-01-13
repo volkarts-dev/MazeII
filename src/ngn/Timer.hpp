@@ -13,7 +13,8 @@ public:
     Timer();
 
     void reset();
-    std::pair<bool, Duration<double>> elapsed(Duration<double> secs = {});
+    std::pair<bool, Duration<double>> elapsed(bool reset = false);
+    std::pair<bool, Duration<double>> elapsed(Duration<double> secs);
 
 private:
     Clock clock_;

@@ -24,3 +24,13 @@
     clazz& operator=(clazz&&) = default;
 
 #define NGN_UNUSED(x) ((void)x)
+
+#define EMPTY()
+
+#define DEFER(...) __VA_ARGS__ EMPTY()
+
+#define EVAL_1(...) __VA_ARGS__
+#define EVAL_2(...) EVAL_1(EVAL_1(__VA_ARGS__))
+#define EVAL_3(...) EVAL_2(EVAL_2(__VA_ARGS__))
+#define EVAL_4(...) EVAL_3(EVAL_3(__VA_ARGS__))
+#define EVAL(...) EVAL_4(__VA_ARGS__)

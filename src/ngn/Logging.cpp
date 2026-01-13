@@ -15,13 +15,26 @@ constexpr std::array Units = { "B"sv, "KB"sv, "MB"sv, "GB"sv, "TB"sv, "PB"sv, "E
 
 void humanReadableBytes(std::size_t bytes, std::size_t& outNum, std::string_view& outUnit)
 {
-
     outNum = bytes;
     std::size_t unitIndex = 0;
 
     while (outNum >= 1024 && unitIndex < Units.size() - 1)
     {
         outNum /= 1024;
+        ++unitIndex;
+    }
+
+    outUnit = Units[unitIndex];
+}
+
+void humanReadableBytes(std::size_t bytes, double& outNum, std::string_view& outUnit)
+{
+    outNum = static_cast<double>(bytes);
+    std::size_t unitIndex = 0;
+
+    while (outNum >= 1024.0 && unitIndex < Units.size() - 1)
+    {
+        outNum /= 1024.0;
         ++unitIndex;
     }
 

@@ -23,6 +23,7 @@ using spdlog::trace;
 } // namespace log
 
 void humanReadableBytes(std::size_t bytes, std::size_t& outNum, std::string_view& outUnit);
+void humanReadableBytes(std::size_t bytes, double& outNum, std::string_view& outUnit);
 
 struct Bytes
 {

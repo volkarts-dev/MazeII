@@ -3,6 +3,7 @@
 
 #include "Application.hpp"
 
+#include "Instrumentation.hpp"
 #include "Timer.hpp"
 #include "gfx/CommandBuffer.hpp"
 #include "gfx/FontMaker.hpp"
@@ -183,9 +184,10 @@ bool Application::isKeyUp(int key) const
 int Application::exec()
 {
     Timer fpsTimer;
-    Timer fpsStatTimer;
-    Timer memStatTimer;
+    Timer statTimer;
     double frameCount{};
+
+    NGN_INSTRUMENTATION_MAIN_START();
 
     while (!glfwWindowShouldClose(window_))
     {
@@ -201,38 +203,52 @@ int Application::exec()
 
         glfwPollEvents();
 
-        const auto tick = fpsTimer.elapsed();
+        const auto tick = fpsTimer.elapsed(true);
         const auto deltaTime = Duration<float>{tick.second}.count();
-
-        if (const auto fpsStat = fpsStatTimer.elapsed(Duration<double>{5.0}); fpsStat.first)
-        {
-            const auto fps = frameCount / fpsStat.second.count();
-            frameCount = 0;
-
-            ngn::log::info("FPS: {:.1f}", fps);
-        }
-        frameCount += 1.0;
 
         update(deltaTime);
 
         draw(deltaTime);
 
-        if (const auto memStat = memStatTimer.elapsed(Duration<double>{5.0}); memStat.first)
+#if defined(NGN_ENABLE_INSTRUMENTATION)
+        if (const auto stat = statTimer.elapsed(); frameCount >= 5000.0)
+#else
+        if (const auto stat = statTimer.elapsed(Duration<double>{5.0}); stat.first)
+#endif
         {
-            ngn::log::info("F-MEM: {}/{}, alloc: {} ({}), dealloc: {} ({})",
+            ngn::log::info("FPS: {:.1f}, F-MEM: {}/{}, alloc: {} ({}), dealloc: {} ({})",
+                           frameCount / stat.second.count(),
                            Bytes{frameMemoryArena_->allocated()}, Bytes{frameMemoryArena_->capacity()},
                            Bytes{frameMemoryArena_->statAllocatedSize()}, frameMemoryArena_->statAllocatedCount(),
                            Bytes{frameMemoryArena_->statDeallocatedSize()}, frameMemoryArena_->statDeallocatedCount());
+
+#if defined(NGN_ENABLE_INSTRUMENTATION)
+            break;
+#else
+            frameCount = 0.0;
+#endif
+        }
+        else
+        {
+            frameCount += 1.0;
         }
     }
 
+    NGN_INSTRUMENTATION_MAIN_STOP();
+
     renderer_->waitForDevice();
+
+#if defined(NGN_ENABLE_INSTRUMENTATION)
+    ngn::instrumentation::dumpTimerInfos(std::cout);
+#endif
 
     return exitCode_;
 }
 
 void Application::update(float deltaTime)
 {
+    NGN_INSTRUMENT_FUNCTION();
+
     stage_->onUpdate(this, deltaTime);
 
     world_->update(deltaTime);
@@ -241,6 +257,7 @@ void Application::update(float deltaTime)
 void Application::draw(float deltaTime)
 {
     NGN_UNUSED(deltaTime);
+    NGN_INSTRUMENT_FUNCTION();
 
     const auto imageIndex = renderer_->startFrame();
     if (imageIndex == ngn::InvalidIndex)
@@ -284,3 +301,5 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
 }
 
 } // namespace ngn
+
+NGN_INSTRUMENTATION_EPILOG(Application)

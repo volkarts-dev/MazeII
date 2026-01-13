@@ -27,6 +27,7 @@ add_library(ngn STATIC
     Application.cpp Application.hpp
     Assets.hpp.in
     Input.hpp
+    Instrumentation.cpp Instrumentation.hpp
     Logging.cpp Logging.hpp
     Macros.hpp
     Math.hpp Math.cpp
@@ -58,6 +59,10 @@ if(NGN_ENABLE_VISUAL_DEBUGGING)
         assets/shader/Debug.frag
         assets/shader/Debug.vert
     )
+endif()
+
+if(NGN_ENABLE_INSTRUMENTATION)
+    target_compile_definitions(ngn PUBLIC NGN_ENABLE_INSTRUMENTATION)
 endif()
 
 target_precompile_headers(ngn PRIVATE Pch.hpp)

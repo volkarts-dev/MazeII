@@ -16,15 +16,24 @@ void Timer::reset()
     start_ = clock_.now();
 }
 
+std::pair<bool, Duration<double> > Timer::elapsed(bool reset)
+{
+    const auto now = clock_.now();
+    const auto diff = now - start_;
+    if (reset)
+        start_ = now;
+    return std::make_pair(false, diff);
+}
+
 std::pair<bool, Duration<double> > Timer::elapsed(Duration<double> secs)
 {
     const auto now = clock_.now();
-    const auto end = start_ + secs;
     const auto diff = now - start_;
-    const auto e = now > end;
-    if (e)
+    const auto end = start_ + secs;
+    const auto reset = now > end;
+    if (reset)
         start_ = now;
-    return std::make_pair(e, diff);
+    return std::make_pair(reset, diff);
 }
 
 } // namespace ngn
