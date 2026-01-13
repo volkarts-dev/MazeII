@@ -85,8 +85,8 @@ float area(const AABB& aabb)
 glm::vec2 rotate(const glm::vec2& vec, const glm::vec2& dir)
 {
     return {
-        vec.x * dir.y - vec.y * dir.x,
-        vec.x * dir.x + vec.y * dir.y,
+         vec.x * dir.y + vec.y * dir.x,
+        -vec.x * dir.x + vec.y * dir.y,
     };
 }
 

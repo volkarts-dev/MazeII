@@ -16,7 +16,7 @@ public:
 class Rotation
 {
 public:
-    glm::vec2 dir{1, 0};
+    glm::vec2 dir{0, 1};
     float angle{};
 
     inline void update()
