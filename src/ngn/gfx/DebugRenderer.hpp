@@ -23,6 +23,7 @@ public:
     void updateView(const glm::mat4& view);
 
     void drawLine(const glm::vec2& start, const glm::vec2& end, const glm::vec4 color = Colors::White);
+    void drawArrow(const glm::vec2& start, const glm::vec2& end, float size, const glm::vec4 color = Colors::White);
     void drawTriangle(const glm::vec2& edge1, const glm::vec2& edge2, const glm::vec2& edge3,
                       const glm::vec4 color = Colors::White);
     void drawCircle(const glm::vec2& center, float radius, const glm::vec4 color = Colors::White);

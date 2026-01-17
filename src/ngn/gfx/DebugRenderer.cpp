@@ -135,6 +135,20 @@ void DebugRenderer::drawLine(const glm::vec2& start, const glm::vec2& end, const
     batch.count++;
 }
 
+void DebugRenderer::drawArrow(const glm::vec2& start, const glm::vec2& end, float size, const glm::vec4 color)
+{
+    const auto ab = end - start;
+    const auto len = glm::length(ab);
+    const auto dir = ab / len;
+    const auto base = start + dir * (len - size);
+    const auto p1 = base + glm::vec2{-dir.y, dir.x} * size;
+    const auto p2 = base - glm::vec2{-dir.y, dir.x} * size;
+
+    drawLine(start, end, color);
+    drawLine(end, p1, color);
+    drawLine(end, p2, color);
+}
+
 void DebugRenderer::drawTriangle(const glm::vec2& edge1, const glm::vec2& edge2, const glm::vec2& edge3,
                                  const glm::vec4 color)
 {
