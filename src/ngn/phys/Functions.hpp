@@ -8,6 +8,7 @@
 namespace ngn {
 
 class AABB;
+class Line;
 class Position;
 class Rotation;
 class Scale;
@@ -16,6 +17,7 @@ class Shape;
 AABB calculateAABB(const Shape& shape);
 bool contains(const AABB& lhs, const AABB& rhs);
 bool intersects(const AABB& lhs, const AABB& rhs);
+bool intersects(const Line& lhs, const AABB& rhs);
 AABB combine(const AABB& one, const AABB& two);
 float area(const AABB& aabb);
 

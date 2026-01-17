@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "DynamicTree.hpp"
 #include "Macros.hpp"
 #include "Shapes.hpp"
 #include "phys/Collision.hpp"
@@ -11,8 +12,6 @@
 namespace ngn {
 
 class Application;
-class DynamicTree;
-
 class BodyCreateInfo
 {
 public:
@@ -46,6 +45,12 @@ public:
     void createBody(entt::entity entity, const BodyCreateInfo& createInfo, Shape shape);
 
     void update(float deltaTime);
+
+    template<typename ShapeT, typename Callback>
+    void query(const ShapeT& shape, const Callback& callback) const
+    {
+        dynamicTree_->query(shape, callback);
+    }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     void debugDrawState(class DebugRenderer* debugRenderer, bool shapes, bool boundingBoxes, bool tree, bool collisions);

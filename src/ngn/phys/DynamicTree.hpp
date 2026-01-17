@@ -6,9 +6,16 @@
 
 #include "Shapes.hpp"
 #include "Functions.hpp"
+#include "utils/StaticVector.hpp"
 #include <entt/fwd.hpp>
 
 namespace ngn {
+
+namespace {
+
+constexpr std::size_t TreeQueryStackSize = 1024;
+
+} // namespace
 
 class WorldObject;
 
@@ -55,8 +62,8 @@ public:
         return query(calculateAABB(shape), callback);
     }
 
-    template<typename Callback>
-    void query(const AABB& aabb, const Callback& callback) const;
+    template<typename PrimitiveT, typename Callback>
+    void query(const PrimitiveT& primitive, const Callback& callback) const;
 
     const TreeNode& node(uint32_t index) const
     {
@@ -93,8 +100,7 @@ private:
 template<typename Callback>
 void DynamicTree::walkTree(const Callback& callback) const
 {
-    // TODO do not use vector with dynamic allocations for this
-    std::vector<uint32_t> stack;
+    StaticVector<uint32_t, TreeQueryStackSize> stack;
 
     stack.emplace_back(rootIndex_);
 
@@ -115,11 +121,10 @@ void DynamicTree::walkTree(const Callback& callback) const
     }
 }
 
-template<typename Callback>
-void DynamicTree::query(const AABB& aabb, const Callback& callback) const
+template<typename PrimitiveT, typename Callback>
+void DynamicTree::query(const PrimitiveT& primitive, const Callback& callback) const
 {
-    // TODO do not use vector with dynamic allocations for this
-    std::vector<uint32_t> stack;
+    StaticVector<uint32_t, TreeQueryStackSize> stack;
 
     stack.emplace_back(rootIndex_);
 
@@ -130,7 +135,7 @@ void DynamicTree::query(const AABB& aabb, const Callback& callback) const
 
         const TreeNode& node = nodes_[index];
 
-        if (intersects(aabb, node.aabb))
+        if (intersects(primitive, node.aabb))
         {
             if (node.isLeaf())
             {

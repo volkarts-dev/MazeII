@@ -22,6 +22,8 @@ add_library(ngn STATIC
     phys/Solver.hpp phys/Solver.cpp
     phys/World.hpp phys/World.cpp
 
+    utils/StaticVector.hpp
+
     Allocators.hpp Allocators.cpp
     Application.cpp Application.hpp
     Assets.hpp.in
