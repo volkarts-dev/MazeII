@@ -88,6 +88,7 @@ private:
     };
     std::unordered_map<CollisionPair, AABBPair> debugPossibleCollisions_;
     std::unordered_map<CollisionPair, Collision> debugCollisions_;
+    void removeDebugState(entt::entity entity);
 #endif
 
     NGN_DISABLE_COPY_MOVE(World)

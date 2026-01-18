@@ -91,100 +91,6 @@ void World::update(float deltaTime)
     solveCollisions(collisions);
 }
 
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-
-void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool boundingBoxes, bool tree, bool collisions)
-{
-    auto drawShape = [](DebugRenderer* renderer, const Shape& shape, const glm::vec4& color)
-    {
-        switch (shape.type)
-        {
-            using enum Shape::Type;
-
-            case Circle:
-                renderer->drawCircle(shape.circle.center, shape.circle.radius, color);
-                break;
-
-            case Line:
-                renderer->drawLine(shape.line.start, shape.line.end, color);
-                break;
-
-            case Capsule:
-                renderer->drawCapsule(shape.capsule.start, shape.capsule.end, shape.capsule.radius, color);
-                break;
-
-            case Invalid:
-                break;
-        }
-    };
-
-    auto fillShape = [](DebugRenderer* renderer, const Shape& shape, const glm::vec4& color)
-    {
-        switch (shape.type)
-        {
-            using enum Shape::Type;
-
-            case Circle:
-                renderer->fillCircle(shape.circle.center, shape.circle.radius, color);
-                break;
-
-            case Line:
-                renderer->drawLine(shape.line.start, shape.line.end, color);
-                break;
-
-            case Capsule:
-                renderer->fillCapsule(shape.capsule.start, shape.capsule.end, shape.capsule.radius, color);
-                break;
-
-            case Invalid:
-                break;
-        }
-    };
-
-    if (shapes)
-    {
-        for (auto [e, shape]: registry_->view<const ActiveTag, Shape>().each())
-        {
-            fillShape(debugRenderer, shape, {0, 1, 0, 0.1});
-        }
-    }
-
-    if (boundingBoxes)
-    {
-        dynamicTree_->walkTree([debugRenderer, tree](const TreeNode& node)
-        {
-            if (node.isLeaf() || tree)
-                debugRenderer->drawAABB(node.aabb.topLeft, node.aabb.bottomRight, {1, 0, 1, 0.3});
-        });
-    }
-
-    if (collisions)
-    {
-        if (boundingBoxes)
-        {
-            for (const auto& col : debugPossibleCollisions_)
-            {
-                debugRenderer->drawAABB(col.second.aabb1.topLeft, col.second.aabb1.bottomRight, {1, 1, 0, 0.6});
-                debugRenderer->drawAABB(col.second.aabb2.topLeft, col.second.aabb2.bottomRight, {1, 1, 0, 0.6});
-            }
-        }
-
-        for (const auto& col : debugCollisions_)
-        {
-            drawShape(debugRenderer, registry_->get<Shape>(col.first.bodyA), {1, 0, 0, 0.9});
-            drawShape(debugRenderer, registry_->get<Shape>(col.first.bodyB), {1, 0, 0, 0.9});
-            const auto penVec = col.second.direction * col.second.penetration;
-            const auto start = col.second.point - penVec / 2.f;
-            const auto end = start + penVec;
-            debugRenderer->drawCircle(col.second.point, 2.f, {1, 0, 0, 0.9});
-            debugRenderer->drawCircle(start, 1.f, {1, 0, 0, 0.9});
-            debugRenderer->drawLine(start, end, {1, 0, 0, 0.9});
-        }
-    }
-}
-
-#endif
-
 void World::updateActive()
 {
     auto view = registry_->view<NodeInfo>();
@@ -199,8 +105,6 @@ void World::updateActive()
             const auto aabb = calculateAABB(shape);
 
             nodeInfo.nodeId = dynamicTree_->addObject(aabb, e);
-
-            registry_->emplace<ActiveTag>(e);
         }
         else if (!active && nodeInfo.nodeId != InvalidIndex)
         {
@@ -208,7 +112,9 @@ void World::updateActive()
 
             nodeInfo.nodeId = InvalidIndex;
 
-            registry_->remove<ActiveTag>(e);
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+            removeDebugState(e);
+#endif
         }
     }
 }
@@ -318,19 +224,7 @@ CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
         const auto& node = dynamicTree_->node(index);
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-        // NOTE This needs stable iterators
-        for (auto it = debugPossibleCollisions_.begin(); it != debugPossibleCollisions_.end(); )
-        {
-            if (it->first.contains(node.entity))
-            {
-                debugCollisions_.erase(it->first);
-                it = debugPossibleCollisions_.erase(it);
-            }
-            else
-            {
-                it++;
-            }
-        }
+        removeDebugState(node.entity);
 #endif
 
         auto callback = [&collisionPairs, &node
@@ -379,14 +273,14 @@ CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
         SATDetector::testCollision(collision, shapeA, shapeB);
         if (collision.colliding)
         {
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+            debugCollisions_.insert_or_assign(col, collision);
+#endif
+
             collisionSignal_.publish(collision);
 
             if (!registry_->get<Body>(col.bodyA).sensor && !registry_->get<Body>(col.bodyB).sensor)
                 collisions.push_back(std::move(collision));
-
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-            debugCollisions_.insert_or_assign(col, collision);
-#endif
         }
     }
 
@@ -402,6 +296,116 @@ void World::solveCollisions(const CollisionList& collisions)
         collisionSignal_.publish(col);
     }
 }
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+
+void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool boundingBoxes, bool tree, bool collisions)
+{
+    auto drawShape = [](DebugRenderer* renderer, const Shape& shape, const glm::vec4& color)
+    {
+        switch (shape.type)
+        {
+            using enum Shape::Type;
+
+            case Circle:
+                renderer->drawCircle(shape.circle.center, shape.circle.radius, color);
+                break;
+
+            case Line:
+                renderer->drawLine(shape.line.start, shape.line.end, color);
+                break;
+
+            case Capsule:
+                renderer->drawCapsule(shape.capsule.start, shape.capsule.end, shape.capsule.radius, color);
+                break;
+
+            case Invalid:
+                break;
+        }
+    };
+
+    auto fillShape = [](DebugRenderer* renderer, const Shape& shape, const glm::vec4& color)
+    {
+        switch (shape.type)
+        {
+            using enum Shape::Type;
+
+            case Circle:
+                renderer->fillCircle(shape.circle.center, shape.circle.radius, color);
+                break;
+
+            case Line:
+                renderer->drawLine(shape.line.start, shape.line.end, color);
+                break;
+
+            case Capsule:
+                renderer->fillCapsule(shape.capsule.start, shape.capsule.end, shape.capsule.radius, color);
+                break;
+
+            case Invalid:
+                break;
+        }
+    };
+
+    if (shapes)
+    {
+        for (auto [e, shape]: registry_->view<const ActiveTag, Shape>().each())
+        {
+            fillShape(debugRenderer, shape, {0, 1, 0, 0.1});
+        }
+    }
+
+    if (boundingBoxes)
+    {
+        dynamicTree_->walkTree([debugRenderer, tree](const TreeNode& node)
+        {
+            if (node.isLeaf() || tree)
+                debugRenderer->drawAABB(node.aabb.topLeft, node.aabb.bottomRight, {1, 0, 1, 0.3});
+        });
+    }
+
+    if (collisions)
+    {
+        if (boundingBoxes)
+        {
+            for (const auto& col : debugPossibleCollisions_)
+            {
+                debugRenderer->drawAABB(col.second.aabb1.topLeft, col.second.aabb1.bottomRight, {1, 1, 0, 0.6});
+                debugRenderer->drawAABB(col.second.aabb2.topLeft, col.second.aabb2.bottomRight, {1, 1, 0, 0.6});
+            }
+        }
+
+        for (const auto& col : debugCollisions_)
+        {
+            drawShape(debugRenderer, registry_->get<Shape>(col.first.bodyA), {1, 0, 0, 0.9});
+            drawShape(debugRenderer, registry_->get<Shape>(col.first.bodyB), {1, 0, 0, 0.9});
+            const auto penVec = col.second.direction * col.second.penetration;
+            const auto start = col.second.point - penVec / 2.f;
+            const auto end = start + penVec;
+            debugRenderer->drawCircle(col.second.point, 2.f, {1, 0, 0, 0.9});
+            debugRenderer->drawCircle(start, 1.f, {1, 0, 0, 0.9});
+            debugRenderer->drawLine(start, end, {1, 0, 0, 0.9});
+        }
+    }
+}
+
+void World::removeDebugState(entt::entity entity)
+{
+    for (auto it = debugPossibleCollisions_.begin(); it != debugPossibleCollisions_.end(); )
+    {
+        if (it->first.contains(entity))
+        {
+            debugCollisions_.erase(it->first);
+            it = debugPossibleCollisions_.erase(it);
+        }
+        else
+        {
+            it++;
+        }
+    }
+}
+
+#endif
 
 } // namespace ngn
 
