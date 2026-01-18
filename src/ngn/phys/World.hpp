@@ -12,13 +12,17 @@
 namespace ngn {
 
 class Application;
+
 class BodyCreateInfo
 {
 public:
     float invMass{1.f};
-    float friction{0.f};
+    float friction{1.f};
     float restitution{1.f};
+    bool sensor{false};
     bool dynamic{true};
+    bool fastMoving{false};
+    bool active{true};
 };
 
 class WorldConfig
@@ -32,6 +36,9 @@ public:
 class World
 {
 public:
+    using CollisionCallback = entt::delegate<void(const Collision&)>;
+
+public:
     World(Application* app);
     ~World();
 
@@ -40,7 +47,7 @@ public:
     template<auto Callback>
     entt::connection addCollisionListener();
     template<auto Callback, typename Type>
-    entt::connection addCollisionListener(Type& arg);
+    entt::connection addCollisionListener(Type arg);
 
     void createBody(entt::entity entity, const BodyCreateInfo& createInfo, Shape shape);
 
@@ -86,18 +93,18 @@ private:
     NGN_DISABLE_COPY_MOVE(World)
 };
 
-template<auto Callback, typename Type>
-inline entt::connection World::addCollisionListener(Type& arg)
-{
-    entt::sink s{collisionSignal_};
-    return s.connect<Callback>(arg);
-}
-
 template<auto Callback>
 inline entt::connection World::addCollisionListener()
 {
     entt::sink s{collisionSignal_};
     return s.connect<Callback>();
+}
+
+template<auto Callback, typename Type>
+inline entt::connection World::addCollisionListener(Type arg)
+{
+    entt::sink s{collisionSignal_};
+    return s.connect<Callback>(arg);
 }
 
 } // namespace ngn

@@ -372,6 +372,7 @@ CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
         SATDetector::testCollision(collision, shapeA, shapeB);
         if (collision.colliding)
         {
+            collisionSignal_.publish(collision);
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
             debugCollisions_.insert_or_assign(col, collision);
 #endif
