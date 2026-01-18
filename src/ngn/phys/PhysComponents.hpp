@@ -13,6 +13,7 @@ public:
     float invMass;
     float friction;
     float restitution;
+    bool sensor;
 };
 
 class LinearForce

@@ -67,6 +67,7 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
                                  .invMass = createInfo.invMass,
                                  .friction = createInfo.friction,
                                  .restitution = createInfo.restitution,
+                                 .sensor = createInfo.sensor,
                              });
 
     registry_->emplace<Shape>(entity, shape);
@@ -379,11 +380,13 @@ CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
         if (collision.colliding)
         {
             collisionSignal_.publish(collision);
+
+            if (!registry_->get<Body>(col.bodyA).sensor && !registry_->get<Body>(col.bodyB).sensor)
+                collisions.push_back(std::move(collision));
+
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
             debugCollisions_.insert_or_assign(col, collision);
 #endif
-
-            collisions.push_back(std::move(collision));
         }
     }
 
