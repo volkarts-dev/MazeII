@@ -7,15 +7,11 @@
 #include "phys/Functions.hpp"
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
-#include "gfx/Buffer.hpp"
-#include "gfx/CommandBuffer.hpp"
 #include "gfx/FontMaker.hpp"
 #include "gfx/FontRenderer.hpp"
 #include "gfx/GFXComponents.hpp"
-#include "gfx/Image.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "CommonComponents.hpp"
-#include "Logging.hpp"
 #include "TestBedAssets.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include <entt/entt.hpp>
@@ -26,13 +22,14 @@
 #include "gfx/DebugRenderer.hpp"
 #endif
 
-TestBedStage::TestBedStage(ngn::Application* app)
+TestBedStage::TestBedStage(ngn::Application* app) :
+    app_{app}
 {
-    app->spriteRenderer()->addImages({{testbed::assets::player_png()}});
+    app_->spriteRenderer()->addImages({{testbed::assets::player_png()}});
 
-    ngn::FontMaker fontMaker{app->renderer(), 256};
+    ngn::FontMaker fontMaker{app_->renderer(), 256};
     fontMaker.addFont(testbed::assets::liberation_mono_ttf(), 20);
-    app->fontRenderer()->setFontCollection(fontMaker.compile());
+    app_->fontRenderer()->setFontCollection(fontMaker.compile());
 
 
 
@@ -45,19 +42,19 @@ TestBedStage::TestBedStage(ngn::Application* app)
 
     // TEMP
 
-    auto* registry = app->registry();
+    auto* registry = app_->registry();
 
     walls_.reserve(6);
 
-    auto createWall = [this, app](const glm::vec2& start, const glm::vec2& end)
+    auto createWall = [this](const glm::vec2& start, const glm::vec2& end)
     {
-        walls_.push_back(app->createActor(start));
+        walls_.push_back(app_->createActor(start));
 
         ngn::BodyCreateInfo createInfo;
         createInfo.restitution = 1.5f;
         createInfo.invMass = 0;
         createInfo.dynamic = false;
-        app->world()->createBody(walls_.back(), createInfo, ngn::Shape{
+        app_->world()->createBody(walls_.back(), createInfo, ngn::Shape{
                                      ngn::Line{.start = {0, 0}, .end = end - start}
                                  });
     };
@@ -73,7 +70,7 @@ TestBedStage::TestBedStage(ngn::Application* app)
 
     ngn::BodyCreateInfo createInfo;
 
-    player_ = app->createActor({400, 300});
+    player_ = app_->createActor({400, 300});
 
     registry->emplace<ngn::Sprite>(player_, ngn::Sprite{
                                         .texCoords = {0, 0, 64, 64},
@@ -83,10 +80,10 @@ TestBedStage::TestBedStage(ngn::Application* app)
 
     createInfo.restitution = 1.5f;
     createInfo.invMass = 1.f / 10.f;
-    app->world()->createBody(player_, createInfo, ngn::Shape{ngn::Circle{.radius = 32}});
+    app_->world()->createBody(player_, createInfo, ngn::Shape{ngn::Circle{.radius = 32}});
 
 
-    enemy_ = app->createActor({600, 300});
+    enemy_ = app_->createActor({600, 300});
 
     registry->emplace<ngn::Sprite>(enemy_, ngn::Sprite{
                                         .texCoords = {0, 0, 64, 64},
@@ -96,14 +93,14 @@ TestBedStage::TestBedStage(ngn::Application* app)
 
     createInfo.restitution = 1.5f;
     createInfo.invMass = 1.f / 1.f;
-    app->world()->createBody(enemy_, createInfo, ngn::Shape{ngn::Circle{.radius = 32}});
+    app_->world()->createBody(enemy_, createInfo, ngn::Shape{ngn::Circle{.radius = 32}});
 
 
-    obstacle_ = app->createActor({300, 300});
+    obstacle_ = app_->createActor({300, 300});
 
     createInfo.restitution = 1.5f;
     createInfo.invMass = 0;
-    app->world()->createBody(obstacle_, createInfo, ngn::Shape{ngn::Capsule{.start = {0, -70}, .end = {0, 70}, .radius = 32}});
+    app_->world()->createBody(obstacle_, createInfo, ngn::Shape{ngn::Capsule{.start = {0, -70}, .end = {0, 70}, .radius = 32}});
 
     // /TEMP
 }
@@ -112,27 +109,25 @@ TestBedStage::~TestBedStage()
 {
 }
 
-void TestBedStage::onActivate(ngn::Application* app)
+void TestBedStage::onActivate()
 {
-    NGN_UNUSED(app);
 }
 
-void TestBedStage::onDeactivate(ngn::Application* app)
+void TestBedStage::onDeactivate()
 {
-    NGN_UNUSED(app);
 }
 
-void TestBedStage::onKeyEvent(ngn::Application* app, ngn::InputAction action, int key, ngn::InputMods mods)
+void TestBedStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods)
 {
     NGN_UNUSED(mods);
 
     if (action == ngn::InputAction::Press && key == GLFW_KEY_ESCAPE)
-        app->quit();
+        app_->quit();
 }
 
-void TestBedStage::onUpdate(ngn::Application* app, float deltaTime)
+void TestBedStage::onUpdate(float deltaTime)
 {
-    app->spriteRenderer()->updateView(
+    app_->spriteRenderer()->updateView(
                 glm::lookAt(
                     glm::vec3(400.0f, 300.0f, 0.5f),
                     glm::vec3(400.0f, 300.0f, 0.0f),
@@ -141,51 +136,51 @@ void TestBedStage::onUpdate(ngn::Application* app, float deltaTime)
 
     // ****************************************************
 
-    if (app->isKeyDown(GLFW_KEY_LEFT))
+    if (app_->isKeyDown(GLFW_KEY_LEFT))
     {
-        auto& force = app->registry()->get<ngn::AngularForce>(player_).value;
+        auto& force = app_->registry()->get<ngn::AngularForce>(player_).value;
         force += 20.f;
     }
-    if (app->isKeyDown(GLFW_KEY_RIGHT))
+    if (app_->isKeyDown(GLFW_KEY_RIGHT))
     {
-        auto& force = app->registry()->get<ngn::AngularForce>(player_).value;
+        auto& force = app_->registry()->get<ngn::AngularForce>(player_).value;
         force -= 20.f;
     }
-    if (app->isKeyDown(GLFW_KEY_UP))
+    if (app_->isKeyDown(GLFW_KEY_UP))
     {
-        auto [force, rot] = app->registry()->get<ngn::LinearForce, ngn::Rotation>(player_);
+        auto [force, rot] = app_->registry()->get<ngn::LinearForce, ngn::Rotation>(player_);
         force.value -= rot.dir * 1200.f;
     }
-    if (app->isKeyDown(GLFW_KEY_DOWN))
+    if (app_->isKeyDown(GLFW_KEY_DOWN))
     {
-        auto [force, rot] = app->registry()->get<ngn::LinearForce, ngn::Rotation>(player_);
+        auto [force, rot] = app_->registry()->get<ngn::LinearForce, ngn::Rotation>(player_);
         force.value += rot.dir * 1200.f;
     }
 
     // ****************************************************
-    auto [obstacleRot, obstacleTc] = app->registry()->get<ngn::Rotation, ngn::TransformChanged>(obstacle_);
+    auto [obstacleRot, obstacleTc] = app_->registry()->get<ngn::Rotation, ngn::TransformChanged>(obstacle_);
 
     obstacleRot.angle +=  ngn::PI / 20.0f * deltaTime;
     obstacleTc.value = true;
 
     // ****************************************************
 
-    app->spriteRenderer()->renderSpriteComponents();
+    app_->spriteRenderer()->renderSpriteComponents();
 
     // ****************************************************
 
-    app->fontRenderer()->drawText(0, "Hello MazeII", 400, 50);
+    app_->fontRenderer()->drawText(0, "Hello MazeII", 400, 50);
 
     // ****************************************************
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    app->debugRenderer()->updateView(
+    app_->debugRenderer()->updateView(
                 glm::lookAt(
                     glm::vec3(400.0f, 300.0f, 0.5f),
                     glm::vec3(400.0f, 300.0f, 0.0f),
                     glm::vec3(0.0f, 1.0f, 0.0f)
                 ));
 
-    app->world()->debugDrawState(app->debugRenderer(), true, true, true, true);
+    app_->world()->debugDrawState(app_->debugRenderer(), true, true, true, true);
 #endif
 }

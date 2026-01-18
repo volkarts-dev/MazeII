@@ -53,29 +53,11 @@ class ApplicationStage
 public:
     virtual ~ApplicationStage();
 
-    virtual void onActivate(Application* app)
-    {
-        NGN_UNUSED(app);
-    }
+    virtual void onActivate() { }
+    virtual void onDeactivate() { }
 
-    virtual void onDeactivate(Application* app)
-    {
-        NGN_UNUSED(app);
-    }
-
-    virtual void onKeyEvent(Application* app, InputAction action, int key, InputMods mods)
-    {
-        NGN_UNUSED(app);
-        NGN_UNUSED(action);
-        NGN_UNUSED(key);
-        NGN_UNUSED(mods);
-    }
-
-    virtual void onUpdate(Application* app, float deltaTime)
-    {
-        NGN_UNUSED(app);
-        NGN_UNUSED(deltaTime);
-    };
+    virtual void onKeyEvent(InputAction action, int key, InputMods mods) { NGN_UNUSED(action); NGN_UNUSED(key); NGN_UNUSED(mods); }
+    virtual void onUpdate(float deltaTime) { NGN_UNUSED(deltaTime); }
 };
 
 // *********************************************************************************************************************

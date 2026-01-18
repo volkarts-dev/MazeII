@@ -16,14 +16,15 @@ public:
     TestBedStage(ngn::Application* app);
     ~TestBedStage() override;
 
-    void onActivate(ngn::Application* app) override;
-    void onDeactivate(ngn::Application* app) override;
+    void onActivate() override;
+    void onDeactivate() override;
 
-    void onKeyEvent(ngn::Application* app, ngn::InputAction action, int key, ngn::InputMods mods) override;
+    void onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods) override;
 
-    void onUpdate(ngn::Application* app, float deltaTime) override;
+    void onUpdate(float deltaTime) override;
 
 private:
+    ngn::Application* app_;
     std::vector<entt::entity> walls_;
     entt::entity player_;
     entt::entity enemy_;

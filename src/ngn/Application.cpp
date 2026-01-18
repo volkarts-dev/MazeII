@@ -114,12 +114,12 @@ Application::Application(ApplicationDelegate* delegate) :
     if (!stage_)
         throw std::runtime_error("Failed to initialize app.");
 
-    stage_->onActivate(this);
+    stage_->onActivate();
 }
 
 Application::~Application()
 {
-    stage_->onDeactivate(this);
+    stage_->onDeactivate();
 
     delegate_->onDone(this);
 
@@ -195,10 +195,10 @@ int Application::exec()
 
         if (nextStage_)
         {
-            stage_->onDeactivate(this);
+            stage_->onDeactivate();
             stage_ = nextStage_;
             nextStage_ = nullptr;
-            stage_->onActivate(this);
+            stage_->onActivate();
         }
 
         glfwPollEvents();
@@ -249,7 +249,7 @@ void Application::update(float deltaTime)
 {
     NGN_INSTRUMENT_FUNCTION();
 
-    stage_->onUpdate(this, deltaTime);
+    stage_->onUpdate(deltaTime);
 
     world_->update(deltaTime);
 }
@@ -297,7 +297,7 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
 
     auto* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
 
-    app->stage_->onKeyEvent(app, toInputAction(action), key, toInputMods(mods));
+    app->stage_->onKeyEvent(toInputAction(action), key, toInputMods(mods));
 }
 
 } // namespace ngn
