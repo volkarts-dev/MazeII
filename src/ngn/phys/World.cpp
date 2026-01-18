@@ -226,7 +226,7 @@ void World::integrate(float deltaTime)
         if (veloLen2 > 100.f)
         {
             const auto resistance = -(velocity.value / glm::sqrt(veloLen2)) * veloLen2;
-            force.value += resistance * config_.linearDamping;
+            force.value += resistance * config_.linearDamping * body.friction;
         }
         else if (nearZero(force.value))
         {
