@@ -5,6 +5,11 @@
 
 namespace ngn {
 
+Shape::Shape() :
+    type{Type::Invalid}
+{
+}
+
 Shape::Shape(Circle&& c) :
     type{Type::Circle},
     circle{std::move(c)}

@@ -111,6 +111,9 @@ void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool bound
             case Capsule:
                 renderer->drawCapsule(shape.capsule.start, shape.capsule.end, shape.capsule.radius, color);
                 break;
+
+            case Invalid:
+                break;
         }
     };
 
@@ -130,6 +133,9 @@ void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool bound
 
             case Capsule:
                 renderer->fillCapsule(shape.capsule.start, shape.capsule.end, shape.capsule.radius, color);
+                break;
+
+            case Invalid:
                 break;
         }
     };

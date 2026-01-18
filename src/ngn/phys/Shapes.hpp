@@ -50,12 +50,14 @@ class Shape
 public:
     enum class Type : uint32_t
     {
+        Invalid,
         Circle,
         Line,
         Capsule,
     };
 
 public:
+    Shape();
     Shape(Circle&& c);
     Shape(Line&& l);
     Shape(Capsule&& c);

@@ -39,6 +39,9 @@ AABB calculateAABB(const Shape& shape)
             aabb.bottomRight = {glm::max(l.start.x, l.end.x), glm::max(l.start.y, l.end.y)};
             break;
         }
+
+        case Invalid:
+            break;
     }
 
     return aabb;
@@ -152,6 +155,9 @@ Shape transform(Shape shape, const Position& pos, const Rotation& rot, const Sca
             l.end= transform(l.end, pos, rot, sca);
             break;
         }
+
+        case Invalid:
+            break;
     }
 
     return shape;
