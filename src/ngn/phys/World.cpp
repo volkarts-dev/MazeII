@@ -71,12 +71,18 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
 
     registry_->emplace<Shape>(entity, shape);
 
-    const auto nodeId = dynamicTree_->addObject(calculateAABB(shape), entity);
+    auto nodeId = InvalidIndex;
+    if (createInfo.active)
+    {
+        nodeId = dynamicTree_->addObject(calculateAABB(shape), entity);
+        registry_->emplace<ActiveTag>(entity);
+    }
     registry_->emplace<NodeInfo>(entity, shape, nodeId);
 }
 
 void World::update(float deltaTime)
 {
+    updateActive();
     integrate(deltaTime);
     const auto moved = updateTree();
     const auto possibleCollisions = findPossibleCollisions(moved);
@@ -130,7 +136,7 @@ void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool bound
 
     if (shapes)
     {
-        for (auto [e, shape]: registry_->view<Shape>().each())
+        for (auto [e, shape]: registry_->view<const ActiveTag, Shape>().each())
         {
             fillShape(debugRenderer, shape, {0, 1, 0, 0.1});
         }
@@ -172,12 +178,40 @@ void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool bound
 
 #endif
 
+void World::updateActive()
+{
+    auto view = registry_->view<NodeInfo>();
+    for (auto [e, nodeInfo] : view.each())
+    {
+        const auto active = registry_->any_of<ActiveTag>(e);
+
+        if (active && nodeInfo.nodeId == InvalidIndex)
+        {
+            auto [pos, rot, sca, shape]= registry_->get<const Position, const Rotation, const Scale, Shape>(e);
+            shape = transform(nodeInfo.origShape, pos, rot, sca);
+            const auto aabb = calculateAABB(shape);
+
+            nodeInfo.nodeId = dynamicTree_->addObject(aabb, e);
+
+            registry_->emplace<ActiveTag>(e);
+        }
+        else if (!active && nodeInfo.nodeId != InvalidIndex)
+        {
+            dynamicTree_->removeObject(nodeInfo.nodeId);
+
+            nodeInfo.nodeId = InvalidIndex;
+
+            registry_->remove<ActiveTag>(e);
+        }
+    }
+}
+
 void World::integrate(float deltaTime)
 {
     NGN_INSTRUMENT_FUNCTION();
 
-    auto linForces = registry_->view<LinearForce, LinearVelocity>();
-    for (auto [e, force, velocity] : linForces.each())
+    auto linForces = registry_->view<LinearForce, LinearVelocity, const Body, const ActiveTag>();
+    for (auto [e, force, velocity, body] : linForces.each())
     {
         force.value += config_.gravity;
 
@@ -197,7 +231,7 @@ void World::integrate(float deltaTime)
         force.value = {};
     }
 
-    auto angForces = registry_->view<AngularForce, AngularVelocity>();
+    auto angForces = registry_->view<AngularForce, AngularVelocity, const ActiveTag>();
     for (auto [e, force, velocity] : angForces.each())
     {
         const auto veloLen2 = velocity.value * velocity.value;
@@ -215,7 +249,7 @@ void World::integrate(float deltaTime)
         force.value = 0.f;
     }
 
-    auto linVelocities = registry_->view<LinearVelocity, Position, TransformChanged>();
+    auto linVelocities = registry_->view<LinearVelocity, Position, TransformChanged, const ActiveTag>();
     for (auto [e, velocity, position, tc] : linVelocities.each())
     {
         const auto newPos = position.value + velocity.value * deltaTime;
@@ -226,7 +260,7 @@ void World::integrate(float deltaTime)
         }
     }
 
-    auto angVelocities = app_->registry()->view<AngularVelocity, Rotation, TransformChanged>();
+    auto angVelocities = app_->registry()->view<AngularVelocity, Rotation, TransformChanged, const ActiveTag>();
     for (auto [e, velocity, rotation, tc] : angVelocities.each())
     {
         const auto newRot = rotation.angle + velocity.value * deltaTime;
@@ -244,8 +278,8 @@ MovedList World::updateTree()
 {
     MovedList moved{app_->createFrameAllocator<uint32_t>()};
 
-    auto view = registry_->view<Position, Rotation, Scale, TransformChanged, Body, Shape, NodeInfo>().each();
-    for (auto [e, pos, rot, sca, tc, body, shape, nodeInfo] : view)
+    auto view = registry_->view<Position, Rotation, Scale, TransformChanged, Body, Shape, NodeInfo, const ActiveTag>();
+    for (auto [e, pos, rot, sca, tc, body, shape, nodeInfo] : view.each())
     {
         if (tc.value)
         {

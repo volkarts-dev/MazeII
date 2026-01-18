@@ -7,6 +7,10 @@
 
 namespace ngn {
 
+class ActiveTag
+{
+};
+
 class Position
 {
 public:

@@ -57,6 +57,7 @@ public:
 #endif
 
 private:
+    void updateActive();
     void integrate(float deltaTime);
     MovedList updateTree();
     CollisionPairSet findPossibleCollisions(const MovedList& moved);
