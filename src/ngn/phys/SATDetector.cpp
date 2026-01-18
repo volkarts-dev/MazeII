@@ -33,6 +33,9 @@ void SATDetector::testCollision(Collision& collision, const Shape& lhs, const Sh
             case Capsule:
                 testCollision(collision, lhsT, rhs.capsule.start, rhs.capsule.end, rhs.capsule.radius);
                 break;
+
+            case Invalid:
+                break;
         }
     };
 
@@ -50,6 +53,9 @@ void SATDetector::testCollision(Collision& collision, const Shape& lhs, const Sh
 
         case Capsule:
             test(lhs.capsule);
+            break;
+
+        case Invalid:
             break;
     }
 }
