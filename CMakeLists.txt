@@ -24,7 +24,7 @@ enable_ipo()
 
 # compile options for own targets
 add_library(compile_options INTERFACE)
-target_compile_features(compile_options INTERFACE cxx_std_20)
+target_compile_features(compile_options INTERFACE cxx_std_23)
 set_project_warnings(compile_options)
 enable_avx2(compile_options)
 

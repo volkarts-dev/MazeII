@@ -1,1 +1,1 @@
-find_package(Freetype REQUIRED)
+find_package(Freetype 2.13 REQUIRED)
