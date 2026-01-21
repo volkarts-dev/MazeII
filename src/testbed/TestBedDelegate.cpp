@@ -24,6 +24,8 @@ ngn::ApplicationConfig TestBedDelegate::applicationConfig(ngn::Application* app)
         .spriteBatchCount = 1024,
         .fontRenderer = true,
 
+        .audio = false,
+
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
         .debugRenderer = true,
         .debugBatchCount = 1204

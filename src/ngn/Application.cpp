@@ -5,6 +5,7 @@
 
 #include "Instrumentation.hpp"
 #include "Timer.hpp"
+#include "audio/Audio.hpp"
 #include "gfx/CommandBuffer.hpp"
 #include "gfx/FontMaker.hpp"
 #include "gfx/FontRenderer.hpp"
@@ -51,6 +52,7 @@ Application::Application(ApplicationDelegate* delegate) :
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     debugRenderer_{},
 #endif
+    audio_{},
     world_{},
     stage_{},
     nextStage_{},
@@ -110,6 +112,9 @@ Application::Application(ApplicationDelegate* delegate) :
     }
 #endif
 
+    if (config.audio)
+        audio_ = new Audio{};
+
     stage_ = delegate_->onInit(this);
     if (!stage_)
         throw std::runtime_error("Failed to initialize app.");
@@ -125,15 +130,14 @@ Application::~Application()
 
     delete world_;
 
+    delete audio_;
+
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    if (debugRenderer_)
-        delete debugRenderer_;
+    delete debugRenderer_;
 #endif
 
-    if (fontRenderer_)
-        delete fontRenderer_;
-    if (spriteRenderer_)
-        delete spriteRenderer_;
+    delete fontRenderer_;
+    delete spriteRenderer_;
 
     delete frameMemoryArena_;
 

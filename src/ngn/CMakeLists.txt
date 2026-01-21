@@ -1,4 +1,8 @@
 add_library(ngn STATIC
+    audio/Audio.hpp audio/Audio.cpp
+    audio/AudioBuffer.hpp audio/AudioBuffer.cpp
+    audio/Sound.hpp audio/Sound.cpp
+
     gfx/Buffer.hpp gfx/Buffer.cpp
     gfx/CommandBuffer.hpp gfx/CommandBuffer.cpp
     gfx/Colors.hpp gfx/Colors.cpp
@@ -81,6 +85,7 @@ target_link_libraries(ngn PUBLIC
     Freetype::Freetype
     glfw::glfw
     glm::configured
+    OpenAL::OpenAL
     spdlog::spdlog
     vulkan::vulkan
 )

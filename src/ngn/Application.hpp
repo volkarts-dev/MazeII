@@ -15,6 +15,7 @@ struct GLFWwindow;
 namespace ngn {
 
 class Application;
+class Audio;
 class FontRenderer;
 class FontMaker;
 class MemoryArena;
@@ -39,6 +40,8 @@ public:
     bool spriteRenderer{};
     uint32_t spriteBatchCount{};
     bool fontRenderer{};
+
+    bool audio{};
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugRenderer{};
@@ -91,6 +94,7 @@ public:
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer() const { return debugRenderer_; }
 #endif
+    Audio* audio() const { return audio_; }
 
     void activateStage(ApplicationStage* stage);
     void quit(int exitCode = 0);
@@ -127,6 +131,8 @@ private:
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer_;
 #endif
+
+    Audio* audio_;
 
     entt::registry* registry_;
     World* world_;

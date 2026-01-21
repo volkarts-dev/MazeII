@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25)
 
 project(MazeII LANGUAGES CXX)
 
@@ -35,6 +35,7 @@ include(LoadFreetype)
 include(LoadGLFW)
 include(LoadGLM)
 include(LoadGLSLC)
+include(LoadOpenAL)
 include(LoadSpdlog)
 include(LoadVulkan)
 

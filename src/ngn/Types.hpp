@@ -22,4 +22,19 @@ constexpr auto InvalidIndex = std::numeric_limits<uint32_t>::max();
 constexpr uint32_t MaxFramesInFlight = 2;
 constexpr uint32_t MaxSpritePipelineTextures = 8;
 
+template<typename _Tp, typename _Up>
+concept not_same_as = !std::is_same_v<_Tp, _Up>;
+
+template<typename Func, typename... Args>
+concept ReturnsVoid = requires(Func func, Args... args)
+{
+    { func(std::forward<Args>(args)...) } -> std::same_as<void>;
+};
+
+template<typename Func, typename... Args>
+concept ReturnsNonVoid = requires(Func func, Args... args)
+{
+    { func(std::forward<Args>(args)...) } -> not_same_as<void>;
+};
+
 } // namespace ngn
