@@ -15,8 +15,7 @@
 
 namespace ngn {
 
-SpriteRenderer::SpriteRenderer(entt::registry* registry, Renderer* renderer, uint32_t batchSize) :
-    registry_{registry},
+SpriteRenderer::SpriteRenderer(Renderer* renderer, uint32_t batchSize) :
     renderer_{renderer},
     spritePipeline_{new SpritePipeline{renderer_}}
 {
@@ -191,20 +190,20 @@ void SpriteRenderer::renderSprite(const SpriteVertex& vertex)
     batch.count++;
 }
 
-void SpriteRenderer::renderSpriteComponents()
+void SpriteRenderer::renderSpriteComponents(entt::registry* registry)
 {
     NGN_INSTRUMENT_FUNCTION();
 
     auto& batch = batches_[renderer_->currentFrame()];
 
-    auto sprites = registry_->view<const Position, const Sprite, const ActiveTag>();
+    auto sprites = registry->view<const Position, const Sprite, const ActiveTag>();
     for (auto [e, pos, spr] : sprites.each())
     {
         assert(batch.count < batch.buffer->size() / sizeof(SpriteVertex));
 
         NGN_INSTRUMENT_BLOCK_BANDWIDTH_VAR(ls, "<load-sprite>", sizeof(Sprite));
 
-        auto [rot, sca] = registry_->try_get<const Rotation, const Scale>(e);
+        auto [rot, sca] = registry->try_get<const Rotation, const Scale>(e);
 
         NGN_SCOPETIMER_STOP(ls)
 

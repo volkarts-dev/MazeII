@@ -21,7 +21,7 @@ class Sampler;
 class SpriteRenderer
 {
 public:
-    SpriteRenderer(entt::registry* registry, Renderer* renderer, uint32_t batchSize);
+    SpriteRenderer(Renderer* renderer, uint32_t batchSize);
     ~SpriteRenderer();
 
     uint32_t addImages(std::span<const BufferView> images);
@@ -30,7 +30,7 @@ public:
     void updateView(const glm::mat4& view);
     void renderSprite(const SpriteVertex& vertex);
 
-    void renderSpriteComponents();
+    void renderSpriteComponents(entt::registry* registry);
 
     void draw(CommandBuffer* commandBuffer);
 
@@ -60,7 +60,6 @@ private:
     void addImage(uint32_t index, const Image* image, bool owning);
 
 private:
-    entt::registry* registry_;
     Renderer* renderer_;
     SpritePipeline* spritePipeline_;
     std::array<UniformBuffer, MaxFramesInFlight> uniformBuffers_;

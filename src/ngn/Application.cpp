@@ -14,7 +14,6 @@
 #include "gfx/Renderer.hpp"
 #include "phys/World.hpp"
 #include "Allocators.hpp"
-#include "Logging.hpp"
 #include "Types.hpp"
 #include <GLFW/glfw3.h>
 #include <entt/entt.hpp>

@@ -3,8 +3,6 @@
 
 #include "Allocators.hpp"
 
-//#include "Logging.hpp"
-
 namespace ngn {
 
 MemoryArena::MemoryArena(std::size_t size) :

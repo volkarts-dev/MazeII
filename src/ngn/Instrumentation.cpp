@@ -3,8 +3,6 @@
 
 #include "Instrumentation.hpp"
 
-#include "Logging.hpp"
-
 namespace ngn::instrumentation {
 
 uint64_t calcCpuTimerFreq()

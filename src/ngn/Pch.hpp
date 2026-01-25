@@ -5,6 +5,7 @@
 
 // IWYU pragma: begin_exports
 
+#include "Logging.hpp"
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 #include <cstdint>

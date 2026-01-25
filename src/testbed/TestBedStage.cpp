@@ -165,7 +165,7 @@ void TestBedStage::onUpdate(float deltaTime)
 
     // ****************************************************
 
-    app_->spriteRenderer()->renderSpriteComponents();
+    app_->spriteRenderer()->renderSpriteComponents(app_->registry());
 
     // ****************************************************
 

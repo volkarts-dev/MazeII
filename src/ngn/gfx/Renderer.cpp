@@ -6,7 +6,6 @@
 #include "Buffer.hpp"
 #include "CommandBuffer.hpp"
 #include "Image.hpp"
-#include "Logging.hpp"
 #include "Pipeline.hpp"
 #include "Types.hpp"
 #include <GLFW/glfw3.h>
