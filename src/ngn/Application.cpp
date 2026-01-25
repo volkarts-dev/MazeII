@@ -80,9 +80,6 @@ Application::Application(ApplicationDelegate* delegate) :
 
     renderer_ = new Renderer{window_};
 
-
-    frameMemoryArena_ = new MemoryArena{config.requiredMemory};
-
     registry_ = new entt::registry{};
 
     world_ = new World{this};
@@ -110,6 +107,8 @@ Application::Application(ApplicationDelegate* delegate) :
     if (config.audio)
         audio_ = new Audio{};
 
+    frameMemoryArena_ = new MemoryArena{config.requiredMemory};
+
     stage_ = delegate_->onInit(this);
     if (!stage_)
         throw std::runtime_error("Failed to initialize app.");
@@ -124,7 +123,7 @@ Application::~Application()
 
     delegate_->onDone(this);
 
-    delete world_;
+    delete frameMemoryArena_;
 
     delete audio_;
 
@@ -136,7 +135,9 @@ Application::~Application()
 
     delete spriteRenderer_;
 
-    delete frameMemoryArena_;
+    delete world_;
+
+    delete registry_;
 
     delete renderer_;
 

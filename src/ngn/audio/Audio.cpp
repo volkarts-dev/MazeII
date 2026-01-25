@@ -287,7 +287,11 @@ AudioBuffer* Audio::loadOGG(const BufferView& data)
         result.format = AL_FORMAT_STEREO16;
     result.sampleRate = static_cast<uint32_t>(sampleRate);
 
-    return addAudioBuffer(new AudioBuffer{result});
+    auto* audioBuffer = addAudioBuffer(new AudioBuffer{result});
+
+    std::free(buffer);
+
+    return audioBuffer;
 }
 
 AudioBuffer* Audio::addAudioBuffer(AudioBuffer* buffer)
