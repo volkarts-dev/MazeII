@@ -8,12 +8,17 @@ namespace ngn {
 
 Timer::Timer()
 {
-    reset();
+    restart();
 }
 
-void Timer::reset()
+void Timer::restart()
 {
     start_ = clock_.now();
+}
+
+void Timer::setZero()
+{
+    start_ = {};
 }
 
 std::pair<bool, Duration<double> > Timer::elapsed(bool reset)

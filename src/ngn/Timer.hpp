@@ -12,7 +12,8 @@ class Timer
 public:
     Timer();
 
-    void reset();
+    void restart();
+    void setZero();
     std::pair<bool, Duration<double>> elapsed(bool reset = false);
     std::pair<bool, Duration<double>> elapsed(Duration<double> secs);
 
