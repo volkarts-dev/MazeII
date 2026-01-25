@@ -16,13 +16,15 @@ ngn::ApplicationConfig TestBedDelegate::applicationConfig(ngn::Application* app)
     return {
         .windowWidth = 800,
         .windowHeight = 600,
-        .windowTitle = "Maze][ - TestBed",
+        .windowTitle = "Maze ][ - TestBed",
 
         .requiredMemory = 100 * 1024 * 1024,
 
         .spriteRenderer = true,
         .spriteBatchCount = 1024,
+
         .fontRenderer = true,
+        .fontBatchCount = 1024,
 
         .audio = false,
 

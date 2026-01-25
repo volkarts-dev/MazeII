@@ -7,7 +7,7 @@
 
 namespace ngn {
 class Buffer;
-class FontRenderer;
+class UiRenderer;
 class Renderer;
 class SpriteRenderer;
 

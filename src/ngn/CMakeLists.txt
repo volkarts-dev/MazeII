@@ -8,13 +8,13 @@ add_library(ngn STATIC
     gfx/Colors.hpp gfx/Colors.cpp
     gfx/FontCollection.hpp gfx/FontCollection.cpp
     gfx/FontMaker.hpp gfx/FontMaker.cpp
-    gfx/FontRenderer.hpp gfx/FontRenderer.cpp
     gfx/GFXComponents.hpp
     gfx/Image.hpp gfx/Image.cpp
     gfx/Pipeline.hpp gfx/Pipeline.cpp
     gfx/Renderer.hpp gfx/Renderer.cpp
     gfx/SpritePipeline.cpp gfx/SpritePipeline.hpp
     gfx/SpriteRenderer.hpp gfx/SpriteRenderer.cpp
+    gfx/UiRenderer.hpp gfx/UiRenderer.cpp
     gfx/Uniforms.hpp
 
     phys/Collision.hpp

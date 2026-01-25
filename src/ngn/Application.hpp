@@ -16,7 +16,7 @@ namespace ngn {
 
 class Application;
 class Audio;
-class FontRenderer;
+class UiRenderer;
 class FontMaker;
 class MemoryArena;
 class SpriteRenderer;
@@ -39,7 +39,9 @@ public:
 
     bool spriteRenderer{};
     uint32_t spriteBatchCount{};
+
     bool fontRenderer{};
+    uint32_t fontBatchCount{};
 
     bool audio{};
 
@@ -84,13 +86,15 @@ public:
     Application(ApplicationDelegate* delegate);
     ~Application();
 
+    glm::vec2 windowSize() const;
+
     Renderer* renderer() const { return renderer_; }
     MemoryArena* frameMemoryArena() const { return frameMemoryArena_; }
     entt::registry* registry() const { return registry_; }
     World* world() const { return world_; }
 
     SpriteRenderer* spriteRenderer() const { return spriteRenderer_; }
-    FontRenderer* fontRenderer() const { return fontRenderer_; }
+    UiRenderer* uiRenderer() const { return uiRenderer_; }
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer() const { return debugRenderer_; }
 #endif
@@ -126,7 +130,7 @@ private:
     MemoryArena* frameMemoryArena_;
 
     SpriteRenderer* spriteRenderer_;
-    FontRenderer* fontRenderer_;
+    UiRenderer* uiRenderer_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer_;

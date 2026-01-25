@@ -8,7 +8,7 @@
 #include "audio/Audio.hpp"
 #include "gfx/CommandBuffer.hpp"
 #include "gfx/FontMaker.hpp"
-#include "gfx/FontRenderer.hpp"
+#include "gfx/UiRenderer.hpp"
 #include "gfx/Pipeline.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "gfx/Renderer.hpp"
@@ -47,7 +47,7 @@ Application::Application(ApplicationDelegate* delegate) :
     renderer_{},
     frameMemoryArena_{},
     spriteRenderer_{},
-    fontRenderer_{},
+    uiRenderer_{},
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     debugRenderer_{},
 #endif
@@ -93,15 +93,11 @@ Application::Application(ApplicationDelegate* delegate) :
     if (config.spriteRenderer)
     {
         spriteRenderer_ = new SpriteRenderer{renderer_, config.spriteBatchCount};
-
-        if (config.fontRenderer)
-        {
-            fontRenderer_ = new ngn::FontRenderer{spriteRenderer_};
-        }
     }
-    else if (config.fontRenderer)
+
+    if (config.fontRenderer)
     {
-        throw std::runtime_error("The FontRenderer requires a SpriteRenderer");
+        uiRenderer_ = new ngn::UiRenderer{renderer_, config.fontBatchCount};
     }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
@@ -135,7 +131,8 @@ Application::~Application()
     delete debugRenderer_;
 #endif
 
-    delete fontRenderer_;
+    delete uiRenderer_;
+
     delete spriteRenderer_;
 
     delete frameMemoryArena_;
@@ -147,6 +144,14 @@ Application::~Application()
     glfwTerminate();
 
     gApplication = nullptr;
+}
+
+glm::vec2 Application::windowSize() const
+{
+    int width{};
+    int height{};
+    glfwGetWindowSize(window_, &width, &height);
+    return glm::vec2{width, height};
 }
 
 void Application::activateStage(ApplicationStage* stage)
@@ -276,6 +281,9 @@ void Application::draw(float deltaTime)
 
     if (spriteRenderer_)
         spriteRenderer_->draw(commandBuffer);
+
+    if (uiRenderer_)
+        uiRenderer_->draw(commandBuffer);
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     if (debugRenderer_)

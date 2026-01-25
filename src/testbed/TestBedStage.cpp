@@ -8,7 +8,7 @@
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
 #include "gfx/FontMaker.hpp"
-#include "gfx/FontRenderer.hpp"
+#include "gfx/UiRenderer.hpp"
 #include "gfx/GFXComponents.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "CommonComponents.hpp"
@@ -29,7 +29,7 @@ TestBedStage::TestBedStage(ngn::Application* app) :
 
     ngn::FontMaker fontMaker{app_->renderer(), 256};
     fontMaker.addFont(testbed::assets::liberation_mono_ttf(), 20);
-    app_->fontRenderer()->setFontCollection(fontMaker.compile());
+    app_->uiRenderer()->setFontCollection(fontMaker.compile());
 
 
 
@@ -134,6 +134,13 @@ void TestBedStage::onUpdate(float deltaTime)
                     glm::vec3(0.0f, 1.0f, 0.0f)
                 ));
 
+    app_->uiRenderer()->updateView(
+                glm::lookAt(
+                    glm::vec3(400.0f, 300.0f, 0.5f),
+                    glm::vec3(400.0f, 300.0f, 0.0f),
+                    glm::vec3(0.0f, 1.0f, 0.0f)
+                    ));
+
     // ****************************************************
 
     if (app_->isKeyDown(GLFW_KEY_LEFT))
@@ -169,7 +176,7 @@ void TestBedStage::onUpdate(float deltaTime)
 
     // ****************************************************
 
-    app_->fontRenderer()->drawText(0, "Hello MazeII", 400, 50);
+    app_->uiRenderer()->writeText(0, "Hello Maze ][", 400, 50);
 
     // ****************************************************
 

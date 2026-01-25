@@ -144,9 +144,14 @@ uint32_t SpriteRenderer::addImages(std::span<const Image* const> images)
 
 void SpriteRenderer::updateView(const glm::mat4& view)
 {
+    updateView(view, renderer_->currentFrame());
+}
+
+void SpriteRenderer::updateView(const glm::mat4& view, uint32_t frameIndex)
+{
     const auto screenSize = renderer_->swapChainExtent();
 
-    auto& ubo = uniformBuffers_[renderer_->currentFrame()];
+    auto& ubo = uniformBuffers_[frameIndex];
 
     ubo.mapped[0].view = view;
 

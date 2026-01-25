@@ -28,6 +28,7 @@ public:
     uint32_t addImages(std::span<const Image* const> images);
 
     void updateView(const glm::mat4& view);
+    void updateView(const glm::mat4& view, uint32_t frameIndex);
     void renderSprite(const SpriteVertex& vertex);
 
     void renderSpriteComponents(entt::registry* registry);
