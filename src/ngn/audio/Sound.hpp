@@ -13,6 +13,7 @@ class AudioBuffer;
 class Sound
 {
 public:
+    Sound();
     Sound(uint32_t bufferId);
     Sound(AudioBuffer* buffer);
     ~Sound();

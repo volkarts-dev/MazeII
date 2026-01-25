@@ -8,12 +8,17 @@
 
 namespace ngn {
 
-Sound::Sound(uint32_t bufferId)
+Sound::Sound()
 {
     alCall(alGenSources, 1, &source_);
     alCall(alSourcef, source_, AL_PITCH, 1.0f);
     alCall(alSourcef, source_, AL_GAIN, 1.0f);
     alCall(alSourcei, source_, AL_LOOPING, AL_FALSE);
+}
+
+Sound::Sound(uint32_t bufferId) :
+    Sound{}
+{
     setBuffer(bufferId);
 }
 
