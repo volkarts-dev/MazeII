@@ -92,7 +92,7 @@ Application::Application(ApplicationDelegate* delegate) :
 
     if (config.spriteRenderer)
     {
-        spriteRenderer_ = new SpriteRenderer{registry_, renderer_, config.spriteBatchCount};
+        spriteRenderer_ = new SpriteRenderer{renderer_, config.spriteBatchCount};
 
         if (config.fontRenderer)
         {
