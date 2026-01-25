@@ -105,7 +105,7 @@ public:
         return LinearAllocator<T>{frameMemoryArena_};
     }
 
-    entt::entity createActor(glm::vec2 pos, float rot = 0.0f, glm::vec2 sca = {1, 1});
+    entt::entity createActor(glm::vec2 pos, float rot = 0.0f, glm::vec2 sca = {1, 1}, bool active = true);
 
     bool isKeyDown(int key) const;
     bool isKeyUp(int key) const;

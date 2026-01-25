@@ -162,15 +162,19 @@ void Application::quit(int exitCode)
     glfwSetWindowShouldClose(window_, GLFW_TRUE);
 }
 
-entt::entity Application::createActor(glm::vec2 pos, float rot, glm::vec2 sca)
+entt::entity Application::createActor(glm::vec2 pos, float rot, glm::vec2 sca, bool active)
 {
     const auto entity = registry_->create();
 
     registry_->emplace<Position>(entity, pos);
+
     auto& rotation = registry_->emplace<Rotation>(entity, glm::vec2{1, 0}, rot);
+    rotation.update();
+
     registry_->emplace<Scale>(entity, sca);
 
-    rotation.update();
+    if (active)
+        registry_->emplace<ActiveTag>(entity);
 
     return entity;
 }
