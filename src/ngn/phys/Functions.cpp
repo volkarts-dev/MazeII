@@ -8,6 +8,53 @@
 
 namespace ngn {
 
+namespace {
+
+template<typename... Trans>
+inline Shape transformIntern(Shape shape, Trans&&... trans)
+{
+    switch (shape.type)
+    {
+        using enum Shape::Type;
+
+        case Circle:
+        {
+            auto& c = shape.circle;
+            c.center = transform(c.center, std::forward<Trans>(trans)...);
+            if constexpr (sizeof...(Trans) >= 3)
+            {
+                const auto args = std::make_tuple(std::forward<Trans>(trans)...);
+                const auto& sca = std::get<2>(args);
+                c.radius *= std::max(sca.value.x, sca.value.y);
+            }
+            break;
+        }
+
+        case Capsule:
+        {
+            auto& c = shape.capsule;
+            c.start = transform(c.start, std::forward<Trans>(trans)...);
+            c.end= transform(c.end, std::forward<Trans>(trans)...);
+            break;
+        }
+
+        case Line:
+        {
+            auto& l = shape.line;
+            l.start = transform(l.start, std::forward<Trans>(trans)...);
+            l.end= transform(l.end, std::forward<Trans>(trans)...);
+            break;
+        }
+
+        case Invalid:
+            break;
+    }
+
+    return shape;
+}
+
+} // namespace
+
 AABB calculateAABB(const Shape& shape)
 {
     AABB aabb;
@@ -118,6 +165,12 @@ glm::vec2 rotate(const glm::vec2& vec, const glm::vec2& dir)
     };
 }
 
+glm::vec2 transform(glm::vec2 vec, const Position& pos)
+{
+    vec += pos.value;
+    return vec;
+}
+
 glm::vec2 transform(glm::vec2 vec, const Position& pos, const Rotation& rot, const Scale& sca)
 {
     vec *= sca.value;
@@ -126,41 +179,14 @@ glm::vec2 transform(glm::vec2 vec, const Position& pos, const Rotation& rot, con
     return vec;
 }
 
+Shape transform(Shape shape, const Position& pos)
+{
+    return transformIntern(std::move(shape), pos);
+}
+
 Shape transform(Shape shape, const Position& pos, const Rotation& rot, const Scale& sca)
 {
-    switch (shape.type)
-    {
-        using enum Shape::Type;
-
-        case Circle:
-        {
-            auto& c = shape.circle;
-            c.center = transform(c.center, pos, rot, sca);
-            c.radius *= std::max(sca.value.x, sca.value.y);
-            break;
-        }
-
-        case Capsule:
-        {
-            auto& c = shape.capsule;
-            c.start = transform(c.start, pos, rot, sca);
-            c.end= transform(c.end, pos, rot, sca);
-            break;
-        }
-
-        case Line:
-        {
-            auto& l = shape.line;
-            l.start = transform(l.start, pos, rot, sca);
-            l.end= transform(l.end, pos, rot, sca);
-            break;
-        }
-
-        case Invalid:
-            break;
-    }
-
-    return shape;
+    return transformIntern(std::move(shape), pos, rot, sca);
 }
 
 } // namespace ngn

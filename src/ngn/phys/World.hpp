@@ -17,19 +17,19 @@ class BodyCreateInfo
 {
 public:
     float invMass{1.f};
-    float friction{1.f};
     float restitution{1.f};
+    float friction{1.f};
     bool sensor{false};
     bool dynamic{true};
+    bool useForce{true};
     bool fastMoving{false};
-    bool active{true};
 };
 
 class WorldConfig
 {
 public:
-    float linearDamping{0.07f};
-    float angularDamping{1.5f};
+    float linearDamping{1.0f};
+    float angularDamping{1.0f};
     glm::vec2 gravity{};
 };
 
@@ -64,6 +64,7 @@ public:
 #endif
 
 private:
+    Shape transformShape(entt::entity entity, const Shape& origShape);
     void updateActive();
     void integrate(float deltaTime);
     MovedList updateTree();

@@ -52,10 +52,13 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
 {
     if (createInfo.dynamic)
     {
+        if (createInfo.useForce)
+        {
+            registry_->emplace<LinearForce>(entity);
+            registry_->emplace<AngularForce>(entity);
+        }
         registry_->emplace<LinearVelocity>(entity);
-        registry_->emplace<LinearForce>(entity);
         registry_->emplace<AngularVelocity>(entity);
-        registry_->emplace<AngularForce>(entity);
     }
 
     if (const auto* pos = registry_->try_get<Position>(entity); !pos)
@@ -70,14 +73,12 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
                                  .sensor = createInfo.sensor,
                              });
 
-    registry_->emplace<Shape>(entity, shape);
+    const auto transformedShape = transformShape(entity, shape);
+    registry_->emplace<Shape>(entity, transformedShape);
 
     auto nodeId = InvalidIndex;
-    if (createInfo.active)
-    {
-        nodeId = dynamicTree_->addObject(calculateAABB(shape), entity);
-        registry_->emplace<ActiveTag>(entity);
-    }
+    if (registry_->any_of<ActiveTag>(entity))
+        nodeId = dynamicTree_->addObject(calculateAABB(transformedShape), entity);
     registry_->emplace<NodeInfo>(entity, shape, nodeId);
 }
 
@@ -91,6 +92,16 @@ void World::update(float deltaTime)
     solveCollisions(collisions);
 }
 
+Shape World::transformShape(entt::entity entity, const Shape& origShape)
+{
+    auto [pos, rot, sca]= registry_->try_get<const Position, const Rotation, const Scale>(entity);
+    if (sca)
+        return transform(origShape, *pos, *rot, *sca);
+    else if (pos)
+        return transform(origShape, *pos);
+    return origShape;
+}
+
 void World::updateActive()
 {
     auto view = registry_->view<NodeInfo>();
@@ -100,11 +111,10 @@ void World::updateActive()
 
         if (active && nodeInfo.nodeId == InvalidIndex)
         {
-            auto [pos, rot, sca, shape]= registry_->get<const Position, const Rotation, const Scale, Shape>(e);
-            shape = transform(nodeInfo.origShape, pos, rot, sca);
-            const auto aabb = calculateAABB(shape);
+            auto shape = registry_->get<Shape>(e);
+            shape = transformShape(e, nodeInfo.origShape);
 
-            nodeInfo.nodeId = dynamicTree_->addObject(aabb, e);
+            nodeInfo.nodeId = dynamicTree_->addObject(calculateAABB(shape), e);
         }
         else if (!active && nodeInfo.nodeId != InvalidIndex)
         {
@@ -123,7 +133,7 @@ void World::integrate(float deltaTime)
 {
     NGN_INSTRUMENT_FUNCTION();
 
-    auto linForces = registry_->view<LinearForce, LinearVelocity, const Body, const ActiveTag>();
+    auto linForces = registry_->view<LinearForce, LinearVelocity, const Body, ActiveTag>();
     for (auto [e, force, velocity, body] : linForces.each())
     {
         force.value += config_.gravity;
@@ -131,8 +141,9 @@ void World::integrate(float deltaTime)
         const auto veloLen2 = glm::length2(velocity.value);
         if (veloLen2 > 100.f)
         {
-            const auto resistance = -(velocity.value / glm::sqrt(veloLen2)) * veloLen2;
-            force.value += resistance * config_.linearDamping * body.friction;
+            const auto veloLen = glm::sqrt(veloLen2);
+            const auto resistance = 0.5f * veloLen2 * config_.linearDamping * body.friction * 0.5f;
+            force.value += -velocity.value / veloLen * resistance;
         }
         else if (nearZero(force.value))
         {
@@ -144,14 +155,15 @@ void World::integrate(float deltaTime)
         force.value = {};
     }
 
-    auto angForces = registry_->view<AngularForce, AngularVelocity, const ActiveTag>();
-    for (auto [e, force, velocity] : angForces.each())
+    auto angForces = registry_->view<AngularForce, AngularVelocity, const Body, ActiveTag>();
+    for (auto [e, force, velocity, body] : angForces.each())
     {
-        const auto veloLen2 = velocity.value * velocity.value;
+        const auto veloLen = velocity.value;
+        const auto veloLen2 = veloLen * veloLen;
         if (veloLen2 > 2.f)
         {
-            const auto resistance = -glm::sign(velocity.value) * veloLen2;
-            force.value += resistance * config_.angularDamping;
+            const auto resistance = 0.5f * veloLen2 * config_.angularDamping * body.friction * 10.0f;
+            force.value += -glm::sign(veloLen) * resistance;
         }
         else if (nearZero(force.value))
         {
@@ -162,7 +174,7 @@ void World::integrate(float deltaTime)
         force.value = 0.f;
     }
 
-    auto linVelocities = registry_->view<LinearVelocity, Position, TransformChanged, const ActiveTag>();
+    auto linVelocities = registry_->view<LinearVelocity, Position, TransformChanged, ActiveTag>();
     for (auto [e, velocity, position, tc] : linVelocities.each())
     {
         const auto newPos = position.value + velocity.value * deltaTime;
@@ -173,7 +185,7 @@ void World::integrate(float deltaTime)
         }
     }
 
-    auto angVelocities = app_->registry()->view<AngularVelocity, Rotation, TransformChanged, const ActiveTag>();
+    auto angVelocities = app_->registry()->view<AngularVelocity, Rotation, TransformChanged, ActiveTag>();
     for (auto [e, velocity, rotation, tc] : angVelocities.each())
     {
         const auto newRot = rotation.angle + velocity.value * deltaTime;
@@ -191,15 +203,14 @@ MovedList World::updateTree()
 {
     MovedList moved{app_->createFrameAllocator<uint32_t>()};
 
-    auto view = registry_->view<Position, Rotation, Scale, TransformChanged, Body, Shape, NodeInfo, const ActiveTag>();
+    auto view = registry_->view<Position, Rotation, Scale, TransformChanged, Body, Shape, NodeInfo, ActiveTag>();
     for (auto [e, pos, rot, sca, tc, body, shape, nodeInfo] : view.each())
     {
         if (tc.value)
         {
             shape = transform(nodeInfo.origShape, pos, rot, sca);
-            auto aabb = calculateAABB(shape);
 
-            dynamicTree_->updateObject(nodeInfo.nodeId, aabb);
+            dynamicTree_->updateObject(nodeInfo.nodeId, calculateAABB(shape));
 
             // only dynamic bodies can move
             if (registry_->all_of<LinearVelocity>(e))
@@ -349,7 +360,7 @@ void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool bound
 
     if (shapes)
     {
-        for (auto [e, shape]: registry_->view<const ActiveTag, Shape>().each())
+        for (auto [e, shape]: registry_->view<ActiveTag, Shape>().each())
         {
             fillShape(debugRenderer, shape, {0, 1, 0, 0.1});
         }
