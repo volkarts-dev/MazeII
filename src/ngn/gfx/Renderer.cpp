@@ -376,21 +376,38 @@ void Renderer::createCommandBuffers()
 
 void Renderer::createDescriptorPool()
 {
+    // TODO Descriptor pool size calculations are QFS!
+
+    constexpr auto UboDescriptorCount = 0
+            + MaxFramesInFlight // Sprite pipeline
+            + MaxFramesInFlight // Font sprite pipeline
+            + MaxFramesInFlight // Debug triangle pipeline
+            + MaxFramesInFlight // Debug line pipeline
+            ;
+    constexpr auto SamplerDescriptorCount = 0
+            + MaxFramesInFlight * MaxSpritePipelineTextures // Sprite pipeline
+            + MaxFramesInFlight * MaxSpritePipelineTextures // Font sprite pipeline
+            ;
+    constexpr auto MaxSets = 0
+            + MaxFramesInFlight // Sprite pipeline
+            + MaxFramesInFlight // Font sprite pipeline
+            + MaxFramesInFlight // Debug triangle pipeline
+            + MaxFramesInFlight // Debug line pipeline
+            ;
+
     std::array poolSizes{
         vk::DescriptorPoolSize{
             .type = vk::DescriptorType::eUniformBuffer,
-            .descriptorCount = (MaxFramesInFlight + MaxFramesInFlight) * 2, // why *2?
-            // QFS: spritePipeline descriptor count + debugPipeline descriptor count
+            .descriptorCount = UboDescriptorCount
         },
         vk::DescriptorPoolSize{
             .type = vk::DescriptorType::eCombinedImageSampler,
-            .descriptorCount = MaxFramesInFlight * MaxSpritePipelineTextures,
-            // QFS: spritePipeline descriptor count * max texture count
+            .descriptorCount = SamplerDescriptorCount
         },
     };
 
     vk::DescriptorPoolCreateInfo createInfo{
-        .maxSets = MaxFramesInFlight + MaxFramesInFlight,
+        .maxSets = MaxSets,
     };
     createInfo.setPoolSizes(poolSizes);
 
