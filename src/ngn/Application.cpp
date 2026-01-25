@@ -115,6 +115,7 @@ Application::Application(ApplicationDelegate* delegate) :
         throw std::runtime_error("Failed to initialize app.");
 
     stage_->onActivate();
+    stage_->onWindowResize(windowSize());
 }
 
 Application::~Application()
@@ -150,7 +151,7 @@ glm::vec2 Application::windowSize() const
 {
     int width{};
     int height{};
-    glfwGetWindowSize(window_, &width, &height);
+    glfwGetFramebufferSize(window_, &width, &height);
     return glm::vec2{width, height};
 }
 
@@ -211,6 +212,7 @@ int Application::exec()
             stage_ = nextStage_;
             nextStage_ = nullptr;
             stage_->onActivate();
+            stage_->onWindowResize(windowSize());
         }
 
         glfwPollEvents();
@@ -298,12 +300,10 @@ void Application::draw(float deltaTime)
 
 void Application::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
-    NGN_UNUSED(width);
-    NGN_UNUSED(height);
-
     auto* app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
 
     app->renderer_->triggerFramebufferResized();
+    app->stage_->onWindowResize(glm::vec2(width, height));
 }
 
 void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
