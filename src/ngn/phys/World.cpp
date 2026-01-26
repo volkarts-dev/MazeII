@@ -9,7 +9,7 @@
 #include "Functions.hpp"
 #include "Math.hpp"
 #include "PhysComponents.hpp"
-#include "SATDetector.hpp"
+#include "CollisionTests.hpp"
 #include "Solver.hpp"
 #include <glm/gtx/norm.hpp>
 
@@ -74,11 +74,11 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
     registry_->emplace<TransformChangedTag>(entity);
 
     registry_->emplace<Body>(entity, Body{
-                                 .invMass = createInfo.invMass,
-                                 .friction = createInfo.friction,
-                                 .restitution = createInfo.restitution,
-                                 .sensor = createInfo.sensor,
-                             });
+        .invMass = createInfo.invMass,
+        .friction = createInfo.friction,
+        .restitution = createInfo.restitution,
+        .sensor = createInfo.sensor,
+    });
 
     const auto transformedShape = transformShape(entity, shape);
     registry_->emplace<Shape>(entity, transformedShape);
@@ -291,7 +291,7 @@ CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
         const auto& shapeB = registry_->get<Shape>(col.bodyB);
 
         Collision collision{.pair = col};
-        SATDetector::testCollision(collision, shapeA, shapeB);
+        testCollision(collision, shapeA, shapeB);
         if (collision.colliding)
         {
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
@@ -310,7 +310,7 @@ CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
 
 void World::solveCollisions(const CollisionList& collisions)
 {
-    Solver::resolveCollisions(registry_, collisions);
+    resolveCollisions(registry_, collisions);
 
     for (const auto& col : collisions)
     {

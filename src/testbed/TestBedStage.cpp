@@ -31,17 +31,6 @@ TestBedStage::TestBedStage(ngn::Application* app) :
     fontMaker.addFont(testbed::assets::liberation_mono_ttf(), 20);
     app_->uiRenderer()->setFontCollection(fontMaker.compile());
 
-
-
-
-
-
-
-
-
-
-    // TEMP
-
     auto* registry = app_->registry();
 
     walls_.reserve(6);
@@ -55,8 +44,8 @@ TestBedStage::TestBedStage(ngn::Application* app) :
         createInfo.invMass = 0;
         createInfo.dynamic = false;
         app_->world()->createBody(walls_.back(), createInfo, ngn::Shape{
-                                     ngn::Line{.start = {0, 0}, .end = end - start}
-                                 });
+            ngn::Line{.start = {0, 0}, .end = end - start}
+        });
     };
 
     createWall({10, 10}, {400, 10});
@@ -73,10 +62,10 @@ TestBedStage::TestBedStage(ngn::Application* app) :
     player_ = app_->createActor({400, 300});
 
     registry->emplace<ngn::Sprite>(player_, ngn::Sprite{
-                                        .texCoords = {0, 0, 64, 64},
-                                        .size{64, 64},
-                                        .texture = 1,
-                                    });
+        .texCoords = {0, 0, 64, 64},
+        .size{64, 64},
+        .texture = 1,
+    });
 
     createInfo.restitution = 1.5f;
     createInfo.invMass = 1.f / 10.f;
@@ -86,10 +75,10 @@ TestBedStage::TestBedStage(ngn::Application* app) :
     enemy_ = app_->createActor({600, 300});
 
     registry->emplace<ngn::Sprite>(enemy_, ngn::Sprite{
-                                        .texCoords = {0, 0, 64, 64},
-                                        .size{64, 64},
-                                        .texture = 1,
-                                    });
+        .texCoords = {0, 0, 64, 64},
+        .size{64, 64},
+        .texture = 1,
+    });
 
     createInfo.restitution = 1.5f;
     createInfo.invMass = 1.f / 1.f;
@@ -100,9 +89,8 @@ TestBedStage::TestBedStage(ngn::Application* app) :
 
     createInfo.restitution = 1.5f;
     createInfo.invMass = 0;
+    createInfo.useForce = false;
     app_->world()->createBody(obstacle_, createInfo, ngn::Shape{ngn::Capsule{.start = {0, -70}, .end = {0, 70}, .radius = 32}});
-
-    // /TEMP
 }
 
 TestBedStage::~TestBedStage()
@@ -117,6 +105,18 @@ void TestBedStage::onDeactivate()
 {
 }
 
+void TestBedStage::onWindowResize(const glm::vec2& windowSize)
+{
+    for (uint32_t i = 0; i < ngn::MaxFramesInFlight; i++)
+    {
+        app_->uiRenderer()->updateView(glm::lookAt(
+            glm::vec3{windowSize / 2.0f, 0.5f},
+            glm::vec3{windowSize / 2.0f, 0.0f},
+            glm::vec3{0.0f, 1.0f, 0.0f}
+        ), i);
+    }
+}
+
 void TestBedStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods)
 {
     NGN_UNUSED(mods);
@@ -127,19 +127,14 @@ void TestBedStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods m
 
 void TestBedStage::onUpdate(float deltaTime)
 {
+    NGN_UNUSED(deltaTime);
+
     app_->spriteRenderer()->updateView(
                 glm::lookAt(
                     glm::vec3(400.0f, 300.0f, 0.5f),
                     glm::vec3(400.0f, 300.0f, 0.0f),
                     glm::vec3(0.0f, 1.0f, 0.0f)
                 ));
-
-    app_->uiRenderer()->updateView(
-                glm::lookAt(
-                    glm::vec3(400.0f, 300.0f, 0.5f),
-                    glm::vec3(400.0f, 300.0f, 0.0f),
-                    glm::vec3(0.0f, 1.0f, 0.0f)
-                    ));
 
     // ****************************************************
 
@@ -165,12 +160,11 @@ void TestBedStage::onUpdate(float deltaTime)
     }
 
     // ****************************************************
-    auto obstacleRot = app_->registry()->get<ngn::Rotation>(obstacle_);
 
-    obstacleRot.angle += ngn::PI / 20.0f * deltaTime;
-    obstacleRot.update();
-
-    app_->registry()->emplace_or_replace<ngn::TransformChangedTag>(obstacle_);
+    {
+        auto& vel = app_->registry()->get<ngn::AngularVelocity>(obstacle_);
+        vel.value = 1000.0f * deltaTime;
+    }
 
     // ****************************************************
 
@@ -178,7 +172,7 @@ void TestBedStage::onUpdate(float deltaTime)
 
     // ****************************************************
 
-    app_->uiRenderer()->writeText(0, "Hello Maze ][", 400, 50);
+    app_->uiRenderer()->writeText(0, "Hello Maze ][", 40, 50);
 
     // ****************************************************
 

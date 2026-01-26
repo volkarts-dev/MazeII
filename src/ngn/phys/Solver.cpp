@@ -1,14 +1,15 @@
 // Copyright 2025, Daniel Volk <mail@volkarts.com>
 // SPDX-License-Identifier: MIT
 
-#include "CommonComponents.hpp"
 #include "Solver.hpp"
+
+#include "CommonComponents.hpp"
 #include "phys/PhysComponents.hpp"
 #include <entt/entt.hpp>
 
 namespace ngn {
 
-void Solver::resolveCollisions(entt::registry* registry, const CollisionList& collisions)
+void resolveCollisions(entt::registry* registry, const CollisionList& collisions)
 {
     for (const auto& col : collisions)
     {
@@ -16,7 +17,7 @@ void Solver::resolveCollisions(entt::registry* registry, const CollisionList& co
     }
 }
 
-void Solver::resolveCollision(entt::registry* registry, const Collision& collision)
+void resolveCollision(entt::registry* registry, const Collision& collision)
 {
     auto [bodyA, posA, velA] =
             registry->try_get<Body, Position, LinearVelocity>(collision.pair.bodyA);
@@ -51,9 +52,6 @@ void Solver::resolveCollision(entt::registry* registry, const Collision& collisi
     glm::vec2 correction = (collision.penetration / invMassSum) * percent * collision.direction;
     posA->value -= bodyA->invMass * correction;
     posB->value += bodyB->invMass * correction;
-
-    registry->emplace_or_replace<TransformChangedTag>(collision.pair.bodyA);
-    registry->emplace_or_replace<TransformChangedTag>(collision.pair.bodyB);
 }
 
 } // namespace ngn

@@ -5,7 +5,8 @@
 #pragma once
 
 #include "Shapes.hpp"
-#include "Functions.hpp"
+#include "phys/Functions.hpp"
+#include "phys/IntersectionTests.hpp"
 #include "utils/StaticVector.hpp"
 #include <entt/fwd.hpp>
 

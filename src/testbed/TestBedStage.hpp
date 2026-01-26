@@ -19,6 +19,7 @@ public:
     void onActivate() override;
     void onDeactivate() override;
 
+    void onWindowResize(const glm::vec2& windowSize) override;
     void onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods) override;
 
     void onUpdate(float deltaTime) override;

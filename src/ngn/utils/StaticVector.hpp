@@ -5,7 +5,7 @@
 
 namespace ngn {
 
-template<typename T, std::size_t Capacity>
+template<typename T, std::size_t Capacity, std::unsigned_integral SizeT = uint32_t>
 class StaticVector
 {
 public:
@@ -20,8 +20,8 @@ public:
     pointer data() { return data_; }
     const_pointer data() const { return data_; }
 
-    std::size_t capaciy() const { return Capacity; }
-    std::size_t size() const { return size_; }
+    SizeT capaciy() const { return Capacity; }
+    SizeT size() const { return size_; }
     bool empty() const { return size_ == 0; }
 
     iterator begin() { return data_; }
@@ -32,8 +32,8 @@ public:
     const_iterator end() const { return data_ + size_; }
     const_iterator cend() const { return data_ + size_; }
 
-    reference operator[](std::size_t index) { return at(index); }
-    const_reference operator[](std::size_t index) const { return at(index); }
+    reference operator[](SizeT index) { return at(index); }
+    const_reference operator[](SizeT index) const { return at(index); }
 
     reference front()
     {
@@ -58,13 +58,13 @@ public:
         return data_[size_ - 1];
     }
 
-    reference at(std::size_t index)
+    reference at(SizeT index)
     {
         assert(index < size_);
         return data_[index];
     }
 
-    const_reference at(std::size_t index) const
+    const_reference at(SizeT index) const
     {
         assert(index < size_);
         return data_[index];
@@ -88,7 +88,7 @@ public:
 
 private:
     T data_[Capacity];
-    std::size_t size_{};
+    SizeT size_{};
 };
 
 } // namespace ngn

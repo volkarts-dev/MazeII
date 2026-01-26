@@ -4,10 +4,12 @@
 #pragma once
 
 #include "Collision.hpp"
+#include "Shapes.hpp"
 
 namespace ngn {
 
-void resolveCollisions(entt::registry* registry, const CollisionList& collisions);
-void resolveCollision(entt::registry* registry, const Collision& collision);
+void testCollision(Collision& collision, const Shape& lhs, const Shape& rhs);
+
+// minDistance(const Shape& lhs, const Shape& rhs);
 
 } // namespace ngn
