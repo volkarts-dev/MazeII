@@ -165,10 +165,12 @@ void TestBedStage::onUpdate(float deltaTime)
     }
 
     // ****************************************************
-    auto [obstacleRot, obstacleTc] = app_->registry()->get<ngn::Rotation, ngn::TransformChanged>(obstacle_);
+    auto obstacleRot = app_->registry()->get<ngn::Rotation>(obstacle_);
 
-    obstacleRot.angle +=  ngn::PI / 20.0f * deltaTime;
-    obstacleTc.value = true;
+    obstacleRot.angle += ngn::PI / 20.0f * deltaTime;
+    obstacleRot.update();
+
+    app_->registry()->emplace_or_replace<ngn::TransformChangedTag>(obstacle_);
 
     // ****************************************************
 

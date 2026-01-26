@@ -28,6 +28,12 @@ public:
     uint32_t nodeId;
 };
 
+class LastPosition
+{
+public:
+    glm::vec2 value;
+};
+
 } // namespace
 
 World::World(Application* app) :
@@ -64,7 +70,8 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
     if (const auto* pos = registry_->try_get<Position>(entity); !pos)
         registry_->emplace<Position>(entity, glm::vec2{});
 
-    registry_->emplace<TransformChanged>(entity, true);
+    registry_->emplace<LastPosition>(entity);
+    registry_->emplace<TransformChangedTag>(entity);
 
     registry_->emplace<Body>(entity, Body{
                                  .invMass = createInfo.invMass,
@@ -174,28 +181,34 @@ void World::integrate(float deltaTime)
         force.value = 0.f;
     }
 
-    auto linVelocities = registry_->view<LinearVelocity, Position, TransformChanged, ActiveTag>();
-    for (auto [e, velocity, position, tc] : linVelocities.each())
+    auto linVelocities = registry_->view<LinearVelocity, Position, LastPosition, ActiveTag>();
+    for (auto [e, velocity, position, lastPosition] : linVelocities.each())
     {
         const auto newPos = position.value + velocity.value * deltaTime;
         if (newPos != position.value)
         {
-            tc.value = true;
+            lastPosition.value = position.value;
             position.value = newPos;
+
+            registry_->emplace_or_replace<TransformChangedTag>(e);
         }
     }
 
-    auto angVelocities = app_->registry()->view<AngularVelocity, Rotation, TransformChanged, ActiveTag>();
-    for (auto [e, velocity, rotation, tc] : angVelocities.each())
+    auto angVelocities = app_->registry()->view<AngularVelocity, Rotation, ActiveTag>();
+    for (auto [e, velocity, rotation] : angVelocities.each())
     {
+        bool changed = false;
         const auto newRot = rotation.angle + velocity.value * deltaTime;
         if (newRot != rotation.angle)
         {
-            tc.value = true;
+            changed = true;
             rotation.angle = newRot;
         }
-        if (tc.value)
+        if (changed)
+        {
             rotation.update();
+            registry_->emplace_or_replace<TransformChangedTag>(e);
+        }
     }
 }
 
@@ -203,21 +216,18 @@ MovedList World::updateTree()
 {
     MovedList moved{app_->createFrameAllocator<uint32_t>()};
 
-    auto view = registry_->view<Position, Rotation, Scale, TransformChanged, Body, Shape, NodeInfo, ActiveTag>();
-    for (auto [e, pos, rot, sca, tc, body, shape, nodeInfo] : view.each())
+    auto view = registry_->view<Position, Rotation, Scale, Body, Shape, NodeInfo, ActiveTag, TransformChangedTag>();
+    for (auto [e, pos, rot, sca, body, shape, nodeInfo] : view.each())
     {
-        if (tc.value)
-        {
-            shape = transform(nodeInfo.origShape, pos, rot, sca);
+        shape = transform(nodeInfo.origShape, pos, rot, sca);
 
-            dynamicTree_->updateObject(nodeInfo.nodeId, calculateAABB(shape));
+        dynamicTree_->updateObject(nodeInfo.nodeId, calculateAABB(shape));
 
-            // only dynamic bodies can move
-            if (registry_->all_of<LinearVelocity>(e))
-                moved.push_back(nodeInfo.nodeId);
-        }
+        // only dynamic bodies can move
+        if (registry_->all_of<LinearVelocity>(e))
+            moved.push_back(nodeInfo.nodeId);
 
-        tc.value = false;
+        registry_->remove<TransformChangedTag>(e);
     }
 
     return moved;

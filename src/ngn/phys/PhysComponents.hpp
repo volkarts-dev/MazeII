@@ -40,10 +40,8 @@ public:
     float value{};
 };
 
-class TransformChanged
+class TransformChangedTag
 {
-public:
-    bool value;
 };
 
 } // namespace

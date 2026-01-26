@@ -18,10 +18,10 @@ void Solver::resolveCollisions(entt::registry* registry, const CollisionList& co
 
 void Solver::resolveCollision(entt::registry* registry, const Collision& collision)
 {
-    auto [bodyA, posA, velA, tcA] =
-            registry->try_get<Body, Position, LinearVelocity, TransformChanged>(collision.pair.bodyA);
-    auto [bodyB, posB, velB, tcB] =
-            registry->try_get<Body, Position, LinearVelocity, TransformChanged>(collision.pair.bodyB);
+    auto [bodyA, posA, velA] =
+            registry->try_get<Body, Position, LinearVelocity>(collision.pair.bodyA);
+    auto [bodyB, posB, velB] =
+            registry->try_get<Body, Position, LinearVelocity>(collision.pair.bodyB);
 
     LinearVelocity nullVel{};
 
@@ -51,7 +51,9 @@ void Solver::resolveCollision(entt::registry* registry, const Collision& collisi
     glm::vec2 correction = (collision.penetration / invMassSum) * percent * collision.direction;
     posA->value -= bodyA->invMass * correction;
     posB->value += bodyB->invMass * correction;
-    tcA->value = tcB->value = true;
+
+    registry->emplace_or_replace<TransformChangedTag>(collision.pair.bodyA);
+    registry->emplace_or_replace<TransformChangedTag>(collision.pair.bodyB);
 }
 
 } // namespace ngn
