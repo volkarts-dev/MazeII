@@ -58,13 +58,7 @@ public:
     void walkTree(const Callback& callback) const;
 
     template<typename Callback>
-    void query(const Shape& shape, const Callback& callback) const
-    {
-        return query(calculateAABB(shape), callback);
-    }
-
-    template<typename PrimitiveT, typename Callback>
-    void query(const PrimitiveT& primitive, const Callback& callback) const;
+    void query(const AABB& aabb, const Callback& callback) const;
 
     const TreeNode& node(uint32_t index) const
     {
@@ -96,7 +90,7 @@ private:
     uint32_t firstLeafIndex_;
 };
 
-// **********************************************
+// ********************************************************
 
 template<typename Callback>
 void DynamicTree::walkTree(const Callback& callback) const
@@ -112,7 +106,8 @@ void DynamicTree::walkTree(const Callback& callback) const
 
         const TreeNode& node = nodes_[index];
 
-        callback(node);
+        if (!callback(node))
+            break;
 
         if (!node.isLeaf())
         {
@@ -122,8 +117,8 @@ void DynamicTree::walkTree(const Callback& callback) const
     }
 }
 
-template<typename PrimitiveT, typename Callback>
-void DynamicTree::query(const PrimitiveT& primitive, const Callback& callback) const
+template<typename Callback>
+void DynamicTree::query(const AABB& aabb, const Callback& callback) const
 {
     StaticVector<uint32_t, TreeQueryStackSize> stack;
 
@@ -136,11 +131,15 @@ void DynamicTree::query(const PrimitiveT& primitive, const Callback& callback) c
 
         const TreeNode& node = nodes_[index];
 
-        if (intersects(primitive, node.aabb))
+        if (intersects(aabb, node.aabb))
         {
             if (node.isLeaf())
             {
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
                 if (!callback(node.entity, node.aabb))
+#else
+                if (!callback(node.entity))
+#endif
                     return;
             }
             else

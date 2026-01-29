@@ -4,6 +4,8 @@
 
 #include "DynamicTree.hpp"
 
+#include <entt/entt.hpp>
+
 namespace ngn {
 
 DynamicTree::DynamicTree(entt::registry* registry) :

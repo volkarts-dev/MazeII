@@ -53,10 +53,10 @@ public:
 
     void update(float deltaTime);
 
-    template<typename ShapeT, typename Callback>
-    void query(const ShapeT& shape, const Callback& callback) const
+    template<typename Callback>
+    inline void query(const AABB& aabb, const Callback& callback) const
     {
-        dynamicTree_->query(shape, callback);
+        return dynamicTree_->query(aabb, callback);
     }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
