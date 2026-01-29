@@ -245,11 +245,11 @@ CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
         removeDebugState(node.entity);
 #endif
 
-        auto callback = [&collisionPairs, &node
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-                , this
+        auto callback = [&collisionPairs, &node, this](entt::entity entity, const AABB& aabb)
+#else
+        auto callback = [&collisionPairs, &node](entt::entity entity)
 #endif
-                ](entt::entity entity, const AABB& aabb)
         {
             NGN_UNUSED(aabb);
 
@@ -379,6 +379,7 @@ void World::debugDrawState(DebugRenderer* debugRenderer, bool shapes, bool bound
         {
             if (node.isLeaf() || tree)
                 debugRenderer->drawAABB(node.aabb.topLeft, node.aabb.bottomRight, {1, 0, 1, 0.3});
+            return true;
         });
     }
 
