@@ -295,8 +295,6 @@ CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
             debugCollisions_.insert_or_assign(col, collision);
 #endif
 
-            collisionSignal_.publish(collision);
-
             if (!registry_->get<Body>(col.bodyA).sensor && !registry_->get<Body>(col.bodyB).sensor)
                 collisions.push_back(std::move(collision));
         }
