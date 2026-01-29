@@ -1,0 +1,14 @@
+// Copyright 2026, Daniel Volk <mail@volkarts.com>
+// SPDX-License-Identifier: MIT
+
+#pragma once
+
+// IWYU pragma: begin_exports
+
+#include "Logging.hpp"
+#include <glm/glm.hpp>
+#include <cstdint>
+#include <limits>
+#include <chrono>
+
+// IWYU pragma: end_exports
