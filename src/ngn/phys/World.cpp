@@ -140,73 +140,70 @@ void World::integrate(float deltaTime)
 {
     NGN_INSTRUMENT_FUNCTION();
 
-    auto linForces = registry_->view<LinearForce, LinearVelocity, const Body, ActiveTag>();
-    for (auto [e, force, velocity, body] : linForces.each())
+    auto linForces = registry_->view<
+            LinearForce,
+            LinearVelocity,
+            Position,
+            LastPosition,
+            AngularForce,
+            AngularVelocity,
+            Rotation,
+            const Body,
+            ActiveTag>();
+    for (auto [e, linForce, linVelocity, position, lastPosition, angForce, angVelocity, rotation, body] : linForces.each())
     {
-        force.value += config_.gravity;
+        // add world forces
+        linForce.value += config_.gravity;
 
-        const auto veloLen2 = glm::length2(velocity.value);
-        if (veloLen2 > 100.f)
+        // integrate linear velocity
+        const auto linVelocityLen2 = glm::length2(linVelocity.value);
+        if (linVelocityLen2 > 100.f)
         {
-            const auto veloLen = glm::sqrt(veloLen2);
-            const auto resistance = 0.5f * veloLen2 * config_.linearDamping * body.friction * 0.5f;
-            force.value += -velocity.value / veloLen * resistance;
+            const auto linVelocityLen = glm::sqrt(linVelocityLen2);
+            const auto resistance = 0.5f * linVelocityLen2 * config_.linearDamping * body.friction * 0.5f;
+            linForce.value += -linVelocity.value / linVelocityLen * resistance;
         }
-        else if (nearZero(force.value))
+        else if (nearZero(linForce.value))
         {
-            velocity.value = {};
-        }
-
-        velocity.value += force.value * deltaTime;
-
-        force.value = {};
-    }
-
-    auto angForces = registry_->view<AngularForce, AngularVelocity, const Body, ActiveTag>();
-    for (auto [e, force, velocity, body] : angForces.each())
-    {
-        const auto veloLen = velocity.value;
-        const auto veloLen2 = veloLen * veloLen;
-        if (veloLen2 > 2.f)
-        {
-            const auto resistance = 0.5f * veloLen2 * config_.angularDamping * body.friction * 10.0f;
-            force.value += -glm::sign(veloLen) * resistance;
-        }
-        else if (nearZero(force.value))
-        {
-            velocity.value = {};
+            linVelocity.value = {};
         }
 
-        velocity.value += force.value * deltaTime;
-        force.value = 0.f;
-    }
+        linVelocity.value += linForce.value * deltaTime;
 
-    auto linVelocities = registry_->view<LinearVelocity, Position, LastPosition, ActiveTag>();
-    for (auto [e, velocity, position, lastPosition] : linVelocities.each())
-    {
-        const auto newPos = position.value + velocity.value * deltaTime;
-        if (newPos != position.value)
+        // integrate position
+        const auto newPosition = position.value + linVelocity.value * deltaTime;
+        if (newPosition != position.value)
         {
             lastPosition.value = position.value;
-            position.value = newPos;
+            position.value = newPosition;
 
             registry_->emplace_or_replace<TransformChangedTag>(e);
         }
-    }
 
-    auto angVelocities = app_->registry()->view<AngularVelocity, Rotation, ActiveTag>();
-    for (auto [e, velocity, rotation] : angVelocities.each())
-    {
-        bool changed = false;
-        const auto newRot = rotation.angle + velocity.value * deltaTime;
-        if (newRot != rotation.angle)
+        linForce.value = {};
+
+        // integrate angular velocity
+        const auto angVelocityLen2 = angVelocity.value * angVelocity.value;
+        if (angVelocityLen2 > 2.f)
         {
-            changed = true;
-            rotation.angle = newRot;
+            const auto resistance = 0.5f * angVelocityLen2 * config_.angularDamping * body.friction * 10.0f;
+            angForce.value += -glm::sign(angVelocity.value) * resistance;
         }
-        if (changed)
+        else if (nearZero(angForce.value))
         {
+            angVelocity.value = {};
+        }
+
+        angVelocity.value += angForce.value * deltaTime;
+        angForce.value = 0.f;
+
+        // integrate rotation
+        const auto newRotation = rotation.angle + angVelocity.value * deltaTime;
+        if (newRotation != rotation.angle)
+        {
+            rotation.angle = newRotation;
             rotation.update();
+
             registry_->emplace_or_replace<TransformChangedTag>(e);
         }
     }
