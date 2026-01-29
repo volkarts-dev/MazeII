@@ -58,6 +58,8 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
 {
     if (createInfo.dynamic)
     {
+        assert(!createInfo.fastMoving || shape.type == Shape::Type::Circle);
+
         if (createInfo.useForce)
         {
             registry_->emplace<LinearForce>(entity);
@@ -78,6 +80,7 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
         .friction = createInfo.friction,
         .restitution = createInfo.restitution,
         .sensor = createInfo.sensor,
+        .fastMoving = createInfo.fastMoving,
     });
 
     const auto transformedShape = transformShape(entity, shape);
@@ -213,10 +216,31 @@ MovedList World::updateTree()
 {
     MovedList moved{app_->createFrameAllocator<uint32_t>()};
 
-    auto view = registry_->view<Position, Rotation, Scale, Body, Shape, NodeInfo, ActiveTag, TransformChangedTag>();
-    for (auto [e, pos, rot, sca, body, shape, nodeInfo] : view.each())
+    auto view = registry_->view<
+            const Position,
+            const Rotation,
+            const Scale,
+            const LinearVelocity,
+            const Body,
+            Shape,
+            NodeInfo,
+            ActiveTag,
+            TransformChangedTag>();
+    for (auto [e, pos, rot, sca, vel, body, shape, nodeInfo] : view.each())
     {
-        shape = transform(nodeInfo.origShape, pos, rot, sca);
+        if (body.fastMoving)
+        {
+            const auto tCircle = transform(shape, pos, rot, sca).circle;
+            shape = Shape{Capsule{
+                .start = tCircle.center,
+                .end = tCircle.center + vel.value,
+                .radius = tCircle.radius,
+            }};
+        }
+        else
+        {
+            shape = transform(nodeInfo.origShape, pos, rot, sca);
+        }
 
         dynamicTree_->updateObject(nodeInfo.nodeId, calculateAABB(shape));
 
@@ -284,11 +308,17 @@ CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
 
     for (const auto& col : collisionPairs)
     {
+        // HINT
+        // Fast moving bodies would need a special handling of collision
+        // detection and solving. But since actually only shots are fast
+        // moving, correct solving is not needed as they hit something.
+
         const auto& shapeA = registry_->get<Shape>(col.bodyA);
         const auto& shapeB = registry_->get<Shape>(col.bodyB);
 
         Collision collision{.pair = col};
         testCollision(collision, shapeA, shapeB);
+
         if (collision.colliding)
         {
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)

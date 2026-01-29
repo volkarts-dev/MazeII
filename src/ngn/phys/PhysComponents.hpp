@@ -14,6 +14,7 @@ public:
     float friction;
     float restitution;
     bool sensor;
+    bool fastMoving;
 };
 
 class LinearForce
