@@ -8,12 +8,17 @@
 namespace ngn {
 
 class AABB;
+class Circle;
+class Capsule;
 class Line;
 class Position;
 class Rotation;
 class Scale;
 class Shape;
 
+AABB calculateAABB(const Circle& circle);
+AABB calculateAABB(const Capsule& capsule);
+AABB calculateAABB(const Line& line);
 AABB calculateAABB(const Shape& shape);
 bool contains(const AABB& lhs, const AABB& rhs);
 AABB combine(const AABB& one, const AABB& two);

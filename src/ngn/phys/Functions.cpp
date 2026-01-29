@@ -55,6 +55,30 @@ inline Shape transformIntern(Shape shape, Trans&&... trans)
 
 } // namespace
 
+AABB calculateAABB(const Circle& circle)
+{
+    return {
+        .topLeft = circle.center - circle.radius,
+        .bottomRight = circle.center + circle.radius,
+    };
+}
+
+AABB calculateAABB(const Capsule& capsule)
+{
+    return {
+        .topLeft = glm::min(capsule.start, capsule.end) - capsule.radius,
+        .bottomRight = glm::max(capsule.start, capsule.end) + capsule.radius,
+    };
+}
+
+AABB calculateAABB(const Line& line)
+{
+    return {
+        .topLeft = glm::min(line.start, line.end),
+        .bottomRight = glm::max(line.start, line.end),
+    };
+}
+
 AABB calculateAABB(const Shape& shape)
 {
     AABB aabb;
@@ -64,28 +88,13 @@ AABB calculateAABB(const Shape& shape)
         using enum Shape::Type;
 
         case Circle:
-        {
-            auto& c = shape.circle;
-            aabb.topLeft = c.center - c.radius;
-            aabb.bottomRight = c.center + c.radius;
-            break;
-        }
+            return calculateAABB(shape.circle);
 
         case Capsule:
-        {
-            auto& c = shape.capsule;
-            aabb.topLeft = {glm::min(c.start.x, c.end.x) - c.radius, glm::min(c.start.y, c.end.y) - c.radius};
-            aabb.bottomRight = {glm::max(c.start.x, c.end.x) + c.radius, glm::max(c.start.y, c.end.y) + c.radius};
-            break;
-        }
+            return calculateAABB(shape.capsule);
 
         case Line:
-        {
-            auto& l = shape.line;
-            aabb.topLeft = {glm::min(l.start.x, l.end.x), glm::min(l.start.y, l.end.y)};
-            aabb.bottomRight = {glm::max(l.start.x, l.end.x), glm::max(l.start.y, l.end.y)};
-            break;
-        }
+            return calculateAABB(shape.line);
 
         case Invalid:
             break;

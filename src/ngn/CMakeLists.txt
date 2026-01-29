@@ -18,11 +18,10 @@ add_library(ngn STATIC
     gfx/Uniforms.hpp
 
     phys/Collision.hpp
+    phys/CollisionTests.hpp phys/CollisionTests.cpp
     phys/DynamicTree.hpp phys/DynamicTree.cpp
     phys/Functions.hpp phys/Functions.cpp
-    phys/IntersectionTests.hpp phys/IntersectionTests.cpp
     phys/PhysComponents.hpp
-    phys/CollisionTests.hpp phys/CollisionTests.cpp
     phys/Shapes.hpp phys/Shapes.cpp
     phys/Solver.hpp phys/Solver.cpp
     phys/World.hpp phys/World.cpp
