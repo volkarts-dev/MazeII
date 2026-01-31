@@ -19,6 +19,7 @@ target_assets(testbed
         "${CMAKE_CURRENT_BINARY_DIR}/assets"
     ASSET_FILES
         assets/player.png
+        assets/barriers.png
         assets/liberation-mono.ttf
         assets/liberation-sans.ttf
 )

@@ -12,6 +12,8 @@ add_library(ngn STATIC
     gfx/Image.hpp gfx/Image.cpp
     gfx/Pipeline.hpp gfx/Pipeline.cpp
     gfx/Renderer.hpp gfx/Renderer.cpp
+    gfx/SpriteAnimation.hpp
+    gfx/SpriteAnimator.hpp gfx/SpriteAnimator.cpp
     gfx/SpritePipeline.cpp gfx/SpritePipeline.hpp
     gfx/SpriteRenderer.hpp gfx/SpriteRenderer.cpp
     gfx/UiRenderer.hpp gfx/UiRenderer.cpp

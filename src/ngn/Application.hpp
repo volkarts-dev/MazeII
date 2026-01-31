@@ -16,10 +16,11 @@ namespace ngn {
 
 class Application;
 class Audio;
-class UiRenderer;
 class FontMaker;
 class MemoryArena;
 class SpriteRenderer;
+class SpriteAnimator;
+class UiRenderer;
 class World;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
@@ -95,6 +96,7 @@ public:
     World* world() const { return world_; }
 
     SpriteRenderer* spriteRenderer() const { return spriteRenderer_; }
+    SpriteAnimator* spriteAnimationHandler() const { return spriteAnimationHandler_; }
     UiRenderer* uiRenderer() const { return uiRenderer_; }
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer() const { return debugRenderer_; }
@@ -116,7 +118,6 @@ public:
     bool isKeyUp(int key) const;
 
     int exec();
-
 private:
     void update(float deltaTime);
     void draw(float deltaTime);
@@ -131,6 +132,7 @@ private:
     MemoryArena* frameMemoryArena_;
 
     SpriteRenderer* spriteRenderer_;
+    SpriteAnimator* spriteAnimationHandler_;
     UiRenderer* uiRenderer_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)

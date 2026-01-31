@@ -30,4 +30,5 @@ private:
     entt::entity player_;
     entt::entity enemy_;
     entt::entity obstacle_;
+    entt::entity animation_;
 };

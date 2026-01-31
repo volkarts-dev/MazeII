@@ -3,7 +3,7 @@
 
 #include "TestBedStage.hpp"
 
-#include "Math.hpp"
+#include "gfx/SpriteAnimator.hpp"
 #include "phys/Functions.hpp"
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
@@ -25,7 +25,10 @@
 TestBedStage::TestBedStage(ngn::Application* app) :
     app_{app}
 {
-    app_->spriteRenderer()->addImages({{testbed::assets::player_png()}});
+    app_->spriteRenderer()->addImages({{
+        testbed::assets::player_png(),
+        testbed::assets::barriers_png(),
+    }});
 
     ngn::FontMaker fontMaker{app_->renderer(), 256};
     fontMaker.addFont(testbed::assets::liberation_mono_ttf(), 20);
@@ -91,6 +94,29 @@ TestBedStage::TestBedStage(ngn::Application* app) :
     createInfo.invMass = 0;
     createInfo.useForce = false;
     app_->world()->createBody(obstacle_, createInfo, ngn::Shape{ngn::Capsule{.start = {0, -70}, .end = {0, 70}, .radius = 32}});
+
+
+    animation_ = registry->create();
+    registry->emplace<ngn::ActiveTag>(animation_);
+
+    registry->emplace<ngn::Position>(animation_, glm::vec2{100, 100});
+
+    registry->emplace<ngn::Sprite>(animation_, ngn::Sprite{
+        .texCoords = {0, 0, 64, 64},
+        .size{64, 64},
+        .texture = 1,
+    });
+
+    ngn::SpriteAnimationBuilder animationBuilder{};
+    animationBuilder
+            .addFrame(glm::vec4{0, 0, 67, 67}, 2, 1.0f)
+            .addFrame(glm::vec4{68, 0, 135,  67}, 2, 1.0f)
+            .addFrame(glm::vec4{0, 68, 67, 135}, 2, 1.0f)
+            .addFrame(glm::vec4{68, 68, 135, 135}, 2, 1.0f)
+            .setRepeat(true)
+            .setStart(true)
+            ;
+    app_->spriteAnimationHandler()->createAnimation(animation_, animationBuilder);
 }
 
 TestBedStage::~TestBedStage()

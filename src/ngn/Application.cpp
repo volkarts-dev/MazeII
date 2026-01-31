@@ -10,6 +10,7 @@
 #include "gfx/FontMaker.hpp"
 #include "gfx/UiRenderer.hpp"
 #include "gfx/Pipeline.hpp"
+#include "gfx/SpriteAnimator.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "gfx/Renderer.hpp"
 #include "phys/World.hpp"
@@ -47,6 +48,7 @@ Application::Application(ApplicationDelegate* delegate) :
     renderer_{},
     frameMemoryArena_{},
     spriteRenderer_{},
+    spriteAnimationHandler_{},
     uiRenderer_{},
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     debugRenderer_{},
@@ -90,6 +92,8 @@ Application::Application(ApplicationDelegate* delegate) :
     if (config.spriteRenderer)
     {
         spriteRenderer_ = new SpriteRenderer{renderer_, config.spriteBatchCount};
+
+        spriteAnimationHandler_ = new SpriteAnimator{registry_};
     }
 
     if (config.fontRenderer)
@@ -132,6 +136,8 @@ Application::~Application()
 #endif
 
     delete uiRenderer_;
+
+    delete spriteAnimationHandler_;
 
     delete spriteRenderer_;
 
@@ -267,6 +273,9 @@ void Application::update(float deltaTime)
     stage_->onUpdate(deltaTime);
 
     world_->update(deltaTime);
+
+    if (spriteAnimationHandler_)
+        spriteAnimationHandler_->update(deltaTime);
 }
 
 void Application::draw(float deltaTime)
