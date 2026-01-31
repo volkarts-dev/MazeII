@@ -52,6 +52,9 @@ void resolveCollision(entt::registry* registry, const Collision& collision)
     glm::vec2 correction = (collision.penetration / invMassSum) * percent * collision.direction;
     posA->value -= bodyA->invMass * correction;
     posB->value += bodyB->invMass * correction;
+
+    registry->emplace_or_replace<TransformChangedTag>(collision.pair.bodyA);
+    registry->emplace_or_replace<TransformChangedTag>(collision.pair.bodyB);
 }
 
 } // namespace ngn

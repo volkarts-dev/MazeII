@@ -144,34 +144,38 @@ void World::integrate(float deltaTime)
     NGN_INSTRUMENT_FUNCTION();
 
     auto linForces = registry_->view<
-            LinearForce,
             LinearVelocity,
             Position,
             LastPosition,
-            AngularForce,
             AngularVelocity,
             Rotation,
             const Body,
             ActiveTag>();
-    for (auto [e, linForce, linVelocity, position, lastPosition, angForce, angVelocity, rotation, body] : linForces.each())
+    for (auto [e, linVelocity, position, lastPosition, angVelocity, rotation, body] : linForces.each())
     {
-        // add world forces
-        linForce.value += config_.gravity;
-
-        // integrate linear velocity
-        const auto linVelocityLen2 = glm::length2(linVelocity.value);
-        if (linVelocityLen2 > 100.f)
+        auto* linForce = registry_->try_get<LinearForce>(e);
+        if (linForce)
         {
-            const auto linVelocityLen = glm::sqrt(linVelocityLen2);
-            const auto resistance = 0.5f * linVelocityLen2 * config_.linearDamping * body.friction * 0.5f;
-            linForce.value += -linVelocity.value / linVelocityLen * resistance;
-        }
-        else if (nearZero(linForce.value))
-        {
-            linVelocity.value = {};
-        }
+            // add world forces
+            linForce->value += config_.gravity;
 
-        linVelocity.value += linForce.value * deltaTime;
+            // integrate linear velocity
+            const auto linVelocityLen2 = glm::length2(linVelocity.value);
+            if (linVelocityLen2 > 100.f)
+            {
+                const auto linVelocityLen = glm::sqrt(linVelocityLen2);
+                const auto resistance = 0.5f * linVelocityLen2 * config_.linearDamping * body.friction * 0.5f;
+                linForce->value += -linVelocity.value / linVelocityLen * resistance;
+            }
+            else if (nearZero(linForce->value))
+            {
+                linVelocity.value = {};
+            }
+
+            linVelocity.value += linForce->value * deltaTime;
+
+            linForce->value = {};
+        }
 
         // integrate position
         const auto newPosition = position.value + linVelocity.value * deltaTime;
@@ -183,22 +187,26 @@ void World::integrate(float deltaTime)
             registry_->emplace_or_replace<TransformChangedTag>(e);
         }
 
-        linForce.value = {};
 
-        // integrate angular velocity
-        const auto angVelocityLen2 = angVelocity.value * angVelocity.value;
-        if (angVelocityLen2 > 2.f)
+        auto* angForce = registry_->try_get<AngularForce>(e);
+        if (angForce)
         {
-            const auto resistance = 0.5f * angVelocityLen2 * config_.angularDamping * body.friction * 10.0f;
-            angForce.value += -glm::sign(angVelocity.value) * resistance;
-        }
-        else if (nearZero(angForce.value))
-        {
-            angVelocity.value = {};
-        }
+            // integrate angular velocity
+            const auto angVelocityLen2 = angVelocity.value * angVelocity.value;
+            if (angVelocityLen2 > 2.f)
+            {
+                const auto resistance = 0.5f * angVelocityLen2 * config_.angularDamping * body.friction * 10.0f;
+                angForce->value += -glm::sign(angVelocity.value) * resistance;
+            }
+            else if (nearZero(angForce->value))
+            {
+                angVelocity.value = {};
+            }
 
-        angVelocity.value += angForce.value * deltaTime;
-        angForce.value = 0.f;
+            angVelocity.value += angForce->value * deltaTime;
+
+            angForce->value = 0.f;
+        }
 
         // integrate rotation
         const auto newRotation = rotation.angle + angVelocity.value * deltaTime;
@@ -220,16 +228,16 @@ MovedList World::updateTree()
             const Position,
             const Rotation,
             const Scale,
-            const LinearVelocity,
             const Body,
             Shape,
             NodeInfo,
             ActiveTag,
             TransformChangedTag>();
-    for (auto [e, pos, rot, sca, vel, body, shape, nodeInfo] : view.each())
+    for (auto [e, pos, rot, sca, body, shape, nodeInfo] : view.each())
     {
         if (body.fastMoving)
         {
+            const auto& vel = registry_->get<LinearVelocity>(e);
             const auto tCircle = transform(shape, pos, rot, sca).circle;
             shape = Shape{Capsule{
                 .start = tCircle.center,

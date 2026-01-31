@@ -201,7 +201,7 @@ void SpriteRenderer::renderSpriteComponents(entt::registry* registry)
 
     auto& batch = batches_[renderer_->currentFrame()];
 
-    auto sprites = registry->view<const Position, const Sprite, const ActiveTag>();
+    auto sprites = registry->view<const Position, const Sprite, ActiveTag>();
     for (auto [e, pos, spr] : sprites.each())
     {
         assert(batch.count < batch.buffer->size() / sizeof(SpriteVertex));
