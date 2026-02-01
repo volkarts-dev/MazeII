@@ -67,11 +67,13 @@ void SpriteAnimator::startAnimation(entt::entity entity)
 {
     auto& info = registry_->get<SpriteAnimationInfo>(entity);
     registry_->emplace<SpriteAnimation>(entity, 0, frames_[info.framesStart].time);
+    registry_->emplace<ngn::ActiveTag>(entity);
     updateSprite(entity, info.framesStart);
 }
 
 void SpriteAnimator::stopAnimation(entt::entity entity)
 {
+    registry_->remove<ActiveTag>(entity);
     registry_->remove<SpriteAnimation>(entity);
 }
 
@@ -114,6 +116,10 @@ void SpriteAnimator::updateSprite(entt::entity entity, uint32_t frame)
     auto& sprite = registry_->get<Sprite>(entity);
     sprite.texCoords = frames_[frame].texCoords;
     sprite.texture = frames_[frame].texture;
+    sprite.size = {
+        sprite.texCoords.z - sprite.texCoords.x + 1,
+        sprite.texCoords.w - sprite.texCoords.y + 1,
+    };
 }
 
 } // namespace ngn
