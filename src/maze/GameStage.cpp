@@ -223,6 +223,26 @@ void GameStage::handlePlayerInput(float deltaTime)
         auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(playerGameState_.entity);
         force.value += rot.dir * 2000.f;
     }
+    if (app_->isKeyDown(GLFW_KEY_W))
+    {
+        auto& force = registry_->get<ngn::LinearForce>(playerGameState_.entity);
+        force.value += glm::vec2{0, -2000.f};
+    }
+    if (app_->isKeyDown(GLFW_KEY_S))
+    {
+        auto& force = registry_->get<ngn::LinearForce>(playerGameState_.entity);
+        force.value += glm::vec2{0, 2000.f};
+    }
+    if (app_->isKeyDown(GLFW_KEY_A))
+    {
+        auto& force = registry_->get<ngn::LinearForce>(playerGameState_.entity);
+        force.value += glm::vec2{-2000.f, 0};
+    }
+    if (app_->isKeyDown(GLFW_KEY_D))
+    {
+        auto& force = registry_->get<ngn::LinearForce>(playerGameState_.entity);
+        force.value += glm::vec2{2000.f, 0};
+    }
 
     // ****************************************************
 
