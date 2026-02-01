@@ -1,7 +1,7 @@
 // Copyright 2026, Daniel Volk <mail@volkarts.com>
 // SPDX-License-Identifier: MIT
 
-#include "ShotsHandler.hpp"
+#include "Shots.hpp"
 
 #include "Application.hpp"
 #include "GameStage.hpp"
@@ -10,15 +10,15 @@
 #include "audio/Sound.hpp"
 #include "phys/PhysComponents.hpp"
 
-ShotsHandler::ShotsHandler(GameStage* gameStage) :
+Shots::Shots(GameStage* gameStage) :
     gameStage_{gameStage},
     registry_{gameStage_->app()->registry()},
     world_{gameStage_->app()->world()}
 {
-    collisionCallback_ = world_->addCollisionListener<&ShotsHandler::handleCollion>(this);
+    collisionCallback_ = world_->addCollisionListener<&Shots::handleCollion>(this);
 }
 
-ShotsHandler::~ShotsHandler()
+Shots::~Shots()
 {
     auto view = registry_->view<ShotTag>();
     registry_->destroy(view.begin(), view.end());
@@ -26,7 +26,7 @@ ShotsHandler::~ShotsHandler()
     collisionCallback_.release();
 }
 
-void ShotsHandler::fireLaser(const glm::vec2& position, float rotation, bool player)
+void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
 {
     entt::entity entity{};
 
@@ -86,7 +86,7 @@ void ShotsHandler::fireLaser(const glm::vec2& position, float rotation, bool pla
     registry_->emplace_or_replace<ngn::TransformChangedTag>(entity);
 }
 
-void ShotsHandler::update(float deltaTime)
+void Shots::update(float deltaTime)
 {
     NGN_UNUSED(deltaTime);
 
@@ -97,7 +97,7 @@ void ShotsHandler::update(float deltaTime)
     }
 }
 
-void ShotsHandler::handleCollion(const ngn::Collision& collision)
+void Shots::handleCollion(const ngn::Collision& collision)
 {
     const auto shotA = registry_->any_of<ShotTag>(collision.pair.bodyA);
     const auto shotB = registry_->any_of<ShotTag>(collision.pair.bodyB);

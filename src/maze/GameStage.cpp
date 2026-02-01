@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 #include "GameStage.hpp"
-#include "EnemyHandler.hpp"
+#include "Enemies.hpp"
+#include "Explosions.hpp"
 #include "Level.hpp"
 #include "MazeComponents.hpp"
 #include "MazeDelegate.hpp"
-#include "ShotsHandler.hpp"
+#include "Shots.hpp"
 #include "gfx/UiRenderer.hpp"
 #include "gfx/GFXComponents.hpp"
 #include "gfx/SpriteRenderer.hpp"
@@ -24,8 +25,8 @@ GameStage::GameStage(MazeDelegate* delegate) :
     app_{delegate_->app()},
     registry_{app_->registry()},
     level_{},
-    enemyHandler_{},
-    shotsHandler_{}
+    enemies_{},
+    shots_{}
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     ,debugShowBodies_{false}
     ,debugShowBoundingBoxes_{false}
@@ -65,17 +66,21 @@ void GameStage::onActivate()
     playerGameState_.entity = createActor(createInfo);
     registry_->emplace<PlayerTag>(playerGameState_.entity);
 
-    enemyHandler_ = new EnemyHandler{this};
-    enemyHandler_->createEnemy({352, 352}, 0.0f);
+    enemies_ = new Enemies{this};
+    enemies_->createEnemy({352, 352}, 0.0f);
 
-    shotsHandler_ = new ShotsHandler{this};
+    shots_ = new Shots{this};
+
+    explosions_ = new Explosions{this};
 }
 
 void GameStage::onDeactivate()
 {
-    delete shotsHandler_;
+    delete explosions_;
 
-    delete enemyHandler_;
+    delete shots_;
+
+    delete enemies_;
 
     delete level_;
 
@@ -119,11 +124,11 @@ void GameStage::onUpdate(float deltaTime)
 
     // ****************************************************
 
-    enemyHandler_->update(deltaTime);
+    enemies_->update(deltaTime);
 
     // ****************************************************
 
-    shotsHandler_->update(deltaTime);
+    shots_->update(deltaTime);
 
     // ****************************************************
 
@@ -168,12 +173,11 @@ entt::entity GameStage::createActor(const ActorCreateInfo& createInfo)
 
 void GameStage::killEnemy(entt::entity enemy)
 {
-    auto [pos, rot] = registry_->get<ngn::Position, ngn::Rotation>(enemy);
-    pos.value = {352, 352};
-    rot.angle = 0.0f;
-    rot.update();
+    const auto& pos = registry_->get<const ngn::Position>(enemy);
 
-    registry_->emplace_or_replace<ngn::TransformChangedTag>(enemy);
+    explosions_->showExplosion(pos.value, Explosions::Type::One);
+
+    enemies_->killEnemy(enemy);
 }
 
 void GameStage::handlePlayerInputEvents(ngn::InputAction action, int key, ngn::InputMods mods)
@@ -228,7 +232,7 @@ void GameStage::handlePlayerInput(float deltaTime)
         {
             auto [pos, rot] = registry_->get<const ngn::Position, const ngn::Rotation>(playerGameState_.entity);
             const auto start = pos.value - rot.dir * 20.0f;
-            shotsHandler_->fireLaser(start, rot.angle, true);
+            shots_->fireLaser(start, rot.angle, true);
         }
     }
 }

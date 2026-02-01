@@ -70,4 +70,5 @@ void MazeDelegate::loadAssets(ngn::Application* app)
 
     resources_.playerShotSoundData = app->audio()->loadOGG(maze::assets::shoot_ogg());
     resources_.enemyShotSoundData = app->audio()->loadOGG(maze::assets::enemy_shoot_ogg());
+    resources_.explosionSoundData = app->audio()->loadOGG(maze::assets::explode_ogg());
 }

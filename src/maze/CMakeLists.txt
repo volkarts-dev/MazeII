@@ -1,5 +1,6 @@
 add_executable(maze
-    EnemyHandler.hpp EnemyHandler.cpp
+    Enemies.hpp Enemies.cpp
+    Explosions.hpp Explosons.cpp
     GameStage.hpp GameStage.cpp
     Level.hpp Level.cpp
     Main.cpp
@@ -7,7 +8,7 @@ add_executable(maze
     MazeComponents.hpp
     MazeDelegate.hpp MazeDelegate.cpp
     Pch.hpp
-    ShotsHandler.hpp ShotsHandler.cpp
+    Shots.hpp Shots.cpp
 )
 
 target_include_directories(maze PRIVATE . ${CMAKE_CURRENT_BINARY_DIR})

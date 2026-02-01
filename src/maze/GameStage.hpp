@@ -9,12 +9,13 @@
 #include "phys/World.hpp"
 #include "Application.hpp"
 
-class EnemyHandler;
+class Enemies;
+class Explosions;
 class KeyboardHandler;
 class Level;
 class MazeDelegate;
 class Resources;
-class ShotsHandler;
+class Shots;
 
 class ActorCreateInfo
 {
@@ -66,8 +67,9 @@ private:
     ngn::Application* app_;
     entt::registry* registry_;
     Level* level_;
-    EnemyHandler* enemyHandler_;
-    ShotsHandler* shotsHandler_;
+    Enemies* enemies_;
+    Shots* shots_;
+    Explosions* explosions_;
 
     PlayerGameState playerGameState_;
 

@@ -29,3 +29,7 @@ class ShotInfo
 public:
     ActorType sourceType{};
 };
+
+class ExplosionTag
+{
+};

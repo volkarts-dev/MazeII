@@ -10,11 +10,11 @@
 
 class GameStage;
 
-class ShotsHandler
+class Shots
 {
 public:
-    ShotsHandler(GameStage* gameStage);
-    ~ShotsHandler();
+    Shots(GameStage* gameStage);
+    ~Shots();
 
     void fireLaser(const glm::vec2& position, float rotation, bool player);
 
@@ -28,5 +28,5 @@ private:
     ngn::World* world_;
     entt::connection collisionCallback_;
 
-    NGN_DISABLE_COPY_MOVE(ShotsHandler)
+    NGN_DISABLE_COPY_MOVE(Shots)
 };

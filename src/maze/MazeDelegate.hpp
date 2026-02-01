@@ -17,6 +17,7 @@ public:
     uint32_t textureAtlas;
     ngn::AudioBuffer* playerShotSoundData;
     ngn::AudioBuffer* enemyShotSoundData;
+    ngn::AudioBuffer* explosionSoundData;
 };
 
 class MazeDelegate : public ngn::ApplicationDelegate

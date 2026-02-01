@@ -15,13 +15,14 @@ class World;
 
 class GameStage;
 
-class EnemyHandler
+class Enemies
 {
 public:
-    EnemyHandler(GameStage* gameStage);
-    ~EnemyHandler();
+    Enemies(GameStage* gameStage);
+    ~Enemies();
 
     void createEnemy(glm::vec2 pos, float angle);
+    void killEnemy(entt::entity enemy);
 
     void update(float deltaTime);
 
@@ -48,5 +49,5 @@ private:
     ngn::World* world_;
     float updateTimer_;
 
-    NGN_DISABLE_COPY_MOVE(EnemyHandler)
+    NGN_DISABLE_COPY_MOVE(Enemies)
 };

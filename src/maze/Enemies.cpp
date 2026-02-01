@@ -1,7 +1,7 @@
 // Copyright 2026, Daniel Volk <mail@volkarts.com>
 // SPDX-License-Identifier: MIT
 
-#include "EnemyHandler.hpp"
+#include "Enemies.hpp"
 
 #include "gfx/GFXComponents.hpp"
 #include "phys/PhysComponents.hpp"
@@ -23,6 +23,12 @@ namespace {
 constexpr float linearForce = 500.0f;
 constexpr float UpdateTimeout = 0.0f;
 
+class RespornTimer
+{
+public:
+    float timeout;
+};
+
 glm::vec2 steeringSeek(const glm::vec2& pos, const glm::vec2& vel, const glm::vec2& target)
 {
     const auto desiredVel = glm::normalize(target - pos) * linearForce;
@@ -31,7 +37,7 @@ glm::vec2 steeringSeek(const glm::vec2& pos, const glm::vec2& vel, const glm::ve
 
 } // namespace
 
-EnemyHandler::EnemyHandler(GameStage* gameStage) :
+Enemies::Enemies(GameStage* gameStage) :
     gameStage_{gameStage},
     registry_{gameStage_->app()->registry()},
     world_{gameStage_->app()->world()},
@@ -39,13 +45,13 @@ EnemyHandler::EnemyHandler(GameStage* gameStage) :
 {
 }
 
-EnemyHandler::~EnemyHandler()
+Enemies::~Enemies()
 {
     auto view = registry_->view<EnemyTag>();
     registry_->destroy(view.begin(), view.end());
 }
 
-void EnemyHandler::createEnemy(glm::vec2 pos, float angle)
+void Enemies::createEnemy(glm::vec2 pos, float angle)
 {
     ActorCreateInfo createInfo{
         .position = pos,
@@ -67,8 +73,31 @@ void EnemyHandler::createEnemy(glm::vec2 pos, float angle)
     registry_->emplace<EnemyInfo>(enemy);
 }
 
-void EnemyHandler::update(float deltaTime)
+void Enemies::killEnemy(entt::entity enemy)
 {
+    registry_->remove<ngn::ActiveTag>(enemy);
+    registry_->emplace<RespornTimer>(enemy, 5.0f);
+}
+
+void Enemies::update(float deltaTime)
+{
+    auto respornView = registry_->view<RespornTimer>();
+    for (auto [e, timer] : respornView.each())
+    {
+        timer.timeout -= deltaTime;
+        if (timer.timeout <= 0.0f)
+        {
+            registry_->remove<RespornTimer>(e);
+            registry_->emplace<ngn::ActiveTag>(e);
+
+            auto [pos, rot] = registry_->get<ngn::Position, ngn::Rotation>(e);
+            pos.value = {352, 352};
+            rot.angle = 0.0f;
+            rot.update();
+            registry_->emplace_or_replace<ngn::TransformChangedTag>(e);
+        }
+    }
+
     bool doUpdateStep{}; // some things must not be done every frame
     updateTimer_ += deltaTime;
     if (updateTimer_ > UpdateTimeout)
@@ -133,7 +162,7 @@ void EnemyHandler::update(float deltaTime)
     }
 }
 
-bool EnemyHandler::testInSight(entt::entity player, entt::entity enemy, const ngn::Line& lineOfSight)
+bool Enemies::testInSight(entt::entity player, entt::entity enemy, const ngn::Line& lineOfSight)
 {
     const auto lineAABB = ngn::calculateAABB(lineOfSight);
     bool blocking = false;
