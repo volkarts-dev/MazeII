@@ -70,7 +70,6 @@ private:
     MovedList updateTree();
     CollisionPairSet findPossibleCollisions(const MovedList& moved);
     CollisionList findActualCollsions(const CollisionPairSet& collisionPairs);
-    void solveCollisions(const CollisionList& collisions);
 
 private:
     Application* app_;
@@ -79,7 +78,7 @@ private:
 
     WorldConfig config_;
 
-    entt::sigh<void(const Collision&)> collisionSignal_;
+    entt::sigh<void(const Collision&, bool sensor)> collisionSignal_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     struct AABBPair

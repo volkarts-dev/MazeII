@@ -99,7 +99,7 @@ void World::update(float deltaTime)
     const auto moved = updateTree();
     const auto possibleCollisions = findPossibleCollisions(moved);
     const auto collisions = findActualCollsions(possibleCollisions);
-    solveCollisions(collisions);
+    resolveCollisions(registry_, collisions);
 }
 
 Shape World::transformShape(entt::entity entity, const Shape& origShape)
@@ -333,22 +333,19 @@ CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
             debugCollisions_.insert_or_assign(col, collision);
 #endif
 
-            if (!registry_->get<Body>(col.bodyA).sensor && !registry_->get<Body>(col.bodyB).sensor)
+            const auto bodyA = registry_->get<const Body>(col.bodyA);
+            const auto bodyB = registry_->get<const Body>(col.bodyB);
+
+            const auto sensor = bodyA.sensor || bodyB.sensor;
+
+            collisionSignal_.publish(collision, sensor);
+
+            if (!sensor)
                 collisions.push_back(std::move(collision));
         }
     }
 
     return collisions;
-}
-
-void World::solveCollisions(const CollisionList& collisions)
-{
-    resolveCollisions(registry_, collisions);
-
-    for (const auto& col : collisions)
-    {
-        collisionSignal_.publish(col);
-    }
 }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
