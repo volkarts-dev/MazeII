@@ -20,7 +20,9 @@ include(SimdSupport)
 include(TargetAssets)
 
 # global compile options
-enable_ipo()
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    enable_ipo()
+endif()
 
 # compile options for own targets
 add_library(compile_options INTERFACE)
