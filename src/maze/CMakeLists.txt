@@ -29,6 +29,7 @@ target_assets(maze
         assets/boost.ogg
         assets/enemy-shoot.ogg
         assets/explode.ogg
+        assets/laser-hit-wall.ogg
         assets/liberation-mono.ttf
         assets/shoot.ogg
         assets/textures.png

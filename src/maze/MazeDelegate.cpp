@@ -10,7 +10,6 @@
 #include "GameStage.hpp"
 #include "MazeAssets.hpp"
 
-
 ngn::ApplicationConfig MazeDelegate::applicationConfig(ngn::Application* app)
 {
     NGN_UNUSED(app);
@@ -71,4 +70,5 @@ void MazeDelegate::loadAssets(ngn::Application* app)
     resources_.playerShotSoundData = app->audio()->loadOGG(maze::assets::shoot_ogg());
     resources_.enemyShotSoundData = app->audio()->loadOGG(maze::assets::enemy_shoot_ogg());
     resources_.explosionSoundData = app->audio()->loadOGG(maze::assets::explode_ogg());
+    resources_.laserHitWallSoundData = app->audio()->loadOGG(maze::assets::laser_hit_wall_ogg());
 }

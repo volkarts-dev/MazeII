@@ -18,6 +18,7 @@ public:
     ngn::AudioBuffer* playerShotSoundData;
     ngn::AudioBuffer* enemyShotSoundData;
     ngn::AudioBuffer* explosionSoundData;
+    ngn::AudioBuffer* laserHitWallSoundData;
 };
 
 class MazeDelegate : public ngn::ApplicationDelegate

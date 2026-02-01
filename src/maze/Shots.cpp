@@ -10,6 +10,18 @@
 #include "audio/Sound.hpp"
 #include "phys/PhysComponents.hpp"
 
+namespace {
+
+class ShotSound : public ngn::Sound
+{
+};
+
+class HitWallSound : public ngn::Sound
+{
+};
+
+} // namespace
+
 Shots::Shots(GameStage* gameStage) :
     gameStage_{gameStage},
     registry_{gameStage_->app()->registry()},
@@ -54,9 +66,12 @@ void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
         };
 
         entity = gameStage_->createActor(createInfo);
-        registry_->emplace<ngn::Sound>(entity);
+        registry_->emplace<ShotSound>(entity);
         registry_->emplace<ShotInfo>(entity);
         registry_->emplace<ShotTag>(entity);
+
+        auto& hitWallSound = registry_->emplace<HitWallSound>(entity);
+        hitWallSound.setBuffer(gameStage_->resources().laserHitWallSoundData);
     }
 
     registry_->emplace<ngn::ActiveTag>(entity);
@@ -66,7 +81,7 @@ void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
             ngn::Rotation,
             ngn::LinearVelocity,
             ngn::Sprite,
-            ngn::Sound,
+            ShotSound,
             ShotInfo>(entity);
 
     pos.value = position;
@@ -123,7 +138,8 @@ void Shots::handleCollion(const ngn::Collision& collision)
         }
         else
         {
-            // TODO play hit wall sound
+            const auto& snd = registry_->get<HitWallSound>(shot);
+            snd.play();
         }
     };
 
