@@ -97,7 +97,6 @@ TestBedStage::TestBedStage(ngn::Application* app) :
 
 
     animation_ = registry->create();
-    registry->emplace<ngn::ActiveTag>(animation_);
 
     registry->emplace<ngn::Position>(animation_, glm::vec2{100, 100});
 
