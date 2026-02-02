@@ -10,3 +10,7 @@ macro(enable_ipo)
         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
     endif()
 endmacro()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
+endif()
