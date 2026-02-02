@@ -20,6 +20,7 @@ public:
 
     void update(float deltaTime);
 
+private:
     void handleCollion(const ngn::Collision& collision);
 
 private:

@@ -56,6 +56,8 @@ public:
 
     entt::entity createActor(const ActorCreateInfo& createInfo);
 
+    bool testInSight(const glm::vec2& pos);
+
     void killEnemy(entt::entity enemy);
 
 private:
@@ -72,6 +74,8 @@ private:
     Explosions* explosions_;
 
     PlayerGameState playerGameState_;
+    glm::vec2 halfViewSize_;
+    glm::vec4 playerViewBounds_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugShowBodies_;

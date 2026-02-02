@@ -26,7 +26,11 @@ GameStage::GameStage(MazeDelegate* delegate) :
     registry_{app_->registry()},
     level_{},
     enemies_{},
-    shots_{}
+    shots_{},
+    explosions_{},
+    playerGameState_{},
+    halfViewSize_{},
+    playerViewBounds_{}
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     ,debugShowBodies_{false}
     ,debugShowBoundingBoxes_{false}
@@ -89,6 +93,8 @@ void GameStage::onDeactivate()
 
 void GameStage::onWindowResize(const glm::vec2& windowSize)
 {
+    halfViewSize_ = (windowSize + 50.0f) * 0.5f;
+
     for (uint32_t i = 0; i < ngn::MaxFramesInFlight; i++)
     {
         app_->uiRenderer()->updateView(glm::lookAt(
@@ -132,10 +138,15 @@ void GameStage::onUpdate(float deltaTime)
 
     // ****************************************************
 
-    const auto& playerPos = registry_->get<const ngn::Position>(playerGameState_.entity);
+    const auto playerPos = registry_->get<const ngn::Position>(playerGameState_.entity).value;
+    playerViewBounds_ = {
+        playerPos - halfViewSize_,
+        playerPos + halfViewSize_,
+    };
+
     const auto playerView = glm::lookAt(
-        glm::vec3{playerPos.value, 0.5f},
-        glm::vec3{playerPos.value, 0.0f},
+        glm::vec3{playerPos, 0.5f},
+        glm::vec3{playerPos, 0.0f},
         glm::vec3{0.0f, 1.0f, 0.0f}
     );
 
@@ -169,6 +180,13 @@ entt::entity GameStage::createActor(const ActorCreateInfo& createInfo)
     app_->world()->createBody(entity, createInfo.body, createInfo.shape);
     registry_->emplace<ngn::Sprite>(entity, createInfo.sprite);
     return entity;
+}
+
+bool GameStage::testInSight(const glm::vec2& pos)
+{
+    return
+        (pos.x >= playerViewBounds_.x) & (pos.y >= playerViewBounds_.y) &
+        (pos.x <= playerViewBounds_.z) & (pos.y <= playerViewBounds_.w);
 }
 
 void GameStage::killEnemy(entt::entity enemy)

@@ -9,6 +9,7 @@
 #include "MazeDelegate.hpp"
 #include "audio/Sound.hpp"
 #include "phys/PhysComponents.hpp"
+#include <glm/gtx/norm.hpp>
 
 namespace {
 
@@ -76,7 +77,7 @@ void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
 
     registry_->emplace<ngn::ActiveTag>(entity);
 
-    auto [pos, rot, vel, spr, snd, shot] = registry_->get<
+    auto [pos, rot, vel, spr, snd, info] = registry_->get<
             ngn::Position,
             ngn::Rotation,
             ngn::LinearVelocity,
@@ -96,7 +97,7 @@ void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
     snd.setBuffer(player ? gameStage_->resources().playerShotSoundData : gameStage_->resources().enemyShotSoundData);
     snd.play();
 
-    shot.sourceType = player ? ActorType::Player : ActorType::Enemy;
+    info.sourceType = player ? ActorType::Player : ActorType::Enemy;
 
     registry_->emplace_or_replace<ngn::TransformChangedTag>(entity);
 }
@@ -105,10 +106,11 @@ void Shots::update(float deltaTime)
 {
     NGN_UNUSED(deltaTime);
 
-    auto view = registry_->view<const ShotTag, const ngn::ActiveTag, ngn::LinearForce, const ngn::Rotation>();
-    for (auto [e, force, rot] : view.each())
+    auto view = registry_->view<const ngn::Position, ShotTag, ngn::ActiveTag>();
+    for (auto [e, pos] : view.each())
     {
-        force.value = -rot.dir * 1200.f;
+        if (!gameStage_->testInSight(pos.value))
+            registry_->remove<ngn::ActiveTag>(e);
     }
 }
 
