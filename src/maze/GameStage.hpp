@@ -32,8 +32,8 @@ public:
 class PlayerGameState
 {
 public:
-    ngn::Timer laserReloadTimer;
-    entt::entity entity;
+    ngn::Timer laserReloadTimer{};
+    entt::entity entity{};
 };
 
 class GameStage : public ngn::ApplicationStage

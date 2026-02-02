@@ -38,7 +38,7 @@ add_library(ngn STATIC
     Instrumentation.cpp Instrumentation.hpp
     Logging.cpp Logging.hpp
     Macros.hpp
-    Math.hpp Math.cpp
+    Math.hpp
     Pch.hpp
     Timer.hpp Timer.cpp
     Types.hpp

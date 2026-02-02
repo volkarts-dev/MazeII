@@ -3,7 +3,6 @@
 
 #include "Enemies.hpp"
 
-#include "gfx/GFXComponents.hpp"
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
 #include "Application.hpp"
