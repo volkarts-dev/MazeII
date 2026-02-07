@@ -69,7 +69,7 @@ echo "$ALERTS" | jq -c '.' | while IFS= read -r alert; do
   # Check if an issue already exists for this alert (using local map)
   EXISTING_ISSUE=""
   if [ -f /tmp/alert_issue_map.txt ]; then
-    EXISTING_ISSUE=$(grep "^${ALERT_NUMBER}:" /tmp/alert_issue_map.txt | cut -d':' -f2)
+    EXISTING_ISSUE=$(grep "^${ALERT_NUMBER}:" /tmp/alert_issue_map.txt | head -n 1 | cut -d':' -f2)
   fi
   
   if [ -n "$EXISTING_ISSUE" ]; then
