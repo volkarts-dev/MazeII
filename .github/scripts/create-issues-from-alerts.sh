@@ -22,6 +22,30 @@ if [ -z "$ALERTS" ]; then
   exit 0
 fi
 
+# Fetch all existing CodeQL tracking issues once (for all states)
+echo "Fetching existing CodeQL tracking issues..."
+EXISTING_ISSUES=$(gh issue list \
+  --label "codeql" \
+  --state all \
+  --limit 1000 \
+  --json number,title \
+  --jq '.[] | select(.title | contains("CodeQL Alert #")) | {number: .number, title: .title}')
+
+# Build a local map of alert numbers that already have issues
+# Extract alert numbers from titles like "[Security] CodeQL Alert #123: ..."
+declare -A ALERT_TO_ISSUE_MAP
+if [ -n "$EXISTING_ISSUES" ]; then
+  echo "$EXISTING_ISSUES" | jq -c '.' | while IFS= read -r issue; do
+    ISSUE_NUM=$(echo "$issue" | jq -r '.number')
+    ISSUE_TITLE=$(echo "$issue" | jq -r '.title')
+    # Extract alert number from title using regex
+    if [[ $ISSUE_TITLE =~ "CodeQL Alert #"([0-9]+) ]]; then
+      ALERT_NUM="${BASH_REMATCH[1]}"
+      echo "${ALERT_NUM}:${ISSUE_NUM}"
+    fi
+  done > /tmp/alert_issue_map.txt
+fi
+
 # Process each alert
 echo "$ALERTS" | jq -c '.' | while IFS= read -r alert; do
   ALERT_NUMBER=$(echo "$alert" | jq -r '.number')
@@ -37,14 +61,11 @@ echo "$ALERTS" | jq -c '.' | while IFS= read -r alert; do
   echo ""
   echo "Processing Alert #${ALERT_NUMBER}: ${RULE_NAME} (${SEVERITY})"
   
-  # Check if an issue already exists for this alert
-  # Search for issues with the alert number in the title
-  EXISTING_ISSUE=$(gh issue list \
-    --label "codeql" \
-    --state all \
-    --search "CodeQL Alert #${ALERT_NUMBER}" \
-    --json number \
-    --jq '.[0].number // empty')
+  # Check if an issue already exists for this alert (using local map)
+  EXISTING_ISSUE=""
+  if [ -f /tmp/alert_issue_map.txt ]; then
+    EXISTING_ISSUE=$(grep "^${ALERT_NUMBER}:" /tmp/alert_issue_map.txt | cut -d':' -f2)
+  fi
   
   if [ -n "$EXISTING_ISSUE" ]; then
     echo "  Issue already exists: #${EXISTING_ISSUE}"
@@ -94,3 +115,6 @@ done
 
 echo ""
 echo "Done processing alerts."
+
+# Clean up temporary file
+rm -f /tmp/alert_issue_map.txt
