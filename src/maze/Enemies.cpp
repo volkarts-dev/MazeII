@@ -23,7 +23,7 @@ namespace {
 constexpr float linearForce = 500.0f;
 constexpr float UpdateTimeout = 0.0f;
 
-class RespornTimer
+class RespawnTimer
 {
 public:
     float timeout;
@@ -76,18 +76,18 @@ void Enemies::createEnemy(glm::vec2 pos, float angle)
 void Enemies::killEnemy(entt::entity enemy)
 {
     registry_->remove<ngn::ActiveTag>(enemy);
-    registry_->emplace<RespornTimer>(enemy, 5.0f);
+    registry_->emplace<RespawnTimer>(enemy, 5.0f);
 }
 
 void Enemies::update(float deltaTime)
 {
-    auto respornView = registry_->view<RespornTimer>();
-    for (auto [e, timer] : respornView.each())
+    auto respawnView = registry_->view<RespawnTimer>();
+    for (auto [e, timer] : respawnView.each())
     {
         timer.timeout -= deltaTime;
         if (timer.timeout <= 0.0f)
         {
-            registry_->remove<RespornTimer>(e);
+            registry_->remove<RespawnTimer>(e);
             registry_->emplace<ngn::ActiveTag>(e);
 
             auto [pos, rot] = registry_->get<ngn::Position, ngn::Rotation>(e);
