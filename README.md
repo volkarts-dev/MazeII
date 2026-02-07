@@ -1,10 +1,24 @@
 # MAZE II
 
-A simple arcade-like game written in C++ using Vulkan for graphics, OpenAL for audio, and GLFW for windowing. The project uses C++23 standard and is built with CMake.
+A simple arcade-like game written in C++ using Vulkan for graphics, OpenAL for audio, and GLFW for windowing.
+
+Currently the main target ist x64 Linux.
 
 ## Prerequisites
 
-Before building, you need to install the following system dependencies on Ubuntu/Debian:
+Before building, you need to install the following system dependencies:
+
+**Tools:**
+- CMake 3.25 or later
+- GCC or Clang with C++23 support
+- glslc
+
+**Libs:**
+- Vulkan + 
+- OpenAL 1.24+
+- FreeType 2.13+
+
+on Ubuntu/Debian run:
 
 ```bash
 sudo apt-get update
@@ -23,12 +37,6 @@ sudo apt-get install -y \
     libxi-dev \
     libgl1-mesa-dev
 ```
-
-**Requirements:**
-- CMake 3.25 or later
-- GCC 13.3.0+ or Clang with C++23 support
-- FreeType 2.13+
-- OpenAL 1.24+
 
 ## Building
 
