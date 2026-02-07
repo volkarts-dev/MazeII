@@ -2,12 +2,14 @@
 
 ## Project Overview
 
-**MazeII** is a simple arcade game written in C++ using Vulkan for graphics, OpenAL for audio, and GLFW for windowing. It's a modern C++23 project built with CMake.
+**MazeII** is a simple arcade like game written in C++ using Vulkan for graphics, OpenAL for audio, and GLFW for windowing. It uses C++20 features but is compiled in C++23 mode to enhance securty. It's built with CMake and ninja.
+It's primariy target platform is x64 Linux. It should be possiilbe to compile for other platforms and architectures with some modifications.
 
 - **Repository Size**: ~700MB (with submodules)
 - **Language**: C++23
 - **Build System**: CMake 3.25+ required
 - **Target Platform**: Linux (tested on Ubuntu 24.04)
+- **Architecture**: x86-64
 - **Compiler**: GCC 13.3.0+ or Clang with C++23 support
 - **Graphics**: Vulkan API
 - **Audio**: OpenAL
@@ -15,15 +17,6 @@
 - **Dependencies Management**: Git submodules + system packages
 
 ## Critical Build Information
-
-### IMPORTANT: Known Build Issue
-
-**The project has a compilation error when building without NGN_ENABLE_VISUAL_DEBUGGING flag.** In `src/ngn/phys/World.cpp:286`, there's an `NGN_UNUSED(aabb)` macro call, but `aabb` parameter only exists when `NGN_ENABLE_VISUAL_DEBUGGING` is defined. 
-
-**WORKAROUND**: Always build with `-DNGN_ENABLE_VISUAL_DEBUGGING=ON` flag:
-```bash
-cmake -DNGN_ENABLE_VISUAL_DEBUGGING=ON ..
-```
 
 ### Build Prerequisites (System Dependencies)
 
@@ -72,12 +65,13 @@ sudo apt-get install -y \
 
 3. **Configure with CMake**:
    ```bash
-   cmake -DNGN_ENABLE_VISUAL_DEBUGGING=ON ..
+   cmake ..
    ```
    
    Additional build options:
    - `-DNGN_ENABLE_GRAPHICS_DEBUG_LAYER=ON` - Enable Vulkan/OpenGL debug layers
-   - `-DNGN_ENABLE_INSTRUMENTATION=ON` - Enable performance measurement
+   - `-DNGN_ENABLE_VISUAL_DEBUGGING=ON` - Enable visual display of some internal state of the engine
+   - `-DNGN_ENABLE_INSTRUMENTATION=ON` - Enable performance measurement (not to be used in regular builds)
    - `-DCMAKE_BUILD_TYPE=Release` - Release build (default)
    - `-DCMAKE_BUILD_TYPE=Debug` - Debug build
 
@@ -110,7 +104,7 @@ To perform a clean rebuild:
 rm -rf build
 mkdir build
 cd build
-cmake -DNGN_ENABLE_VISUAL_DEBUGGING=ON ..
+cmake ..
 mkdir -p src/ngn/assets/shader  # Prevent shader compilation failure
 cmake --build . -j$(nproc)
 ```
