@@ -37,43 +37,50 @@ public:
 
     reference front()
     {
-        assert(size_);
+        if (size_ == 0)
+            throw std::out_of_range("StaticVector::front() called on empty container");
         return data_[0];
     }
 
     const_reference front() const
     {
-        assert(size_);
+        if (size_ == 0)
+            throw std::out_of_range("StaticVector::front() called on empty container");
         return data_[0];
     }
 
     reference back()
     {
-        assert(size_);
+        if (size_ == 0)
+            throw std::out_of_range("StaticVector::back() called on empty container");
         return data_[size_ - 1];
     }
     const_reference back() const
     {
-        assert(size_);
+        if (size_ == 0)
+            throw std::out_of_range("StaticVector::back() called on empty container");
         return data_[size_ - 1];
     }
 
     reference at(SizeT index)
     {
-        assert(index < size_);
+        if (index >= size_)
+            throw std::out_of_range("StaticVector index out of bounds");
         return data_[index];
     }
 
     const_reference at(SizeT index) const
     {
-        assert(index < size_);
+        if (index >= size_)
+            throw std::out_of_range("StaticVector index out of bounds");
         return data_[index];
     }
 
     template<typename... Args>
     reference emplace_back(Args... args)
     {
-        assert(size_ < Capacity);
+        if (size_ >= Capacity)
+            throw std::out_of_range("StaticVector capacity exceeded");
         auto ptr = std::construct_at(data_ + size_, std::forward<Args>(args)...);
         ++size_;
         return *ptr;
@@ -81,7 +88,8 @@ public:
 
     void pop_back()
     {
-        assert(size_);
+        if (size_ == 0)
+            throw std::out_of_range("StaticVector::pop_back() called on empty container");
         --size_;
         std::destroy_at(data_ + size_);
     }

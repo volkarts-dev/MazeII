@@ -24,13 +24,13 @@ public:
 
     std::size_t remain() const
     {
-        return data.size() - readPos;
+        return readPos >= data.size() ? 0 : (data.size() - readPos);
     }
 
     BufferView read(std::size_t bytes)
     {
         BufferView out{};
-        if (readPos + bytes >= data.size())
+        if (readPos + bytes > data.size())
             return {};
         out = {data.data() + readPos, bytes};
         readPos += bytes;
@@ -65,7 +65,12 @@ T toInt(const BufferView& buffer)
     {
         for (std::size_t i = 0; i < buffer.size(); ++i)
         {
-            reinterpret_cast<uint8_t*>(&a)[3 - i] = buffer[i];
+            // Bounds check to prevent underflow
+            if (i < sizeof(T))
+            {
+                const std::size_t index = sizeof(T) - 1 - i;
+                reinterpret_cast<uint8_t*>(&a)[index] = buffer[i];
+            }
         }
     }
     return a;
@@ -275,9 +280,27 @@ AudioBuffer* Audio::loadOGG(const BufferView& data)
     int sampleRate{};
     short* buffer{};
     const auto samples = stb_vorbis_decode_memory(data.data(), static_cast<int>(data.size()), &channels, &sampleRate, &buffer);
-    if (samples < 0)
-        throw std::runtime_error("Invalid ogg file");
-    const auto bufferSize = static_cast<std::size_t>(samples * channels) * sizeof(short);
+    
+    // Validate return values and buffer pointer
+    if (samples < 0 || buffer == nullptr)
+        throw std::runtime_error("Invalid ogg file or decoder failure");
+
+    // Check for integer overflow in buffer size calculation
+    if (samples > 0 && channels > 0)
+    {
+        // Check if samples * channels would overflow
+        const int64_t totalSamples64 = static_cast<int64_t>(samples) * static_cast<int64_t>(channels);
+        const int64_t bufferSize64 = totalSamples64 * sizeof(short);
+        
+        if (bufferSize64 > std::numeric_limits<std::size_t>::max())
+        {
+            std::free(buffer);
+            throw std::runtime_error("Audio buffer size too large - would cause overflow");
+        }
+    }
+    
+    const auto bufferSize = static_cast<std::size_t>(samples) * 
+                           static_cast<std::size_t>(channels) * sizeof(short);
 
     AudioFileResult result;
     result.data = BufferView{reinterpret_cast<unsigned char*>(buffer), bufferSize};
