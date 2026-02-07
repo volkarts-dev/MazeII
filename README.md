@@ -27,7 +27,7 @@ sudo apt-get install -y \
 **Requirements:**
 - CMake 3.25 or later
 - GCC 13.3.0+ or Clang with C++23 support
-- Freetype 2.13+
+- FreeType 2.13+
 - OpenAL 1.24+
 
 ## Building
