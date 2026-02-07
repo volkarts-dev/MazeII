@@ -44,7 +44,7 @@ if [ -n "$EXISTING_ISSUES" ]; then
     ISSUE_NUM=$(echo "$issue" | jq -r '.number')
     ISSUE_TITLE=$(echo "$issue" | jq -r '.title')
     # Extract alert number from title using regex
-    if [[ $ISSUE_TITLE =~ "CodeQL Alert #"([0-9]+) ]]; then
+    if [[ $ISSUE_TITLE =~ CodeQL\ Alert\ \#([0-9]+) ]]; then
       ALERT_NUM="${BASH_REMATCH[1]}"
       echo "${ALERT_NUM}:${ISSUE_NUM}"
     fi
