@@ -26,7 +26,8 @@ GameStage::GameStage(MazeDelegate* delegate) :
     registry_{app_->registry()},
     level_{},
     enemies_{},
-    shots_{}
+    shots_{},
+    explosions_{}
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     ,debugShowBodies_{false}
     ,debugShowBoundingBoxes_{false}
