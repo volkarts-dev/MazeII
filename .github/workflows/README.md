@@ -11,7 +11,6 @@ The CodeQL workflow is configured in `.github/workflows/codeql.yml` and runs:
 ### Automatic Triggers
 - **On push to main branch**: Scans code whenever changes are pushed to main
 - **On pull requests to main**: Scans code in pull requests before merging
-- **Scheduled**: Runs weekly on Tuesdays at 14:27 UTC
 
 ### Manual Trigger (On-Demand)
 You can manually trigger the CodeQL analysis at any time:
@@ -83,7 +82,6 @@ If CodeQL analysis fails:
 To customize the analysis:
 - Add custom queries by uncommenting the `queries` parameter in the workflow
 - Modify the build commands in the "Run manual build steps" section
-- Adjust the schedule by changing the cron expression
 - Add additional languages to the matrix if needed
 
 ## References
