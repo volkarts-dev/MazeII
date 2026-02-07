@@ -14,6 +14,11 @@ set -euo pipefail
 REPO="${GITHUB_REPOSITORY}"
 ALERT_STATE="open"
 
+# Create a unique temporary file for the alert→issue map
+ALERT_MAP_FILE=$(mktemp)
+# Ensure cleanup happens on exit, even if script fails or is interrupted
+trap 'rm -f "$ALERT_MAP_FILE"' EXIT INT TERM
+
 echo "Fetching open CodeQL alerts for ${REPO}..."
 
 # Fetch all open code scanning alerts
@@ -33,7 +38,7 @@ echo "Fetching existing CodeQL tracking issues..."
 EXISTING_ISSUES=$(gh issue list \
   --label "codeql" \
   --state all \
-  --limit 1000 \
+  --limit 10000 \
   --json number,title \
   --jq '.[] | select(.title | contains("CodeQL Alert #")) | {number: .number, title: .title}')
 
@@ -48,7 +53,7 @@ if [ -n "$EXISTING_ISSUES" ]; then
       ALERT_NUM="${BASH_REMATCH[1]}"
       echo "${ALERT_NUM}:${ISSUE_NUM}"
     fi
-  done > /tmp/alert_issue_map.txt
+  done > "$ALERT_MAP_FILE"
 fi
 
 # Process each alert
@@ -68,8 +73,8 @@ echo "$ALERTS" | jq -c '.' | while IFS= read -r alert; do
   
   # Check if an issue already exists for this alert (using local map)
   EXISTING_ISSUE=""
-  if [ -f /tmp/alert_issue_map.txt ]; then
-    EXISTING_ISSUE=$(grep "^${ALERT_NUMBER}:" /tmp/alert_issue_map.txt | head -n 1 | cut -d':' -f2)
+  if [ -f "$ALERT_MAP_FILE" ]; then
+    EXISTING_ISSUE=$(grep "^${ALERT_NUMBER}:" "$ALERT_MAP_FILE" | head -n 1 | cut -d':' -f2)
   fi
   
   if [ -n "$EXISTING_ISSUE" ]; then
@@ -120,6 +125,3 @@ done
 
 echo ""
 echo "Done processing alerts."
-
-# Clean up temporary file
-rm -f /tmp/alert_issue_map.txt
