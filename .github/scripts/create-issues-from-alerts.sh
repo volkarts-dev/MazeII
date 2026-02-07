@@ -87,9 +87,7 @@ EOF
   ISSUE_NUMBER=$(gh issue create \
     --title "$ISSUE_TITLE" \
     --body "$ISSUE_BODY" \
-    --label "$LABELS" \
-    --json number \
-    --jq '.number')
+    --label "$LABELS")
   
   echo "  ✅ Created issue #${ISSUE_NUMBER}"
 done
