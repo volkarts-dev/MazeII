@@ -80,7 +80,7 @@ See [LICENSE](LICENSE) file for details.
 
 This project uses the following third-party libraries and assets:
 
-- **STB libraries** (stb_image and stb_vorbis) - Public domain image loader and audio decoder by Sean Barrett
+- **STB libraries** (stb_image and stb_vorbis) - Public domain image loader and audio decoder
   - Located in `src/ext/`
   - https://github.com/nothings/stb
 
