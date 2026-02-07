@@ -28,7 +28,7 @@ Shots::Shots(GameStage* gameStage) :
     registry_{gameStage_->app()->registry()},
     world_{gameStage_->app()->world()}
 {
-    collisionCallback_ = world_->addCollisionListener<&Shots::handleCollion>(this);
+    collisionCallback_ = world_->addCollisionListener<&Shots::handleCollision>(this);
 }
 
 Shots::~Shots()
@@ -114,7 +114,7 @@ void Shots::update(float deltaTime)
     }
 }
 
-void Shots::handleCollion(const ngn::Collision& collision)
+void Shots::handleCollision(const ngn::Collision& collision)
 {
     const auto shotA = registry_->any_of<ShotTag>(collision.pair.bodyA);
     const auto shotB = registry_->any_of<ShotTag>(collision.pair.bodyB);

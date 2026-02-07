@@ -21,7 +21,7 @@ public:
     void update(float deltaTime);
 
 private:
-    void handleCollion(const ngn::Collision& collision);
+    void handleCollision(const ngn::Collision& collision);
 
 private:
     GameStage* gameStage_;
