@@ -4,6 +4,12 @@ set -euo pipefail
 # This script creates GitHub issues for open CodeQL security alerts
 # It queries the GitHub API for code scanning alerts and creates an issue for each one
 # that doesn't already have an associated issue
+#
+# Performance Optimization:
+# - Fetches all existing CodeQL tracking issues once at the beginning (1 API call)
+# - Builds a local map of alert numbers to issue numbers for fast lookups
+# - Performs deduplication checks locally instead of making N API calls for N alerts
+# - This prevents rate limiting and significantly improves performance with many alerts
 
 REPO="${GITHUB_REPOSITORY}"
 ALERT_STATE="open"
@@ -33,7 +39,6 @@ EXISTING_ISSUES=$(gh issue list \
 
 # Build a local map of alert numbers that already have issues
 # Extract alert numbers from titles like "[Security] CodeQL Alert #123: ..."
-declare -A ALERT_TO_ISSUE_MAP
 if [ -n "$EXISTING_ISSUES" ]; then
   echo "$EXISTING_ISSUES" | jq -c '.' | while IFS= read -r issue; do
     ISSUE_NUM=$(echo "$issue" | jq -r '.number')
