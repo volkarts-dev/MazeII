@@ -280,7 +280,7 @@ CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
         auto callback = [&collisionPairs, &node, this](entt::entity entity, const AABB& aabb)
 #else
-        auto callback = [&collisionPairs, &node](entt::entity entity)
+        auto callback = [&collisionPairs, &node](entt::entity entity, const AABB& aabb)
 #endif
         {
             NGN_UNUSED(aabb);

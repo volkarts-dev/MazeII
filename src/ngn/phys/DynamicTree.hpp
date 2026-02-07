@@ -135,11 +135,7 @@ void DynamicTree::query(const AABB& aabb, const Callback& callback) const
         {
             if (node.isLeaf())
             {
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
                 if (!callback(node.entity, node.aabb))
-#else
-                if (!callback(node.entity))
-#endif
                     return;
             }
             else
