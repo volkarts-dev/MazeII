@@ -1,0 +1,12 @@
+# CodeQL configuration file
+# This file configures which paths are analyzed by CodeQL
+
+name: "CodeQL Config"
+
+# Paths to include in analysis
+paths:
+  - src
+
+# Paths to exclude from analysis
+paths-ignore:
+  - src/ext
