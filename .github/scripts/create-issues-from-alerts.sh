@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # This script creates GitHub issues for open CodeQL security alerts
 # It queries the GitHub API for code scanning alerts and creates an issue for each one
@@ -14,7 +14,7 @@ echo "Fetching open CodeQL alerts for ${REPO}..."
 ALERTS=$(gh api \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
-  "/repos/${REPO}/code-scanning/alerts?state=${ALERT_STATE}" \
+  "/repos/${REPO}/code-scanning/alerts?state=${ALERT_STATE}&per_page=100" --paginate \
   --jq '.[] | {number: .number, rule_id: .rule.id, rule_name: .rule.name, rule_description: .rule.description, severity: .rule.severity, html_url: .html_url, created_at: .created_at, location: .most_recent_instance.location}')
 
 if [ -z "$ALERTS" ]; then
@@ -52,7 +52,7 @@ echo "$ALERTS" | jq -c '.' | while IFS= read -r alert; do
   fi
   
   # Create the issue title
-  ISSUE_TITLE="[Security] CodeQL Alert #${ALERT_NUMBER}: ${RULE_DESC}"
+  ISSUE_TITLE="[Security] CodeQL Alert #${ALERT_NUMBER}: ${RULE_NAME} (${SEVERITY})"
   
   # Create the issue body
   ISSUE_BODY=$(cat <<EOF
