@@ -4,9 +4,20 @@ set -euo pipefail
 # This script creates GitHub issues for open CodeQL security alerts
 # It queries the GitHub API for code scanning alerts and creates an issue for each one
 # that doesn't already have an associated issue
+#
+# Performance Optimization:
+# - Fetches all existing CodeQL tracking issues once at the beginning (1 API call)
+# - Builds a local map of alert numbers to issue numbers for fast lookups
+# - Performs deduplication checks locally instead of making N API calls for N alerts
+# - This prevents rate limiting and significantly improves performance with many alerts
 
 REPO="${GITHUB_REPOSITORY}"
 ALERT_STATE="open"
+
+# Create a unique temporary file for the alert→issue map
+ALERT_MAP_FILE=$(mktemp)
+# Ensure cleanup happens on exit, even if script fails or is interrupted
+trap 'rm -f "$ALERT_MAP_FILE"' EXIT INT TERM
 
 echo "Fetching open CodeQL alerts for ${REPO}..."
 
@@ -20,6 +31,29 @@ ALERTS=$(gh api \
 if [ -z "$ALERTS" ]; then
   echo "No open alerts found."
   exit 0
+fi
+
+# Fetch all existing CodeQL tracking issues once (for all states)
+echo "Fetching existing CodeQL tracking issues..."
+EXISTING_ISSUES=$(gh issue list \
+  --label "codeql" \
+  --state all \
+  --limit 10000 \
+  --json number,title \
+  --jq '.[] | select(.title | contains("CodeQL Alert #")) | {number: .number, title: .title}')
+
+# Build a local map of alert numbers that already have issues
+# Extract alert numbers from titles like "[Security] CodeQL Alert #123: ..."
+if [ -n "$EXISTING_ISSUES" ]; then
+  echo "$EXISTING_ISSUES" | jq -c '.' | while IFS= read -r issue; do
+    ISSUE_NUM=$(echo "$issue" | jq -r '.number')
+    ISSUE_TITLE=$(echo "$issue" | jq -r '.title')
+    # Extract alert number from title using regex
+    if [[ $ISSUE_TITLE =~ CodeQL\ Alert\ \#([0-9]+) ]]; then
+      ALERT_NUM="${BASH_REMATCH[1]}"
+      echo "${ALERT_NUM}:${ISSUE_NUM}"
+    fi
+  done > "$ALERT_MAP_FILE"
 fi
 
 # Process each alert
@@ -37,14 +71,11 @@ echo "$ALERTS" | jq -c '.' | while IFS= read -r alert; do
   echo ""
   echo "Processing Alert #${ALERT_NUMBER}: ${RULE_NAME} (${SEVERITY})"
   
-  # Check if an issue already exists for this alert
-  # Search for issues with the alert number in the title
-  EXISTING_ISSUE=$(gh issue list \
-    --label "codeql" \
-    --state all \
-    --search "CodeQL Alert #${ALERT_NUMBER}" \
-    --json number \
-    --jq '.[0].number // empty')
+  # Check if an issue already exists for this alert (using local map)
+  EXISTING_ISSUE=""
+  if [ -f "$ALERT_MAP_FILE" ]; then
+    EXISTING_ISSUE=$(grep "^${ALERT_NUMBER}:" "$ALERT_MAP_FILE" | head -n 1 | cut -d':' -f2)
+  fi
   
   if [ -n "$EXISTING_ISSUE" ]; then
     echo "  Issue already exists: #${EXISTING_ISSUE}"
