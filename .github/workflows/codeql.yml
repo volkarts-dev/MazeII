@@ -109,3 +109,30 @@ jobs:
       uses: github/codeql-action/analyze@v4
       with:
         category: "/language:${{matrix.language}}"
+
+  # Create GitHub issues for any open security alerts
+  create-issues:
+    name: Create Issues from Alerts
+    needs: analyze
+    # Only run on pushes to main, not on pull requests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to read code scanning alerts
+      security-events: read
+      # Required to create issues
+      issues: write
+      # Required to read repository content
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Create issues from CodeQL alerts
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        chmod +x .github/scripts/create-issues-from-alerts.sh
+        .github/scripts/create-issues-from-alerts.sh
