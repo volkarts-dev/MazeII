@@ -2,7 +2,7 @@
 
 A simple arcade-like game written in C++ using Vulkan for graphics, OpenAL for audio, and GLFW for windowing.
 
-Currently the main target ist x64 Linux.
+Currently the main target is x64 Linux.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ Before building, you need to install the following system dependencies:
 - glslc
 
 **Libs:**
-- Vulkan + 
+- Vulkan
 - OpenAL 1.24+
 - FreeType 2.13+
 
@@ -59,7 +59,7 @@ sudo apt-get install -y \
    Optional build flags:
    - `-DNGN_ENABLE_GRAPHICS_DEBUG_LAYER=ON` - Enable graphics debug layers
    - `-DNGN_ENABLE_VISUAL_DEBUGGING=ON` - Enable visual debugging display
-   - `-DCMAKE_BUILD_TYPE=Release` - Release build (default)
+   - `-DCMAKE_BUILD_TYPE=Release` - Release build
    - `-DCMAKE_BUILD_TYPE=Debug` - Debug build
 
 4. **Build the Project**:
