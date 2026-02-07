@@ -49,7 +49,7 @@ sudo apt-get install -y \
    ```
    
    Optional build flags:
-   - `-DNGN_ENABLE_GRAPHICS_DEBUG_LAYER=ON` - Enable Vulkan/OpenGL debug layers
+   - `-DNGN_ENABLE_GRAPHICS_DEBUG_LAYER=ON` - Enable graphics debug layers
    - `-DNGN_ENABLE_VISUAL_DEBUGGING=ON` - Enable visual debugging display
    - `-DCMAKE_BUILD_TYPE=Release` - Release build (default)
    - `-DCMAKE_BUILD_TYPE=Debug` - Debug build
