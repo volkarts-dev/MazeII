@@ -75,3 +75,14 @@ sudo apt-get install -y \
 ## License
 
 See [LICENSE](LICENSE) file for details.
+
+### Third-Party Attributions
+
+This project uses the following third-party libraries and assets:
+
+- **STB libraries** (stb_image and stb_vorbis) - Public domain image loader and audio decoder by Sean Barrett
+  - Located in `src/ext/`
+  - https://github.com/nothings/stb
+
+- **Shoot'em Up asset pack** by timberlate007
+  - https://timberlate007.itch.io/shootem-up
