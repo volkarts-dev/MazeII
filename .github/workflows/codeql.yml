@@ -77,6 +77,9 @@ jobs:
           libopenal-dev \
           libfreetype6-dev \
           libvulkan-dev \
+          libwayland-dev \
+          libwayland-bin \
+          libxkbcommon-dev \
           glslc
 
     # Initializes the CodeQL tools for scanning.
