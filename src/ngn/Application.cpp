@@ -284,7 +284,7 @@ void Application::draw(float deltaTime)
     NGN_INSTRUMENT_FUNCTION();
 
     const auto imageIndex = renderer_->startFrame();
-    if (imageIndex == ngn::InvalidIndex)
+    if (imageIndex == ngn::InvalidIndex32)
         return;
 
     auto* commandBuffer = renderer_->currentCommandBuffer();

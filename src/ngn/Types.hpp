@@ -17,7 +17,11 @@ using Duration = std::chrono::duration<Rep>;
 
 using BufferView = std::span<uint8_t>;
 
-constexpr auto InvalidIndex = std::numeric_limits<uint32_t>::max();
+template<std::unsigned_integral T = uint32_t>
+constexpr auto InvalidIndex = std::numeric_limits<T>::max();
+
+constexpr auto InvalidIndex16 = InvalidIndex<uint16_t>;
+constexpr auto InvalidIndex32 = InvalidIndex<uint32_t>;
 
 constexpr uint32_t MaxFramesInFlight = 2;
 constexpr uint32_t MaxSpritePipelineTextures = 8;

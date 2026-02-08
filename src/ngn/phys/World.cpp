@@ -86,7 +86,7 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
     const auto transformedShape = transformShape(entity, shape);
     registry_->emplace<Shape>(entity, transformedShape);
 
-    auto nodeId = InvalidIndex;
+    auto nodeId = InvalidIndex32;
     if (registry_->any_of<ActiveTag>(entity))
         nodeId = dynamicTree_->addObject(calculateAABB(transformedShape), entity);
     registry_->emplace<NodeInfo>(entity, shape, nodeId);
@@ -119,18 +119,18 @@ void World::updateActive()
     {
         const auto active = registry_->any_of<ActiveTag>(e);
 
-        if (active && nodeInfo.nodeId == InvalidIndex)
+        if (active && nodeInfo.nodeId == InvalidIndex32)
         {
             auto shape = registry_->get<Shape>(e);
             shape = transformShape(e, nodeInfo.origShape);
 
             nodeInfo.nodeId = dynamicTree_->addObject(calculateAABB(shape), e);
         }
-        else if (!active && nodeInfo.nodeId != InvalidIndex)
+        else if (!active && nodeInfo.nodeId != InvalidIndex32)
         {
             dynamicTree_->removeObject(nodeInfo.nodeId);
 
-            nodeInfo.nodeId = InvalidIndex;
+            nodeInfo.nodeId = InvalidIndex32;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
             removeDebugState(e);

@@ -12,7 +12,7 @@ namespace ngn {
 UiRenderer::UiRenderer(Renderer* renderer, uint32_t batchSize) :
     spriteRenderer_{renderer, batchSize},
     fontCollection_{},
-    fontIndex_{InvalidIndex}
+    fontIndex_{InvalidIndex32}
 {
 }
 

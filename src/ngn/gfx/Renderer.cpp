@@ -458,7 +458,7 @@ uint32_t Renderer::startFrame()
     if (result == vk::Result::eErrorOutOfDateKHR)
     {
         recreateSwapChain();
-        return InvalidIndex;
+        return InvalidIndex32;
     }
     else if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
     {
