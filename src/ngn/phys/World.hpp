@@ -16,6 +16,7 @@ class Application;
 class BodyCreateInfo
 {
 public:
+    Layers layers{Layers::All};
     float invMass{1.f};
     float restitution{1.f};
     float friction{1.f};
@@ -54,9 +55,9 @@ public:
     void update(float deltaTime);
 
     template<typename Callback>
-    inline void query(const AABB& aabb, const Callback& callback) const
+    inline void query(const AABB& aabb, Layers layers, const Callback& callback) const
     {
-        return dynamicTree_->query(aabb, callback);
+        return dynamicTree_->query(aabb, layers, callback);
     }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)

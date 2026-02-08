@@ -24,6 +24,7 @@ namespace {
 class NodeInfo
 {
 public:
+    Layers layers;
     Shape origShape;
     uint32_t nodeId;
 };
@@ -88,8 +89,8 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
 
     auto nodeId = InvalidIndex32;
     if (registry_->any_of<ActiveTag>(entity))
-        nodeId = dynamicTree_->addObject(calculateAABB(transformedShape), entity);
-    registry_->emplace<NodeInfo>(entity, shape, nodeId);
+        nodeId = dynamicTree_->addObject(calculateAABB(transformedShape), entity, createInfo.layers);
+    registry_->emplace<NodeInfo>(entity, createInfo.layers, shape, nodeId);
 }
 
 void World::update(float deltaTime)
@@ -124,7 +125,7 @@ void World::updateActive()
             auto shape = registry_->get<Shape>(e);
             shape = transformShape(e, nodeInfo.origShape);
 
-            nodeInfo.nodeId = dynamicTree_->addObject(calculateAABB(shape), e);
+            nodeInfo.nodeId = dynamicTree_->addObject(calculateAABB(shape), e, nodeInfo.layers);
         }
         else if (!active && nodeInfo.nodeId != InvalidIndex32)
         {
@@ -271,29 +272,27 @@ CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
 
     for (const auto index : moved)
     {
-        const auto& node = dynamicTree_->node(index);
+        const auto& searchNode = dynamicTree_->node(index);
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-        removeDebugState(node.entity);
+        removeDebugState(searchNode.entity);
 #endif
 
+        auto callback = [&collisionPairs, &searchNode
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-        auto callback = [&collisionPairs, &node, this](entt::entity entity, const AABB& aabb)
-#else
-        auto callback = [&collisionPairs, &node](entt::entity entity, const AABB& aabb)
+                , this
 #endif
+                ](const TreeNode& node)
         {
-            NGN_UNUSED(aabb);
-
-            if (entity != node.entity)
+            if (node.entity != searchNode.entity)
             {
                 CollisionPair pair = {
-                    .bodyA = node.entity,
-                    .bodyB = entity,
+                    .bodyA = searchNode.entity,
+                    .bodyB = node.entity,
                 };
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-                debugPossibleCollisions_.insert(std::make_pair(pair, AABBPair{node.aabb, aabb}));
+                debugPossibleCollisions_.insert(std::make_pair(pair, AABBPair{searchNode.aabb, node.aabb}));
 #endif
 
                 collisionPairs.insert(std::move(pair));
@@ -301,7 +300,7 @@ CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
             return true;
         };
 
-        dynamicTree_->query(node.aabb, callback);
+        dynamicTree_->query(searchNode.aabb, Layers::All, callback);
     }
 
     return collisionPairs;

@@ -3,12 +3,13 @@
 
 #include "Enemies.hpp"
 
-#include "phys/PhysComponents.hpp"
-#include "phys/World.hpp"
 #include "Application.hpp"
 #include "CommonComponents.hpp"
 #include "GameStage.hpp"
+#include "Layers.hpp"
 #include "MazeComponents.hpp"
+#include "phys/PhysComponents.hpp"
+#include "phys/World.hpp"
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
@@ -61,6 +62,7 @@ void Enemies::createEnemy(glm::vec2 pos, float angle)
             .texture = 1,
         },
         .body = {
+            .layers = LayerEnemies,
             .invMass = 1.f / 10.f,
             .restitution = 1.5f,
         },
@@ -165,9 +167,9 @@ bool Enemies::testInSight(entt::entity player, entt::entity enemy, const ngn::Li
 {
     const auto lineAABB = ngn::calculateAABB(lineOfSight);
     bool blocking = false;
-    world_->query(lineAABB, [&blocking, player, enemy](auto e, auto)
+    world_->query(lineAABB, LayerPlayer, [&blocking, player, enemy](const ngn::TreeNode& node)
     {
-        blocking = e != player && e != enemy;
+        blocking = node.entity != player && node.entity != enemy;
         return !blocking;
     });
 

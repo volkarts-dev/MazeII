@@ -22,13 +22,14 @@ bool DynamicTree::initialize()
     return true;
 }
 
-uint32_t DynamicTree::addObject(const AABB& aabb, entt::entity entity)
+uint32_t DynamicTree::addObject(const AABB& aabb, entt::entity entity, Layers layers)
 {
     const auto index = allocateNode();
     TreeNode& node = nodes_[index];
 
     node.aabb = enlargeAABB(aabb);
     node.entity = entity;
+    node.layers = layers;
 
     insertLeaf(index);
 
@@ -132,6 +133,7 @@ void DynamicTree::insertLeaf(uint32_t index)
     uint32_t oldParentIndex = leafSibling->parent;
     newParent->parent = oldParentIndex;
     newParent->aabb = combine(newNode->aabb, leafSibling->aabb);
+    newParent->layers = newNode->layers | leafSibling->layers;
     newParent->left = leafSiblingIndex;
     newParent->right = index;
     newNode->parent = newParentIndex;
@@ -188,7 +190,8 @@ void DynamicTree::removeLeaf(uint32_t index)
     }
     else
     {
-        // if we have no grandparent then the parent is the root and so our sibling becomes the root and has it's parent removed
+        // if we have no grandparent then the parent is the root and so our sibling
+        // becomes the root and has it's parent removed
         rootIndex_ = siblingNodeIndex;
         siblingNode.parent = TreeNode::NullNode;
         deallocateNode(parentNodeIndex);
@@ -214,6 +217,7 @@ void DynamicTree::syncHierarchy(uint32_t index)
 
         nodes_[index].height = 1 + glm::max(nodes_[left].height, nodes_[right].height);
         nodes_[index].aabb = combine(nodes_[left].aabb, nodes_[right].aabb);
+        nodes_[index].layers = nodes_[left].layers | nodes_[right].layers;
 
         index = nodes_[index].parent;
     }
@@ -279,7 +283,9 @@ uint32_t DynamicTree::balance(uint32_t index)
             A.right = iG;
             G.parent = index;
             A.aabb = combine(B.aabb, G.aabb);
+            A.layers = B.layers | G.layers;
             C.aabb = combine(A.aabb, F.aabb);
+            C.layers = A.layers | F.layers;
 
             A.height = 1 + glm::max(B.height, G.height);
             C.height = 1 + glm::max(A.height, F.height);
@@ -290,7 +296,9 @@ uint32_t DynamicTree::balance(uint32_t index)
             A.right = iF;
             F.parent = index;
             A.aabb = combine(B.aabb, F.aabb);
+            A.layers = B.layers | F.layers;
             C.aabb = combine(A.aabb, G.aabb);
+            C.layers = A.layers | G.layers;
 
             A.height = 1 + glm::max(B.height, F.height);
             C.height = 1 + glm::max(A.height, G.height);
@@ -339,7 +347,9 @@ uint32_t DynamicTree::balance(uint32_t index)
             A.left = iE;
             E.parent = index;
             A.aabb = combine(C.aabb, E.aabb);
+            A.layers = C.layers | E.layers;
             B.aabb = combine(A.aabb, D.aabb);
+            B.layers = A.layers | D.layers;
 
             A.height = 1 + glm::max(C.height, E.height);
             B.height = 1 + glm::max(A.height, D.height);
@@ -350,7 +360,9 @@ uint32_t DynamicTree::balance(uint32_t index)
             A.left = iD;
             D.parent = index;
             A.aabb = combine(C.aabb, D.aabb);
+            A.layers = C.layers | D.layers;
             B.aabb = combine(A.aabb, E.aabb);
+            B.layers = A.layers | E.layers;
 
             A.height = 1 + glm::max(C.height, D.height);
             B.height = 1 + glm::max(A.height, E.height);

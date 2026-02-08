@@ -5,6 +5,7 @@
 
 #include "Application.hpp"
 #include "GameStage.hpp"
+#include "Layers.hpp"
 #include "MazeComponents.hpp"
 #include "MazeDelegate.hpp"
 #include "audio/Sound.hpp"
@@ -56,6 +57,7 @@ void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
                 .texture = 1,
             },
             .body = {
+                .layers = player ? LayerPlayerShots : LayerEnemyShots,
                 .invMass = 100000.0f,
                 .restitution = 0.0f,
                 .friction = 0.001f,

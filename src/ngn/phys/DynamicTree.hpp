@@ -7,6 +7,7 @@
 #include "Shapes.hpp"
 #include "phys/CollisionTests.hpp"
 #include "phys/Functions.hpp"
+#include "phys/Layers.hpp"
 #include "utils/StaticVector.hpp"
 #include <entt/fwd.hpp>
 
@@ -38,6 +39,7 @@ public:
 
     AABB aabb{};
     entt::entity entity{};
+    Layers layers{Layers::All};
 
     uint16_t height{0};
     bool updated{};
@@ -50,7 +52,7 @@ public:
 
     bool initialize();
 
-    uint32_t addObject(const AABB& aabb, entt::entity entity);
+    uint32_t addObject(const AABB& aabb, entt::entity entity, Layers layers);
     bool updateObject(uint32_t ndoeId, const AABB& aabb);
     void removeObject(uint32_t nodeId);
 
@@ -58,7 +60,7 @@ public:
     void walkTree(const Callback& callback) const;
 
     template<typename Callback>
-    void query(const AABB& aabb, const Callback& callback) const;
+    void query(const AABB& aabb, Layers layers, const Callback& callback) const;
 
     const TreeNode& node(uint32_t index) const
     {
@@ -118,7 +120,7 @@ void DynamicTree::walkTree(const Callback& callback) const
 }
 
 template<typename Callback>
-void DynamicTree::query(const AABB& aabb, const Callback& callback) const
+void DynamicTree::query(const AABB& aabb, Layers layers, const Callback& callback) const
 {
     StaticVector<uint32_t, TreeQueryStackSize> stack;
 
@@ -131,11 +133,11 @@ void DynamicTree::query(const AABB& aabb, const Callback& callback) const
 
         const TreeNode& node = nodes_[index];
 
-        if (intersects(aabb, node.aabb))
+        if (toBool(node.layers & layers) && intersects(aabb, node.aabb))
         {
             if (node.isLeaf())
             {
-                if (!callback(node.entity, node.aabb))
+                if (!callback(node))
                     return;
             }
             else

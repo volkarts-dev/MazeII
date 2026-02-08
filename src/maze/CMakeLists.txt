@@ -2,6 +2,7 @@ add_executable(maze
     Enemies.hpp Enemies.cpp
     Explosions.hpp Explosions.cpp
     GameStage.hpp GameStage.cpp
+    Layers.hpp
     Level.hpp Level.cpp
     Main.cpp
     MazeAssets.hpp.in

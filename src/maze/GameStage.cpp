@@ -4,6 +4,7 @@
 #include "GameStage.hpp"
 #include "Enemies.hpp"
 #include "Explosions.hpp"
+#include "Layers.hpp"
 #include "Level.hpp"
 #include "MazeComponents.hpp"
 #include "MazeDelegate.hpp"
@@ -62,6 +63,7 @@ void GameStage::onActivate()
             .texture = 1,
         },
         .body = {
+            .layers = LayerPlayer,
             .invMass = 1.f / 10.f,
             .restitution = 1.5f,
         },
