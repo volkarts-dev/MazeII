@@ -150,7 +150,10 @@ void copyGlyph(std::vector<uint8_t>& imageData, const FT_GlyphSlot& glyph, const
         for (uint32_t x = 0; x < glyph->bitmap.width; x++)
         {
             uint32_t srcPos = y * glyph->bitmap.width + x;
+            
             uint32_t destPos = ((state.posY + y) * state.imageDimension + (state.posX + x)) * 4;
+            if (destPos > imageData.size() - 4)
+                throw std::runtime_error("Glyph copy would write out of bounds");
 
             imageData[destPos + 0] = 255;
             imageData[destPos + 1] = 255;

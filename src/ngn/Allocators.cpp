@@ -26,6 +26,11 @@ MemoryArena::~MemoryArena()
 void* MemoryArena::allocate(std::size_t size, std::size_t alignment)
 {
     const auto start = align(top_, alignment);
+    
+    // Check for overflow before addition
+    if (start > capacity_ - size)
+        throw std::runtime_error("Out of memory or integer overflow in allocation");
+    
     const auto end = start + size;
 
     if (end > capacity_)

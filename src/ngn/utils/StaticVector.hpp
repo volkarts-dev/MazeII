@@ -8,6 +8,8 @@ namespace ngn {
 template<typename T, std::size_t Capacity, std::unsigned_integral SizeT = uint32_t>
 class StaticVector
 {
+    static_assert(Capacity <= std::numeric_limits<SizeT>::max(), "Size type cannot hold capacity");
+
 public:
     using pointer = T*;
     using const_pointer = const T*;
@@ -71,9 +73,10 @@ public:
     }
 
     template<typename... Args>
-    reference emplace_back(Args... args)
+    reference emplace_back(Args&&... args)
     {
-        assert(size_ < Capacity);
+        if (size_ >= Capacity)
+            throw std::out_of_range("StaticVector capacity exceeded");
         auto ptr = std::construct_at(data_ + size_, std::forward<Args>(args)...);
         ++size_;
         return *ptr;

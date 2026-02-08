@@ -30,7 +30,6 @@ public:
     Audio();
     ~Audio();
 
-    AudioBuffer* loadWAV(const BufferView& data);
     AudioBuffer* loadOGG(const BufferView& data);
 
 private:

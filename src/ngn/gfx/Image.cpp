@@ -18,9 +18,7 @@ ImageLoader ImageLoader::createFromBitmap(Renderer* renderer, uint32_t width, ui
 
     const vk::DeviceSize imageSize = loader.width_ * loader.height_ * 4;
     if (imageSize != buffer.size())
-    {
         throw std::runtime_error("width * height != buffer_size");
-    }
 
     BufferConfig config{renderer, vk::BufferUsageFlagBits::eTransferSrc, imageSize};
     config.hostVisible = true;
@@ -42,19 +40,19 @@ ImageLoader ImageLoader::loadFromBuffer(Renderer* renderer, const BufferView buf
                                             &texWidth, &texHeight, &texChannels,
                                             STBI_rgb_alpha);
     if (!pixels)
-    {
         throw std::runtime_error("Failed to load texture image.");
-    }
 
+    // Assume stbi_load_from_memory() returns a consistant state,
+    // so we can rely on correct value in all the vars
     const auto width = static_cast<uint32_t>(texWidth);
     const auto height = static_cast<uint32_t>(texHeight);
-    const auto channels = static_cast<uint32_t>(texChannels);
+    const uint32_t channels = STBI_rgb_alpha; // STBI_rgb_alpha forces channels in buffer to be 4
 
     auto loader = createFromBitmap(
-                renderer,
-                width, height,
-                BufferView{pixels, width * height* channels}
-                );
+        renderer,
+        width, height,
+        BufferView{pixels, static_cast<uint64_t>(width) * height * channels}
+    );
 
     stbi_image_free(pixels);
 
