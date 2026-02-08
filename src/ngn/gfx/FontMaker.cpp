@@ -151,16 +151,9 @@ void copyGlyph(std::vector<uint8_t>& imageData, const FT_GlyphSlot& glyph, const
         {
             uint32_t srcPos = y * glyph->bitmap.width + x;
             
-            // Use 64-bit arithmetic to prevent overflow
-            const uint64_t destPos64 = (static_cast<uint64_t>(state.posY + y) * 
-                                       static_cast<uint64_t>(state.imageDimension) + 
-                                       static_cast<uint64_t>(state.posX + x)) * 4;
-            
-            // Bounds check before writing
-            if (destPos64 + 3 >= imageData.size())
+            uint32_t destPos = ((state.posY + y) * state.imageDimension + (state.posX + x)) * 4;
+            if (destPos > imageData.size() - 4)
                 throw std::runtime_error("Glyph copy would write out of bounds");
-            
-            const uint32_t destPos = static_cast<uint32_t>(destPos64);
 
             imageData[destPos + 0] = 255;
             imageData[destPos + 1] = 255;
