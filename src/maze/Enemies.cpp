@@ -82,6 +82,8 @@ void Enemies::killEnemy(entt::entity enemy)
 
 void Enemies::update(float deltaTime)
 {
+    updateTimer_.update(deltaTime);
+
     auto respawnView = registry_->view<RespawnTimer>();
     for (auto [e, timer] : respawnView.each())
     {
@@ -99,13 +101,7 @@ void Enemies::update(float deltaTime)
         }
     }
 
-    bool doUpdateStep{}; // some things must not be done every frame
-    updateTimer_ += deltaTime;
-    if (updateTimer_ > UpdateTimeout)
-    {
-        updateTimer_ = 0.0f;
-        doUpdateStep = true;
-    }
+    bool doUpdateStep = updateTimer_.elapsed(UpdateTimeout).first;
 
     const auto targetView = registry_->view<
             const PlayerTag,

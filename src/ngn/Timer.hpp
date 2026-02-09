@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "Types.hpp"
-
 namespace ngn {
 
 class Timer
@@ -12,14 +10,14 @@ class Timer
 public:
     Timer();
 
-    void restart();
-    void setZero();
-    std::pair<bool, Duration<double>> elapsed(bool reset = false);
-    std::pair<bool, Duration<double>> elapsed(Duration<double> secs);
+    void update(float deltaTime);
+
+    void restart(bool hot = false);
+    std::pair<bool, float> elapsed(bool reset = false);
+    std::pair<bool, float> elapsed(float secs);
 
 private:
-    Clock clock_;
-    Timepoint  start_;
+    float time_;
 };
 
 } // namespace ngn

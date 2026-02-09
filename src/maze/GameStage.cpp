@@ -128,6 +128,10 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
 
 void GameStage::onUpdate(float deltaTime)
 {
+    playerGameState_.laserReloadTimer.update(deltaTime);
+
+    // ****************************************************
+
     handlePlayerInput(deltaTime);
 
     // ****************************************************
@@ -213,7 +217,7 @@ void GameStage::handlePlayerInputEvents(ngn::InputAction action, int key, ngn::I
         }
         else if (key == GLFW_KEY_SPACE)
         {
-            playerGameState_.laserReloadTimer.setZero();
+            playerGameState_.laserReloadTimer.restart(true);
         }
     }
 }
@@ -225,50 +229,31 @@ void GameStage::handlePlayerInput(float deltaTime)
     if (app_->isKeyDown(GLFW_KEY_LEFT))
     {
         auto& force = registry_->get<ngn::AngularForce>(playerGameState_.entity).value;
-        force += 20.f;
+        force += 0.0025f / deltaTime;
     }
-
     if (app_->isKeyDown(GLFW_KEY_RIGHT))
     {
         auto& force = registry_->get<ngn::AngularForce>(playerGameState_.entity).value;
-        force -= 20.f;
+        force -= 0.0025f / deltaTime;
     }
     if (app_->isKeyDown(GLFW_KEY_UP))
     {
+        const auto factor = app_->isKeyDown(GLFW_KEY_Q) ? 3.0f : 0.3f;
         auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(playerGameState_.entity);
-        force.value -= rot.dir * 2000.f;
+        force.value -= rot.dir * factor / deltaTime;
     }
     if (app_->isKeyDown(GLFW_KEY_DOWN))
     {
         auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(playerGameState_.entity);
-        force.value += rot.dir * 2000.f;
+        force.value += rot.dir * 0.2f / deltaTime;
     }
-    if (app_->isKeyDown(GLFW_KEY_W))
-    {
-        auto& force = registry_->get<ngn::LinearForce>(playerGameState_.entity);
-        force.value += glm::vec2{0, -2000.f};
-    }
-    if (app_->isKeyDown(GLFW_KEY_S))
-    {
-        auto& force = registry_->get<ngn::LinearForce>(playerGameState_.entity);
-        force.value += glm::vec2{0, 2000.f};
-    }
-    if (app_->isKeyDown(GLFW_KEY_A))
-    {
-        auto& force = registry_->get<ngn::LinearForce>(playerGameState_.entity);
-        force.value += glm::vec2{-2000.f, 0};
-    }
-    if (app_->isKeyDown(GLFW_KEY_D))
-    {
-        auto& force = registry_->get<ngn::LinearForce>(playerGameState_.entity);
-        force.value += glm::vec2{2000.f, 0};
-    }
+
 
     // ****************************************************
 
     if (app_->isKeyDown(GLFW_KEY_SPACE))
     {
-        if (playerGameState_.laserReloadTimer.elapsed(ngn::Duration<double>(0.5)).first)
+        if (playerGameState_.laserReloadTimer.elapsed(0.5f).first)
         {
             auto [pos, rot] = registry_->get<const ngn::Position, const ngn::Rotation>(playerGameState_.entity);
             const auto start = pos.value - rot.dir * 20.0f;

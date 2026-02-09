@@ -6,14 +6,8 @@
 #include <span>
 #include <cstdint>
 #include <limits>
-#include <chrono>
 
 namespace ngn {
-
-using Clock = std::chrono::high_resolution_clock;
-using Timepoint = Clock::time_point;
-template<typename Rep>
-using Duration = std::chrono::duration<Rep>;
 
 using BufferView = std::span<uint8_t>;
 

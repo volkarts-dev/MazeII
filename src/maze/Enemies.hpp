@@ -47,7 +47,7 @@ private:
     GameStage* gameStage_;
     entt::registry* registry_;
     ngn::World* world_;
-    float updateTimer_;
+    ngn::Timer updateTimer_;
 
     NGN_DISABLE_COPY_MOVE(Enemies)
 };

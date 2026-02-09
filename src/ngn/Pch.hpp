@@ -10,6 +10,5 @@
 #include <vulkan/vulkan.hpp>
 #include <cstdint>
 #include <limits>
-#include <chrono>
 
 // IWYU pragma: end_exports

@@ -18,6 +18,7 @@
 #include "Types.hpp"
 #include <GLFW/glfw3.h>
 #include <entt/entt.hpp>
+#include <chrono>
 #include <cassert>
 #include <cstdlib>
 
@@ -203,7 +204,9 @@ bool Application::isKeyUp(int key) const
 
 int Application::exec()
 {
-    Timer fpsTimer;
+    std::chrono::high_resolution_clock clock;
+    auto lastTick = clock.now();
+
     Timer statTimer;
     double frameCount{};
 
@@ -224,24 +227,29 @@ int Application::exec()
 
         glfwPollEvents();
 
-        const auto tick = fpsTimer.elapsed(true);
-        const auto deltaTime = Duration<float>{tick.second}.count();
+        const auto now = clock.now();
+        const auto deltaTimeDur = now - lastTick;
+        const auto deltaTime = std::chrono::duration<float>{deltaTimeDur}.count();
+        lastTick = now;
 
         update(deltaTime);
 
         draw(deltaTime);
 
+        statTimer.update(deltaTime);
+
 #if defined(NGN_ENABLE_INSTRUMENTATION)
         if (const auto stat = statTimer.elapsed(); frameCount >= 5000.0)
 #else
-        if (const auto stat = statTimer.elapsed(Duration<double>{5.0}); stat.first)
+        if (const auto stat = statTimer.elapsed(5.0f); stat.first)
 #endif
         {
             ngn::log::info("FPS: {:.1f}, F-MEM: {}/{}, alloc: {} ({}), dealloc: {} ({})",
-                           frameCount / stat.second.count(),
-                           Bytes{frameMemoryArena_->allocated()}, Bytes{frameMemoryArena_->capacity()},
-                           Bytes{frameMemoryArena_->statAllocatedSize()}, frameMemoryArena_->statAllocatedCount(),
-                           Bytes{frameMemoryArena_->statDeallocatedSize()}, frameMemoryArena_->statDeallocatedCount());
+               frameCount / stat.second,
+               Bytes{frameMemoryArena_->allocated()}, Bytes{frameMemoryArena_->capacity()},
+               Bytes{frameMemoryArena_->statAllocatedSize()}, frameMemoryArena_->statAllocatedCount(),
+               Bytes{frameMemoryArena_->statDeallocatedSize()}, frameMemoryArena_->statDeallocatedCount()
+            );
 
 #if defined(NGN_ENABLE_INSTRUMENTATION)
             break;

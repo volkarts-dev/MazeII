@@ -11,34 +11,31 @@ Timer::Timer()
     restart();
 }
 
-void Timer::restart()
+void Timer::update(float deltaTime)
 {
-    start_ = clock_.now();
+    time_ += deltaTime;
 }
 
-void Timer::setZero()
+void Timer::restart(bool hot)
 {
-    start_ = {};
+    time_ = hot ? std::numeric_limits<float>::max() : 0.0f;
 }
 
-std::pair<bool, Duration<double> > Timer::elapsed(bool reset)
+std::pair<bool, float> Timer::elapsed(bool reset)
 {
-    const auto now = clock_.now();
-    const auto diff = now - start_;
+    const auto time = time_;
     if (reset)
-        start_ = now;
-    return std::make_pair(false, diff);
+        time_ = 0.0f;
+    return std::make_pair(false, time);
 }
 
-std::pair<bool, Duration<double> > Timer::elapsed(Duration<double> secs)
+std::pair<bool, float> Timer::elapsed(float secs)
 {
-    const auto now = clock_.now();
-    const auto diff = now - start_;
-    const auto end = start_ + secs;
-    const auto reset = now > end;
+    const auto time = time_;
+    const auto reset = time >= secs;
     if (reset)
-        start_ = now;
-    return std::make_pair(reset, diff);
+        time_ = 0.0f;
+    return std::make_pair(reset, time);
 }
 
 } // namespace ngn
