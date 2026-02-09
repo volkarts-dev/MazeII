@@ -29,6 +29,7 @@ add_library(ngn STATIC
     phys/Solver.hpp phys/Solver.cpp
     phys/World.hpp phys/World.cpp
 
+    utils/Array.hpp
     utils/StaticVector.hpp
 
     Allocators.hpp Allocators.cpp

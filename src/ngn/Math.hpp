@@ -8,7 +8,7 @@
 
 namespace ngn {
 
-constexpr float Epsilon = 1e-6f;
+constexpr float Epsilon = 1e-9f;
 
 constexpr float PI = std::numbers::pi_v<float>;
 constexpr float TwoPI = std::numbers::pi_v<float> * 2.f;

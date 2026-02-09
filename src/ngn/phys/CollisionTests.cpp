@@ -4,6 +4,7 @@
 #include "CollisionTests.hpp"
 
 #include "Collision.hpp"
+#include "Math.hpp"
 #include "Shapes.hpp"
 #include <glm/gtx/norm.hpp>
 #include <cassert>
@@ -205,6 +206,38 @@ void testCollision(Collision& collision, const Shape& lhs, const Shape& rhs)
         case Invalid:
             break;
     }
+}
+
+std::pair<glm::vec2, glm::vec2> intersections(const glm::vec2& lineStart, const glm::vec2& lineEnd,
+                                              const glm::vec2& circleCenter, float circleRadius)
+{
+    const auto d = lineEnd - lineStart;
+    const auto f = lineStart - circleCenter;
+
+    const auto a = glm::dot(d, d);
+    const auto b = 2.0f * glm::dot(d, f);
+    const auto c = glm::dot(f, f) - circleRadius * circleRadius;
+
+    const auto det = b * b - 4 * a * c;
+
+    glm::vec2 result[2] = {{NAN, NAN}, {NAN, NAN}};
+
+    if (det > -Epsilon)
+    {
+        const auto sqrtDet = glm::sqrt(det);
+        const auto t1 = (-b + sqrtDet) / (2.0f * a);
+        const auto t2 = (-b - sqrtDet) / (2.0f * a);
+
+        uint32_t index = 0;
+
+        if (t1 >= 0.0f && t1 <= 1.0f)
+            result[index++] = lineStart + d * t1;
+
+        if (det > Epsilon && t2 >= 0.0f && t2 <= 1.0f)
+            result[index++] = lineStart + d * t2;
+    }
+
+    return std::make_pair(result[0], result[1]);
 }
 
 } // namespace ngn
