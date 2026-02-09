@@ -9,6 +9,7 @@
 #include "gfx/Renderer.hpp"
 #include "Macros.hpp"
 #include <entt/fwd.hpp>
+#include <random>
 
 struct GLFWwindow;
 
@@ -90,6 +91,8 @@ public:
 
     glm::vec2 windowSize() const;
 
+    std::random_device::result_type randomSeed() { return randomDevice_(); }
+
     Renderer* renderer() const { return renderer_; }
     MemoryArena* frameMemoryArena() const { return frameMemoryArena_; }
     entt::registry* registry() const { return registry_; }
@@ -126,6 +129,8 @@ private:
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 private:
+    std::random_device randomDevice_;
+
     ApplicationDelegate* delegate_;
     GLFWwindow* window_;
     Renderer* renderer_;

@@ -43,6 +43,7 @@ public:
     ~GameStage() override;
 
     ngn::Application* app() const { return app_; }
+    Level* level() const { return level_; }
 
     void onActivate() override;
     void onDeactivate() override;

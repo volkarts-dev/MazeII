@@ -4,9 +4,12 @@
 #pragma once
 
 #include "Macros.hpp"
+#include "MazeComponents.hpp"
+#include "Timer.hpp"
 #include "phys/Shapes.hpp"
 #include <entt/fwd.hpp>
 #include <glm/fwd.hpp>
+#include <random>
 
 namespace ngn {
 class Application;
@@ -14,6 +17,7 @@ class World;
 } // namespace ngn
 
 class GameStage;
+class Level;
 
 class Enemies
 {
@@ -21,7 +25,7 @@ public:
     Enemies(GameStage* gameStage);
     ~Enemies();
 
-    void createEnemy(glm::vec2 pos, float angle);
+    void createEnemy(NavIndex startSector, float angle);
     void killEnemy(entt::entity enemy);
 
     void update(float deltaTime);
@@ -32,6 +36,7 @@ private:
         Idle,
         Persuit,
         Evasion,
+        Wander,
     };
 
     class EnemyInfo
@@ -41,13 +46,17 @@ private:
     };
 
 private:
+    NavIndex findNextRandomSector(NavIndex last, NavIndex current);
     bool testInSight(entt::entity player, entt::entity enemy, const ngn::Line& lineOfSight);
 
 private:
     GameStage* gameStage_;
     entt::registry* registry_;
     ngn::World* world_;
+    ngn::NavigationGraph* navigationGraph_;
     ngn::Timer updateTimer_;
+
+    std::mt19937 randGenerator_;
 
     NGN_DISABLE_COPY_MOVE(Enemies)
 };

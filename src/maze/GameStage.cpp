@@ -73,7 +73,7 @@ void GameStage::onActivate()
     registry_->emplace<PlayerTag>(playerGameState_.entity);
 
     enemies_ = new Enemies{this};
-    enemies_->createEnemy({352, 352}, 0.0f);
+    enemies_->createEnemy(34, 0.0f);
 
     shots_ = new Shots{this};
 
@@ -172,6 +172,7 @@ void GameStage::onUpdate(float deltaTime)
     app_->debugRenderer()->updateView(playerView);
 
     app_->world()->debugDrawState(app_->debugRenderer(), debugShowBodies_, debugShowBoundingBoxes_, false, true);
+    level_->debugDrawState(app_->debugRenderer());
 #endif
 }
 

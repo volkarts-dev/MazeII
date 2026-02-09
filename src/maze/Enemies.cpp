@@ -7,7 +7,11 @@
 #include "CommonComponents.hpp"
 #include "GameStage.hpp"
 #include "Layers.hpp"
-#include "MazeComponents.hpp"
+#include "Level.hpp"
+#include "Math.hpp"
+#include "ai/SteeringHelper.hpp"
+#include "glm/ext/scalar_constants.hpp"
+#include "phys/CollisionTests.hpp"
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
 #include <entt/entt.hpp>
@@ -22,6 +26,12 @@ namespace {
 
 constexpr float linearForce = 500.0f;
 constexpr float UpdateTimeout = 0.0f;
+
+class StartSector
+{
+public:
+    NavIndex index;
+};
 
 class RespawnTimer
 {
@@ -41,7 +51,9 @@ Enemies::Enemies(GameStage* gameStage) :
     gameStage_{gameStage},
     registry_{gameStage_->app()->registry()},
     world_{gameStage_->app()->world()},
-    updateTimer_{}
+    navigationGraph_{gameStage_->level()->navigationGraph()},
+    updateTimer_{},
+    randGenerator_{gameStage->app()->randomSeed()}
 {
 }
 
@@ -51,8 +63,10 @@ Enemies::~Enemies()
     registry_->destroy(view.begin(), view.end());
 }
 
-void Enemies::createEnemy(glm::vec2 pos, float angle)
+void Enemies::createEnemy(NavIndex startSector, float angle)
 {
+    const auto pos = navigationGraph_->midPoint(startSector);
+
     ActorCreateInfo createInfo{
         .position = pos,
         .rotation = angle,
@@ -71,7 +85,15 @@ void Enemies::createEnemy(glm::vec2 pos, float angle)
     const auto enemy = gameStage_->createActor(createInfo);
 
     registry_->emplace<EnemyTag>(enemy);
-    registry_->emplace<EnemyInfo>(enemy);
+    auto& start = registry_->emplace<StartSector>(enemy);
+    auto& info = registry_->emplace<EnemyInfo>(enemy);
+    auto& sectors = registry_->emplace<EnemyPathSectors>(enemy);
+    auto& points = registry_->emplace<EnemyPathPoints>(enemy);
+
+    start.index = startSector;
+    info.state = State::Wander;
+    sectors.path[0] = startSector;
+    points.path[0] = pos;
 }
 
 void Enemies::killEnemy(entt::entity enemy)
@@ -93,10 +115,23 @@ void Enemies::update(float deltaTime)
             registry_->remove<RespawnTimer>(e);
             registry_->emplace<ngn::ActiveTag>(e);
 
-            auto [pos, rot] = registry_->get<ngn::Position, ngn::Rotation>(e);
-            pos.value = {352, 352};
-            rot.angle = 0.0f;
+            auto [start, pos, rot, sectors, points, info] = registry_->get<
+                    const StartSector,
+                    ngn::Position,
+                    ngn::Rotation,
+                    EnemyPathSectors,
+                    EnemyPathPoints,
+                    EnemyInfo>(e);
+
+            pos.value = navigationGraph_->midPoint(start.index);
+            rot.angle = glm::pi<float>();
             rot.update();
+
+            info.state = State::Wander;
+            sectors.path[0] = start.index;
+            std::fill(sectors.path.begin() + 1, sectors.path.end(), ngn::InvalidIndex<NavIndex>);
+            points.path[0] = pos.value;
+
             registry_->emplace_or_replace<ngn::TransformChangedTag>(e);
         }
     }
@@ -104,20 +139,49 @@ void Enemies::update(float deltaTime)
     bool doUpdateStep = updateTimer_.elapsed(UpdateTimeout).first;
 
     const auto targetView = registry_->view<
-            const PlayerTag,
             const ngn::Position,
-            const ngn::LinearVelocity>();
+            const ngn::LinearVelocity,
+            PlayerTag>();
     auto [tEnt, tPos, tVel] = *targetView.each().begin();
 
     auto view = registry_->view<
-            const EnemyTag,
-            const ngn::ActiveTag,
             const ngn::Position,
+            const ngn::Rotation,
             const ngn::LinearVelocity,
             ngn::LinearForce,
-            EnemyInfo>();
-    for (auto [ent, pos, vel, force, info] : view.each())
+            ngn::AngularForce,
+            EnemyInfo,
+            EnemyPathSectors,
+            EnemyPathPoints,
+            EnemyTag,
+            ngn::ActiveTag>();
+    for (auto [ent, pos, rot, linVel, linForce, angForce, info, sectors, points] : view.each())
     {
+        if (doUpdateStep)
+        {
+            auto& currentSector = sectors.path[0];
+            auto possibleNewSector = navigationGraph_->findNearerSector(currentSector, pos.value);
+            if (possibleNewSector != currentSector) // Moved to other sector
+            {
+                if (possibleNewSector == sectors.path[1])
+                {
+                    for (NavIndex i = 1; i < sectors.path.size(); i++)
+                    {
+                        sectors.path[i - 1] = sectors.path[i];
+                        points.path[i - 1] = points.path[i];
+                    }
+                    sectors.path[sectors.path.size() - 1] = ngn::InvalidIndex<NavIndex>;
+                }
+                else
+                {
+                    sectors.path[0] = possibleNewSector;
+                    points.path[0] = navigationGraph_->midPoint(possibleNewSector);
+                    std::fill(sectors.path.begin() + 1, sectors.path.end(), ngn::InvalidIndex<NavIndex>);
+                }
+                ngn::log::info("{}; {}-{}-{}", currentSector, sectors.path[0], sectors.path[1], sectors.path[2]);
+            }
+        }
+
         const ngn::Line lineOfSight{pos.value, tPos.value};
 
         switch (info.state)
@@ -133,6 +197,7 @@ void Enemies::update(float deltaTime)
                         info.state = State::Persuit;
                     }
                 }
+
                 break;
             }
 
@@ -147,7 +212,8 @@ void Enemies::update(float deltaTime)
                 }
 
                 const auto futureTPos = tPos.value + tVel.value;
-                force.value = steeringSeek(pos.value, vel.value, futureTPos);
+                linForce.value = steeringSeek(pos.value, linVel.value, futureTPos);
+
                 break;
             }
 
@@ -155,8 +221,78 @@ void Enemies::update(float deltaTime)
             {
                 break;
             }
+
+            case Wander:
+            {
+                bool filled = false;
+                for (NavIndex i = 1; i < sectors.path.size(); i++)
+                {
+                    if (sectors.path[i] == ngn::InvalidIndex<NavIndex>)
+                    {
+                        const auto last = i > 1 ? sectors.path[i - 2] : ngn::InvalidIndex<NavIndex>;
+                        const auto current = sectors.path[i - 1];
+                        const auto next = findNextRandomSector(last, current);
+                        sectors.path[i] = next;
+                        points.path[i] = navigationGraph_->midPoint(next);
+                        filled = true;
+                    }
+                }
+                if (filled)
+                {
+                    ngn::log::info("New Path: {}-{}-{}", sectors.path[0], sectors.path[1], sectors.path[2]);
+                }
+
+                glm::vec2 headed{NAN, NAN};
+
+                for (NavIndex i = 0; i < points.path.size() - 1; i++)
+                {
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+                    gameStage_->app()->debugRenderer()->drawLine(points.path[i], points.path[i + 1], ngn::Colors::Blue);
+#endif
+
+                    const auto ip = ngn::intersections(points.path[i], points.path[i + 1], pos.value, 64.0f);
+                    if (!std::isnan(ip.first.x))
+                    {
+                        headed = ip.first;
+#if !defined(NGN_ENABLE_VISUAL_DEBUGGING)
+                        break;
+#endif
+                    }
+                }
+
+                if (!std::isnan(headed.x))
+                {
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+                    gameStage_->app()->debugRenderer()->drawCircle(headed, 3, ngn::Colors::Blue);
+#endif
+
+                    linForce.value += steeringSeek(pos.value, linVel.value, headed);
+
+                    const auto dir = headed - pos.value;
+                    const auto maxAngForce = 0.0025f / deltaTime;
+                    angForce.value +=
+                            ngn::computeAngularForce(rot.angle, ngn::atan2(dir.x, dir.y), maxAngForce);
+                }
+
+                break;
+            }
         }
     }
+}
+
+NavIndex Enemies::findNextRandomSector(NavIndex last, NavIndex current)
+{
+    NavSectorVector<NavSectorEdgeCount> possibilities;
+    const auto& connections = navigationGraph_->connections(current);
+    for (NavIndex i = 0; i < connections.size(); i++)
+    {
+        if (connections[i] == ngn::InvalidIndex<NavIndex> || connections[i] == last)
+            continue;
+        possibilities.emplace_back(connections[i]);
+    }
+
+    std::uniform_int_distribution<NavIndex> distrib(0, possibilities.size() - 1);
+    return possibilities[distrib(randGenerator_)];
 }
 
 bool Enemies::testInSight(entt::entity player, entt::entity enemy, const ngn::Line& lineOfSight)
@@ -165,6 +301,7 @@ bool Enemies::testInSight(entt::entity player, entt::entity enemy, const ngn::Li
     bool blocking = false;
     world_->query(lineAABB, LayerPlayer, [&blocking, player, enemy](const ngn::TreeNode& node)
     {
+        // TODO Do an actual collision check (not only an aabb test)
         blocking = node.entity != player && node.entity != enemy;
         return !blocking;
     });
@@ -172,9 +309,11 @@ bool Enemies::testInSight(entt::entity player, entt::entity enemy, const ngn::Li
     const auto diff2 = glm::length2(lineOfSight.end - lineOfSight.start);
     const bool inSight = !blocking && diff2 > 65536.0f && diff2 < 262144.0f;
 
-//#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-//    gameStage_->app()->debugRenderer()->drawArrow(lineOfSight.start, lineOfSight.end, 20.0f, inSight ? ngn::Colors::Green : ngn::Colors::Red);
-//#endif
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    gameStage_->app()->debugRenderer()->drawArrow(
+                lineOfSight.start, lineOfSight.end, 20.0f,
+                (!blocking && diff2 < 262144.0f) ? ngn::Colors::Green : ngn::Colors::Red);
+#endif
 
     return inSight;
 }

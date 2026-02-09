@@ -31,7 +31,7 @@ ngn::ApplicationConfig MazeDelegate::applicationConfig(ngn::Application* app)
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
         .debugRenderer = true,
-        .debugBatchCount = 16384
+        .debugBatchCount = 65536
 #endif
     };
 }

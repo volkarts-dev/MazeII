@@ -1,4 +1,7 @@
 add_library(ngn STATIC
+    ai/NavigationGraph.hpp ai/NavigationGraph.cpp
+    ai/SteeringHelper.hpp ai/SteeringHelper.cpp
+
     audio/Audio.hpp audio/Audio.cpp
     audio/AudioBuffer.hpp audio/AudioBuffer.cpp
     audio/Sound.hpp audio/Sound.cpp

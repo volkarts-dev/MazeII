@@ -8,7 +8,14 @@
 #include <vector>
 
 namespace ngn {
+
 class Application;
+class NavigationGraph;
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+class DebugRenderer;
+#endif
+
 } // namespace ngn
 
 class Level
@@ -17,8 +24,16 @@ public:
     Level(ngn::Application* app);
     ~Level();
 
+    ngn::NavigationGraph* navigationGraph() const { return navigationGraph_; }
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    void debugDrawState(ngn::DebugRenderer* debugRenderer);
+#endif
+
 private:
-    void createMaze();
+    void createWalls();
+    void createSprites();
+    void createNavigationGraph();
 
 private:
     ngn::Application* app_;
@@ -26,6 +41,8 @@ private:
 
     std::vector<entt::entity> walls_;
     std::vector<entt::entity> sprites_;
+
+    ngn::NavigationGraph* navigationGraph_;
 
     NGN_DISABLE_COPY_MOVE(Level)
 };

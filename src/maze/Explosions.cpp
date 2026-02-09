@@ -68,7 +68,7 @@ void Explosions::showExplosion(const glm::vec2& position, Type type)
 
     pos.value = position;
 
-    // TODO Use different sound for explosion types
+    NGN_UNUSED(type); // TODO Use different sound for explosion types
     snd.setBuffer(gameStage_->resources().explosionSoundData);
     snd.play();
 
