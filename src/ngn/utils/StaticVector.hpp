@@ -82,6 +82,15 @@ public:
         return *ptr;
     }
 
+    reference push_back(T&& value)
+    {
+        if (size_ >= Capacity)
+            throw std::out_of_range("StaticVector capacity exceeded");
+        auto ptr = std::construct_at(data_ + size_, std::move(value));
+        ++size_;
+        return *ptr;
+    }
+
     void pop_back()
     {
         assert(size_);
