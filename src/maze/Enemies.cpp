@@ -266,10 +266,10 @@ void Enemies::update(float deltaTime)
                     gameStage_->app()->debugRenderer()->drawCircle(headed, 3, ngn::Colors::Blue);
 #endif
 
-                    linForce.value += steeringSeek(pos.value, linVel.value, headed);
+                    linForce.value += rot.dir * 500.0f;
 
                     const auto dir = headed - pos.value;
-                    const auto maxAngForce = 0.0025f / deltaTime;
+                    const auto maxAngForce = 20.0f;
                     angForce.value +=
                             ngn::computeAngularForce(rot.angle, ngn::atan2(dir.x, dir.y), maxAngForce);
                 }

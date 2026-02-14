@@ -230,23 +230,23 @@ void GameStage::handlePlayerInput(float deltaTime)
     if (app_->isKeyDown(GLFW_KEY_LEFT))
     {
         auto& force = registry_->get<ngn::AngularForce>(playerGameState_.entity).value;
-        force += 0.0025f / deltaTime;
+        force += 20.0f;
     }
     if (app_->isKeyDown(GLFW_KEY_RIGHT))
     {
         auto& force = registry_->get<ngn::AngularForce>(playerGameState_.entity).value;
-        force -= 0.0025f / deltaTime;
+        force -= 20.0f;
     }
     if (app_->isKeyDown(GLFW_KEY_UP))
     {
-        const auto factor = app_->isKeyDown(GLFW_KEY_Q) ? 3.0f : 0.3f;
+        const auto factor = app_->isKeyDown(GLFW_KEY_Q) ? 5000.0f : 2000.0f;
         auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(playerGameState_.entity);
-        force.value -= rot.dir * factor / deltaTime;
+        force.value -= rot.dir * factor;
     }
     if (app_->isKeyDown(GLFW_KEY_DOWN))
     {
         auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(playerGameState_.entity);
-        force.value += rot.dir * 0.2f / deltaTime;
+        force.value += rot.dir * 2000.0f;
     }
 
 
