@@ -26,6 +26,7 @@ add_library(ngn STATIC
     phys/CollisionTests.hpp phys/CollisionTests.cpp
     phys/DynamicTree.hpp phys/DynamicTree.cpp
     phys/Functions.hpp phys/Functions.cpp
+    phys/IntersectionTests.hpp phys/IntersectionTests.cpp
     phys/Layers.hpp
     phys/PhysComponents.hpp
     phys/Shapes.hpp phys/Shapes.cpp

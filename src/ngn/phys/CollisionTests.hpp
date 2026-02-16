@@ -5,14 +5,10 @@
 
 namespace ngn {
 
-class AABB;
 class Circle;
 class Collision;
 class Line;
 class Shape;
-
-bool intersects(const AABB& lhs, const AABB& rhs);
-bool intersects(const Line& lhs, const AABB& rhs);
 
 void testCollision(Collision& collision, const Shape& lhs, const Shape& rhs);
 
