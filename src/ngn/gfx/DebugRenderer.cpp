@@ -20,7 +20,7 @@ struct CircleValues
     {
         for (std::size_t i = 0; i < values.size(); i++)
         {
-            const auto val = TwoPI / static_cast<float>(values.size()) * static_cast<float>(i);
+            const auto val = math::TwoPI / static_cast<float>(values.size()) * static_cast<float>(i);
             values[i] = {std::cos(val), -std::sin(val)};
         }
     }
@@ -191,7 +191,7 @@ void DebugRenderer::drawCapsule(const glm::vec2& start, const glm::vec2& end, fl
     std::size_t startIndex = 0;
     for ( ; startIndex < gCircleValues.size(); startIndex++)
     {
-        const auto t = TwoPI / static_cast<float>(gCircleValues.size()) * static_cast<float>(startIndex);
+        const auto t = math::TwoPI / static_cast<float>(gCircleValues.size()) * static_cast<float>(startIndex);
         if (t > theta)
             break;
     }
@@ -295,7 +295,7 @@ void DebugRenderer::fillCapsule(const glm::vec2& start, const glm::vec2& end, fl
     std::size_t startIndex = 0;
     for ( ; startIndex < gCircleValues.size(); startIndex++)
     {
-        const auto t = TwoPI / static_cast<float>(gCircleValues.size()) * static_cast<float>(startIndex);
+        const auto t = math::TwoPI / static_cast<float>(gCircleValues.size()) * static_cast<float>(startIndex);
         if (t > theta)
             break;
     }

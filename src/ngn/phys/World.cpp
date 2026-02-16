@@ -168,7 +168,7 @@ void World::integrate(float deltaTime)
                 const auto resistance = 0.5f * linVelocityLen2 * config_.linearDamping * body.friction * 0.5f;
                 linForce->value += -linVelocity.value / linVelocityLen * resistance;
             }
-            else if (nearZero(linForce->value))
+            else if (math::nearZero(linForce->value))
             {
                 linVelocity.value = {};
             }
@@ -199,7 +199,7 @@ void World::integrate(float deltaTime)
                 const auto resistance = 0.5f * angVelocityLen2 * config_.angularDamping * body.friction * 10.0f;
                 angForce->value += -glm::sign(angVelocity.value) * resistance;
             }
-            else if (nearZero(angForce->value))
+            else if (math::nearZero(angForce->value))
             {
                 angVelocity.value = {};
             }

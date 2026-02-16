@@ -222,7 +222,7 @@ std::pair<glm::vec2, glm::vec2> intersections(const glm::vec2& lineStart, const 
 
     glm::vec2 result[2] = {{NAN, NAN}, {NAN, NAN}};
 
-    if (det > -Epsilon)
+    if (det > -math::Epsilon)
     {
         const auto sqrtDet = glm::sqrt(det);
         const auto t1 = (-b + sqrtDet) / (2.0f * a);
@@ -233,7 +233,7 @@ std::pair<glm::vec2, glm::vec2> intersections(const glm::vec2& lineStart, const 
         if (t1 >= 0.0f && t1 <= 1.0f)
             result[index++] = lineStart + d * t1;
 
-        if (det > Epsilon && t2 >= 0.0f && t2 <= 1.0f)
+        if (det > math::Epsilon && t2 >= 0.0f && t2 <= 1.0f)
             result[index++] = lineStart + d * t2;
     }
 

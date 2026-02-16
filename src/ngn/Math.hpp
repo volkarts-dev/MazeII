@@ -6,7 +6,7 @@
 #include <glm/gtx/norm.hpp>
 #include <numbers>
 
-namespace ngn {
+namespace ngn::math {
 
 constexpr float Epsilon = 1e-9f;
 
@@ -34,4 +34,9 @@ inline bool nearZero(glm::vec2 value, float e = Epsilon)
     return abs <= e * abs;
 }
 
-} // namespace ngn
+inline float det(const glm::vec2& a, const glm::vec2& b)
+{
+    return a.x * b.y - a.y * b.x;
+}
+
+} // namespace ngn::math
