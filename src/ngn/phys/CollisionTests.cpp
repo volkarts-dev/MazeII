@@ -53,125 +53,103 @@ void testCollision(Collision& collision,
                    const glm::vec2& lhsStart, const glm::vec2& lhsEnd, float lhsRadius,
                    const glm::vec2& rhsStart, const glm::vec2& rhsEnd, float rhsRadius)
 {
-    const auto ab = lhsEnd - lhsStart;
-    const auto ac = rhsStart- lhsStart;
-    const auto ad = rhsEnd - lhsStart;
+    const auto d1 = lhsEnd - lhsStart;
+    const auto d2 = rhsEnd - rhsStart;
+    const auto r = lhsStart - rhsStart;
 
-    const auto abLen2 = glm::length2(ab);
+    const auto a = glm::length2(d1);
+    const auto e = glm::length2(d2);
+    const auto f = glm::dot(d2, r);
+    const auto c = glm::dot(d1, r);
+    const auto b = glm::dot(d1, d2);
 
-    const auto acT0 = glm::dot(ab, ac) / abLen2;
-    const auto acT = glm::clamp(acT0, 0.0f, 1.0f);
+    // assume that both lines do not degenerate into points (length == 0)
 
-    const auto adT0 = glm::dot(ab, ad) / abLen2;
-    const auto adT = glm::clamp(adT0, 0.0f, 1.0f);
+    const auto denom = a * e - b * b;
 
-    const auto closestC = lhsStart + ab + acT;
-    const auto closestD = lhsEnd + ab + adT;
+    auto s = !math::nearZero(denom) ? glm::clamp((b * f - c * e) / denom, 0.0f, 1.0f) : 0.0f;
+    auto t = (b * s + f) / e;
 
-    const auto closestC2C = rhsStart - closestC;
-    const auto closestD2D = rhsEnd - closestD;
-
-    const auto distC2 = glm::dot(closestC, closestC);
-    const auto distD2 = glm::dot(closestD, closestD);
-
-    if (distC2 <= distD2)
+    if (t < 0.0f)
     {
-        const auto dist = glm::sqrt(distC2);
-        const auto diff = (lhsRadius + rhsRadius) - dist;
-
-        collision.point = closestC + closestC2C / dist * lhsRadius;
-        collision.direction = closestC2C / dist;
-        collision.penetration = diff;
-        collision.colliding = diff > 0.0f;
+        t = 0.0f;
+        s = glm::clamp(-c / a, 0.0f, 1.0f);
     }
-    else
+    else if (t > 1.0f)
     {
-        const auto dist = glm::sqrt(distD2);
-        const auto diff = (lhsRadius + rhsRadius) - dist;
-
-        collision.point = closestD + closestD2D / dist * lhsRadius;
-        collision.direction = closestD2D / dist;
-        collision.penetration = diff;
-        collision.colliding = diff > 0.0f;
+        t = 1.0f;
+        s = glm::clamp((b - c) / a, 0.0f, 1.0f);
     }
+
+    const auto c1 = lhsStart + d1 * s;
+    const auto c2 = rhsStart + d2 * t;
+
+    const auto shortest = c2 - c1;
+
+    const auto dist = glm::length(shortest);
+    const auto radii = lhsRadius + rhsRadius;
+
+    const auto diff = radii - dist;
+
+    collision.direction = shortest / dist;
+    collision.point = c1 + collision.direction * lhsRadius;
+    collision.penetration = diff;
+    collision.colliding = diff > 0.0f;
 }
 
-void testCollision(Collision& collision, const Line& lhs, const Circle& rhs)
+inline void testCollision(Collision& collision, const Line& lhs, const Circle& rhs)
 {
     testCollision(collision, rhs, lhs.start, lhs.end, LINE_WIDTH);
     collision.direction = -collision.direction;
 }
 
-void testCollision(Collision& collision, const Capsule& lhs, const Circle& rhs)
+inline void testCollision(Collision& collision, const Capsule& lhs, const Circle& rhs)
 {
     testCollision(collision, rhs, lhs.start, lhs.end, lhs.radius);
     collision.direction = -collision.direction;
 }
 
-void testCollision(Collision& collision,
+inline void testCollision(Collision& collision,
                    const Line& lhs,
                    const glm::vec2& rhsStart, const glm::vec2& rhsEnd, float rhsRadius)
 {
     testCollision(collision, lhs.start, lhs.end, LINE_WIDTH, rhsStart, rhsEnd, rhsRadius);
 }
 
-void testCollision(Collision& collision,
+inline void testCollision(Collision& collision,
                    const Capsule& lhs,
                    const glm::vec2& rhsStart, const glm::vec2& rhsEnd, float rhsRadius)
 {
     testCollision(collision, lhs.start, lhs.end, lhs.radius, rhsStart, rhsEnd, rhsRadius);
 }
 
-} // namespace
+template<typename ShapeT>
+inline void testCollisionT(Collision& collision, const ShapeT& lhsT, const Shape& rhs)
 {
-
-// *********************************************************************************************************************
-
-void testCollision(Collision& collision, const Shape& lhs, const Shape& rhs)
-{
-    auto test = [&collision, &rhs]<typename T>(const T& lhsT)
-    {
-        switch (rhs.type)
-        {
-            using enum Shape::Type;
-
-            case Circle:
-                testCollision(collision, lhsT, rhs.circle);
-                break;
-
-            case Line:
-                testCollision(collision, lhsT, rhs.line.start, rhs.line.end, LINE_WIDTH);
-                break;
-
-            case Capsule:
-                testCollision(collision, lhsT, rhs.capsule.start, rhs.capsule.end, rhs.capsule.radius);
-                break;
-
-            case Invalid:
-                break;
-        }
-    };
-
-    switch (lhs.type)
+    switch (rhs.type)
     {
         using enum Shape::Type;
 
         case Circle:
-            test(lhs.circle);
+            testCollision(collision, lhsT, rhs.circle);
             break;
 
         case Line:
-            test(lhs.line);
+            testCollision(collision, lhsT, rhs.line.start, rhs.line.end, LINE_WIDTH);
             break;
 
         case Capsule:
-            test(lhs.capsule);
+            testCollision(collision, lhsT, rhs.capsule.start, rhs.capsule.end, rhs.capsule.radius);
             break;
 
         case Invalid:
             break;
     }
-}
+};
+
+} // namespace
+
+// *********************************************************************************************************************
 
 std::pair<glm::vec2, glm::vec2> intersections(const glm::vec2& lineStart, const glm::vec2& lineEnd,
                                               const glm::vec2& circleCenter, float circleRadius)
@@ -203,6 +181,51 @@ std::pair<glm::vec2, glm::vec2> intersections(const glm::vec2& lineStart, const 
     }
 
     return std::make_pair(result[0], result[1]);
+}
+
+// *********************************************************************************************************************
+
+bool testCollision(Collision& collision, const Circle& lhs, const Shape& rhs)
+{
+    testCollisionT(collision, lhs, rhs);
+    return collision.colliding;
+}
+
+bool testCollision(Collision& collision, const Line& lhs, const Shape& rhs)
+{
+    testCollisionT(collision, lhs, rhs);
+    return collision.colliding;
+}
+
+bool testCollision(Collision& collision, const Capsule& lhs, const Shape& rhs)
+{
+    testCollisionT(collision, lhs, rhs);
+    return collision.colliding;
+}
+
+bool testCollision(Collision& collision, const Shape& lhs, const Shape& rhs)
+{
+    switch (lhs.type)
+    {
+        using enum Shape::Type;
+
+        case Circle:
+            testCollisionT(collision, lhs.circle, rhs);
+            break;
+
+        case Line:
+            testCollisionT(collision, lhs.line, rhs);
+            break;
+
+        case Capsule:
+            testCollisionT(collision, lhs.capsule, rhs);
+            break;
+
+        case Invalid:
+            break;
+    }
+
+    return collision.colliding;
 }
 
 } // namespace ngn
