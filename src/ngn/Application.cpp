@@ -229,7 +229,7 @@ int Application::exec()
 
         const auto now = clock.now();
         const auto deltaTimeDur = now - lastTick;
-        const auto deltaTime = std::chrono::duration<float>{deltaTimeDur}.count();
+        const auto deltaTime = glm::min(std::chrono::duration<float>{deltaTimeDur}.count(), 0.0625f);
         lastTick = now;
 
         update(deltaTime);
