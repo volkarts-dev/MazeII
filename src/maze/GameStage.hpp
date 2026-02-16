@@ -45,6 +45,11 @@ public:
     ngn::Application* app() const { return app_; }
     Level* level() const { return level_; }
 
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    bool debugShowBodies() const { return debugShowBodies_; }
+    bool debugShowBoundingBoxes() const { return debugShowBoundingBoxes_; }
+#endif
+
     void onActivate() override;
     void onDeactivate() override;
 

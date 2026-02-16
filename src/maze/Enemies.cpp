@@ -24,7 +24,8 @@
 
 namespace {
 
-constexpr float linearForce = 500.0f;
+constexpr float LinearForce = 500.0f;
+constexpr float AngularForce = 20.0f;
 constexpr float UpdateTimeout = 0.0f;
 
 class StartSector
@@ -39,10 +40,20 @@ public:
     float timeout;
 };
 
-glm::vec2 steeringSeek(const glm::vec2& pos, const glm::vec2& vel, const glm::vec2& target)
+//glm::vec2 steeringSeek(const glm::vec2& pos, const glm::vec2& vel, const glm::vec2& target)
+//{
+//    const auto desiredVel = glm::normalize(target - pos) * linearForce;
+//    return desiredVel - vel;
+//}
+
+inline void steeringSeek(ngn::LinearForce& linForce, ngn::AngularForce& angForce,
+                         const ngn::Position& pos, const ngn::Rotation& rot,
+                         const glm::vec2& target, float maxLinForce, float maxAngForce)
 {
-    const auto desiredVel = glm::normalize(target - pos) * linearForce;
-    return desiredVel - vel;
+    linForce.value += rot.dir * maxLinForce;
+
+    const auto dir = target - pos.value;
+    angForce.value += ngn::computeAngularForce(rot.angle, ngn::math::atan2(dir.x, dir.y), maxAngForce);
 }
 
 } // namespace
@@ -163,6 +174,8 @@ void Enemies::update(float deltaTime)
             auto possibleNewSector = navigationGraph_->findNearerSector(currentSector, pos.value);
             if (possibleNewSector != currentSector) // Moved to other sector
             {
+                sectors.last = sectors.path[0];
+
                 if (possibleNewSector == sectors.path[1])
                 {
                     for (NavIndex i = 1; i < sectors.path.size(); i++)
@@ -192,9 +205,10 @@ void Enemies::update(float deltaTime)
             {
                 if (doUpdateStep)
                 {
-                    if (testInSight(tEnt, ent, lineOfSight))
+                    if (testInSight(lineOfSight))
                     {
                         info.state = State::Persuit;
+                        break;
                     }
                 }
 
@@ -205,14 +219,14 @@ void Enemies::update(float deltaTime)
             {
                 if (doUpdateStep)
                 {
-                    if (!testInSight(tEnt, ent, lineOfSight))
+                    if (!testInSight(lineOfSight))
                     {
-                        info.state = State::Idle;
+                        info.state = State::Wander;
+                        break;
                     }
                 }
 
-                const auto futureTPos = tPos.value + tVel.value;
-                linForce.value = steeringSeek(pos.value, linVel.value, futureTPos);
+                steeringSeek(linForce, angForce, pos, rot, tPos.value, LinearForce, AngularForce);
 
                 break;
             }
@@ -224,12 +238,18 @@ void Enemies::update(float deltaTime)
 
             case Wander:
             {
+                if (testInSight(lineOfSight))
+                {
+                    info.state = State::Persuit;
+                    break;
+                }
+
                 bool filled = false;
                 for (NavIndex i = 1; i < sectors.path.size(); i++)
                 {
                     if (sectors.path[i] == ngn::InvalidIndex<NavIndex>)
                     {
-                        const auto last = i > 1 ? sectors.path[i - 2] : ngn::InvalidIndex<NavIndex>;
+                        const auto last = i > 1 ? sectors.path[i - 2] : sectors.last;
                         const auto current = sectors.path[i - 1];
                         const auto next = findNextRandomSector(last, current);
                         sectors.path[i] = next;
@@ -242,7 +262,7 @@ void Enemies::update(float deltaTime)
                     ngn::log::info("New Path: {}-{}-{}", sectors.path[0], sectors.path[1], sectors.path[2]);
                 }
 
-                glm::vec2 headed{NAN, NAN};
+                auto headed = points.path[0];
 
                 for (NavIndex i = 0; i < points.path.size() - 1; i++)
                 {
@@ -266,12 +286,7 @@ void Enemies::update(float deltaTime)
                     gameStage_->app()->debugRenderer()->drawCircle(headed, 3, ngn::Colors::Blue);
 #endif
 
-                    linForce.value += rot.dir * 500.0f;
-
-                    const auto dir = headed - pos.value;
-                    const auto maxAngForce = 20.0f;
-                    angForce.value +=
-                            ngn::computeAngularForce(rot.angle, ngn::atan2(dir.x, dir.y), maxAngForce);
+                    steeringSeek(linForce, angForce, pos, rot, headed, LinearForce, AngularForce);
                 }
 
                 break;
@@ -295,24 +310,28 @@ NavIndex Enemies::findNextRandomSector(NavIndex last, NavIndex current)
     return possibilities[distrib(randGenerator_)];
 }
 
-bool Enemies::testInSight(entt::entity player, entt::entity enemy, const ngn::Line& lineOfSight)
+bool Enemies::testInSight(const ngn::Line& lineOfSight)
 {
     const auto lineAABB = ngn::calculateAABB(lineOfSight);
     bool blocking = false;
-    world_->query(lineAABB, LayerPlayer, [&blocking, player, enemy](const ngn::TreeNode& node)
+    world_->query(lineAABB, LayerBoundaries, [this, &lineOfSight, &blocking](const ngn::TreeNode& node)
     {
-        // TODO Do an actual collision check (not only an aabb test)
-        blocking = node.entity != player && node.entity != enemy;
+        const auto shape = registry_->get<ngn::Shape>(node.entity);
+        ngn::Collision collision;
+        blocking = ngn::testCollision(collision, lineOfSight, shape);
         return !blocking;
     });
 
     const auto diff2 = glm::length2(lineOfSight.end - lineOfSight.start);
-    const bool inSight = !blocking && diff2 > 65536.0f && diff2 < 262144.0f;
+    const bool inSight = !blocking && diff2 < 262144.0f;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    gameStage_->app()->debugRenderer()->drawArrow(
-                lineOfSight.start, lineOfSight.end, 20.0f,
-                (!blocking && diff2 < 262144.0f) ? ngn::Colors::Green : ngn::Colors::Red);
+    if (gameStage_->debugShowBodies())
+    {
+        gameStage_->app()->debugRenderer()->drawArrow(
+                    lineOfSight.start, lineOfSight.end, 20.0f,
+                    inSight ? ngn::Colors::Green : ngn::Colors::Red);
+    }
 #endif
 
     return inSight;

@@ -47,7 +47,7 @@ private:
 
 private:
     NavIndex findNextRandomSector(NavIndex last, NavIndex current);
-    bool testInSight(entt::entity player, entt::entity enemy, const ngn::Line& lineOfSight);
+    bool testInSight(const ngn::Line& lineOfSight);
 
 private:
     GameStage* gameStage_;

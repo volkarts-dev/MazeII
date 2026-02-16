@@ -49,6 +49,7 @@ class ExplosionTag
 class EnemyPathSectors
 {
 public:
+    NavIndex last{ngn::InvalidIndex<NavIndex>};
     NavSectorArray<4> path{
         ngn::InvalidIndex<NavIndex>,
         ngn::InvalidIndex<NavIndex>,

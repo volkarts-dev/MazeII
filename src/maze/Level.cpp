@@ -3,6 +3,7 @@
 
 #include "Level.hpp"
 
+#include "Layers.hpp"
 #include "MazeComponents.hpp"
 #include "Application.hpp"
 #include "gfx/GFXComponents.hpp"
@@ -54,6 +55,7 @@ void Level::createWalls()
     wallCreateInfo.restitution = 1.5f;
     wallCreateInfo.invMass = 0;
     wallCreateInfo.dynamic = false;
+    wallCreateInfo.layers = LayerWalls;
 
     walls_.resize(OuterWallCount + InnerWallCount);
     registry_->create(walls_.begin(), walls_.end());
