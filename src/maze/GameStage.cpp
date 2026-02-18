@@ -32,10 +32,6 @@ GameStage::GameStage(MazeDelegate* delegate) :
     playerGameState_{},
     halfViewSize_{},
     playerViewBounds_{}
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    ,debugShowBodies_{false}
-    ,debugShowBoundingBoxes_{false}
-#endif
 {
 }
 
@@ -114,13 +110,17 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     if (action == ngn::InputAction::Press)
     {
-        if (ngn::inputModsSet(mods, ngn::InputMods::Alt) && key == GLFW_KEY_P)
+        if (ngn::inputModsSet(mods, ngn::InputMods::Ctrl | ngn::InputMods::Shift) && key == GLFW_KEY_1)
+        {
+            debugShowBoundingBoxes_ = !debugShowBoundingBoxes_;
+        }
+        else if (ngn::inputModsSet(mods, ngn::InputMods::Ctrl | ngn::InputMods::Shift) && key == GLFW_KEY_2)
         {
             debugShowBodies_ = !debugShowBodies_;
         }
-        else if (ngn::inputModsSet(mods, ngn::InputMods::Alt) && key == GLFW_KEY_B)
+        else if (ngn::inputModsSet(mods, ngn::InputMods::Ctrl | ngn::InputMods::Shift) && key == GLFW_KEY_3)
         {
-            debugShowBoundingBoxes_ = !debugShowBoundingBoxes_;
+            debugShowAIStates_ = !debugShowAIStates_;
         }
     }
 #endif
@@ -172,7 +172,8 @@ void GameStage::onUpdate(float deltaTime)
     app_->debugRenderer()->updateView(playerView);
 
     app_->world()->debugDrawState(app_->debugRenderer(), debugShowBodies_, debugShowBoundingBoxes_, false, true);
-    level_->debugDrawState(app_->debugRenderer());
+    if (debugShowAIStates_)
+        level_->debugDrawState(app_->debugRenderer());
 #endif
 }
 
@@ -248,7 +249,6 @@ void GameStage::handlePlayerInput(float deltaTime)
         auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(playerGameState_.entity);
         force.value += rot.dir * 2000.0f;
     }
-
 
     // ****************************************************
 

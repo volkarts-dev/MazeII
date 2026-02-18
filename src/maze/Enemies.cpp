@@ -267,7 +267,8 @@ void Enemies::update(float deltaTime)
                 for (NavIndex i = 0; i < points.path.size() - 1; i++)
                 {
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-                    gameStage_->app()->debugRenderer()->drawLine(points.path[i], points.path[i + 1], ngn::Colors::Blue);
+                    if (gameStage_->debugShowAIStates())
+                        gameStage_->app()->debugRenderer()->drawLine(points.path[i], points.path[i + 1], ngn::Colors::Blue);
 #endif
 
                     const auto ip = ngn::intersections(points.path[i], points.path[i + 1], pos.value, 64.0f);
@@ -283,7 +284,8 @@ void Enemies::update(float deltaTime)
                 if (!std::isnan(headed.x))
                 {
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-                    gameStage_->app()->debugRenderer()->drawCircle(headed, 3, ngn::Colors::Blue);
+                    if (gameStage_->debugShowAIStates())
+                        gameStage_->app()->debugRenderer()->drawCircle(headed, 3, ngn::Colors::Blue);
 #endif
 
                     steeringSeek(linForce, angForce, pos, rot, headed, LinearForce, AngularForce);

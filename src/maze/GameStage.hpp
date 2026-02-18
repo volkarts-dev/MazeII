@@ -48,6 +48,8 @@ public:
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugShowBodies() const { return debugShowBodies_; }
     bool debugShowBoundingBoxes() const { return debugShowBoundingBoxes_; }
+    bool debugShowAIStates() const { return debugShowAIStates_; }
+
 #endif
 
     void onActivate() override;
@@ -84,7 +86,8 @@ private:
     glm::vec4 playerViewBounds_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    bool debugShowBodies_;
-    bool debugShowBoundingBoxes_;
+    bool debugShowBodies_{false};
+    bool debugShowBoundingBoxes_{false};
+    bool debugShowAIStates_{false};
 #endif
 };
