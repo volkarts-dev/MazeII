@@ -35,6 +35,8 @@ class Line
 public:
     glm::vec2 start{};
     glm::vec2 end{};
+
+    constexpr static float Width = 0.02f;
 };
 
 class Capsule

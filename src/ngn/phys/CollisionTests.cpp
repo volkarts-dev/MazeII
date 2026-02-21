@@ -13,8 +13,6 @@ namespace ngn {
 
 namespace {
 
-constexpr float LINE_WIDTH = 0.02f;
-
 void testCollision(Collision& collision, const Circle& lhs, const Circle& rhs)
 {
     const auto c2c = rhs.center - lhs.center;
@@ -99,7 +97,7 @@ void testCollision(Collision& collision,
 
 inline void testCollision(Collision& collision, const Line& lhs, const Circle& rhs)
 {
-    testCollision(collision, rhs, lhs.start, lhs.end, LINE_WIDTH);
+    testCollision(collision, rhs, lhs.start, lhs.end, Line::Width);
     collision.direction = -collision.direction;
 }
 
@@ -113,7 +111,7 @@ inline void testCollision(Collision& collision,
                    const Line& lhs,
                    const glm::vec2& rhsStart, const glm::vec2& rhsEnd, float rhsRadius)
 {
-    testCollision(collision, lhs.start, lhs.end, LINE_WIDTH, rhsStart, rhsEnd, rhsRadius);
+    testCollision(collision, lhs.start, lhs.end, Line::Width, rhsStart, rhsEnd, rhsRadius);
 }
 
 inline void testCollision(Collision& collision,
@@ -135,7 +133,7 @@ inline void testCollisionT(Collision& collision, const ShapeT& lhsT, const Shape
             break;
 
         case Line:
-            testCollision(collision, lhsT, rhs.line.start, rhs.line.end, LINE_WIDTH);
+            testCollision(collision, lhsT, rhs.line.start, rhs.line.end, Line::Width);
             break;
 
         case Capsule:
