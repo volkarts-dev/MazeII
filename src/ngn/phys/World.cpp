@@ -306,11 +306,11 @@ CollisionPairSet World::findPossibleCollisions(const MovedList& moved)
     return collisionPairs;
 }
 
-CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
+CollisionInfoList World::findActualCollsions(const CollisionPairSet& collisionPairs)
 {
     NGN_INSTRUMENT_FUNCTION();
 
-    CollisionList collisions{app_->createFrameAllocator<Collision>()};
+    CollisionInfoList collisions{app_->createFrameAllocator<Collision>()};
     collisions.reserve(collisionPairs.size());
 
     for (const auto& col : collisionPairs)
@@ -323,13 +323,13 @@ CollisionList World::findActualCollsions(const CollisionPairSet& collisionPairs)
         const auto& shapeA = registry_->get<Shape>(col.bodyA);
         const auto& shapeB = registry_->get<Shape>(col.bodyB);
 
-        Collision collision{.pair = col};
-        testCollision(collision, shapeA, shapeB);
+        CollisionInfo collision{.pair = col, .coll{}};
+        testCollision(collision.coll, shapeA, shapeB);
 
-        if (collision.colliding)
+        if (collision.coll.colliding)
         {
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-            debugCollisions_.insert_or_assign(col, collision);
+            debugCollisions_.insert_or_assign(col, collision.coll);
 #endif
 
             const auto bodyA = registry_->get<const Body>(col.bodyA);

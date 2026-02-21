@@ -7,7 +7,7 @@
 
 namespace ngn {
 
-void resolveCollisions(entt::registry* registry, const CollisionList& collisions);
-void resolveCollision(entt::registry* registry, const Collision& collision);
+void resolveCollisions(entt::registry* registry, const CollisionInfoList& collisions);
+void resolveCollision(entt::registry* registry, const CollisionInfo& collision);
 
 } // namespace ngn

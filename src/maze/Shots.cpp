@@ -116,7 +116,8 @@ void Shots::update(float deltaTime)
     }
 }
 
-void Shots::handleCollision(const ngn::Collision& collision)
+void Shots::handleCollision(const ngn::CollisionInfo& collision)
+
 {
     const auto shotA = registry_->any_of<ShotTag>(collision.pair.bodyA);
     const auto shotB = registry_->any_of<ShotTag>(collision.pair.bodyB);

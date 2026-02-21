@@ -9,7 +9,7 @@
 
 namespace ngn {
 
-void resolveCollisions(entt::registry* registry, const CollisionList& collisions)
+void resolveCollisions(entt::registry* registry, const CollisionInfoList& collisions)
 {
     for (const auto& col : collisions)
     {
@@ -17,7 +17,7 @@ void resolveCollisions(entt::registry* registry, const CollisionList& collisions
     }
 }
 
-void resolveCollision(entt::registry* registry, const Collision& collision)
+void resolveCollision(entt::registry* registry, const CollisionInfo& collision)
 {
     auto [bodyA, posA, velA] =
             registry->try_get<Body, Position, LinearVelocity>(collision.pair.bodyA);
@@ -33,7 +33,7 @@ void resolveCollision(entt::registry* registry, const Collision& collision)
 
     const auto vd = velB->value - velA->value;
 
-    float r = glm::dot(vd, collision.direction);
+    float r = glm::dot(vd, collision.coll.direction);
     if (r > 0.0f) // bodies are separating
         r = -r;
 
@@ -41,7 +41,7 @@ void resolveCollision(entt::registry* registry, const Collision& collision)
 
     float invMassSum = bodyA->invMass + bodyB->invMass;
 
-    glm::vec2 impulse = (-e * r) * collision.direction;
+    glm::vec2 impulse = (-e * r) * collision.coll.direction;
 
     // apply impulse (TODO use force?)
     velA->value -= (bodyA->invMass / invMassSum) * impulse;
@@ -49,7 +49,7 @@ void resolveCollision(entt::registry* registry, const Collision& collision)
 
     // position correction
     constexpr float percent = 0.2f;
-    glm::vec2 correction = (collision.penetration / invMassSum) * percent * collision.direction;
+    glm::vec2 correction = (collision.coll.penetration / invMassSum) * percent * collision.coll.direction;
     posA->value -= bodyA->invMass * correction;
     posB->value += bodyB->invMass * correction;
 

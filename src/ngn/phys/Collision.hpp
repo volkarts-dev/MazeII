@@ -30,17 +30,23 @@ public:
 class Collision
 {
 public:
-    CollisionPair pair;
     glm::vec2 point{};
     glm::vec2 direction{};
     float penetration{};
     bool colliding{false};
 };
 
+class CollisionInfo
+{
+public:
+    CollisionPair pair;
+    Collision coll;
+};
+
 using MovedList = std::vector<uint32_t, LinearAllocator<uint32_t>>;
 using CollisionPairSet = std::unordered_set<CollisionPair, std::hash<CollisionPair>,
                                             std::equal_to<>, LinearAllocator<CollisionPair>>;
-using CollisionList = std::vector<Collision, LinearAllocator<Collision>>;
+using CollisionInfoList = std::vector<CollisionInfo, LinearAllocator<CollisionInfo>>;
 
 } // namespace ngn
 
