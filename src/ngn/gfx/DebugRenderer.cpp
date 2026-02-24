@@ -14,8 +14,9 @@ namespace ngn {
 
 namespace {
 
-struct CircleValues
+class CircleValues
 {
+public:
     CircleValues()
     {
         for (std::size_t i = 0; i < values.size(); i++)

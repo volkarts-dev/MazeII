@@ -94,8 +94,9 @@ private:
     NGN_DISABLE_COPY_MOVE(Face)
 };
 
-struct CompileState
+class CompileState
 {
+public:
     CompileState(uint32_t _imageDimension) :
         imageDimension{_imageDimension}
     {

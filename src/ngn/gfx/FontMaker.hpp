@@ -21,8 +21,9 @@ public:
     FontCollection* compile();
 
 private:
-    struct FontInfo
+    class FontInfo
     {
+    public:
         BufferView font;
         uint32_t size;
     };

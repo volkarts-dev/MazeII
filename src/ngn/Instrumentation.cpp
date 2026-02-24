@@ -37,8 +37,9 @@ uint64_t calcCpuTimerFreq()
 
 namespace {
 
-struct DoubleFormatter
+class DoubleFormatter
 {
+public:
     int width;
     int precision;
 };

@@ -39,14 +39,16 @@ public:
     void draw(CommandBuffer* commandBuffer);
 
 private:
-    struct UniformBuffer
+    class UniformBuffer
     {
+    public:
         Buffer* buffer;
         std::span<ViewProjection> mapped;
     };
 
-    struct Batch
+    class Batch
     {
+    public:
         Buffer* buffer;
         std::span<DebugVertex> mapped;
         uint32_t count;

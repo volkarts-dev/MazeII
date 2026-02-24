@@ -36,22 +36,25 @@ public:
     void draw(CommandBuffer* commandBuffer);
 
 private:
-    struct UniformBuffer
+    class UniformBuffer
     {
+    public:
         Buffer* buffer;
         std::span<ViewProjection> mapped;
     };
 
-    struct Texture
+    class Texture
     {
+    public:
         const Image* image{};
         const ImageView* view{};
         const Sampler* sampler{};
         bool owning{};
     };
 
-    struct Batch
+    class Batch
     {
+    public:
         Buffer* buffer;
         std::span<SpriteVertex> mapped;
         uint32_t count;

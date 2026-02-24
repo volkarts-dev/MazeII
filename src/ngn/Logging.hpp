@@ -25,8 +25,9 @@ using spdlog::trace;
 void humanReadableBytes(std::size_t bytes, std::size_t& outNum, std::string_view& outUnit);
 void humanReadableBytes(std::size_t bytes, double& outNum, std::string_view& outUnit);
 
-struct Bytes
+class Bytes
 {
+public:
     std::size_t value;
 };
 

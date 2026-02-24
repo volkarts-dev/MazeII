@@ -74,8 +74,9 @@ uint64_t calcCpuTimerFreq();
 
 #if defined(NGN_ENABLE_INSTRUMENTATION)
 
-struct TimerInfo
+class TimerInfo
 {
+public:
     uint64_t timeInclusive{};
     uint64_t timeExclusive{};
     uint64_t hitCount{};
@@ -85,8 +86,9 @@ struct TimerInfo
 
 extern TimerInfo* gActualTimerInfo;
 
-struct TimerInfoChain
+class TimerInfoChain
 {
+public:
     TimerInfoChain(const char* n, std::span<TimerInfo> ti);
 
     TimerInfoChain* parent;

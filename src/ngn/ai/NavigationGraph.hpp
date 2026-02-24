@@ -18,8 +18,9 @@ public:
 
     using Connections = Array<IndexType, 4, IndexType>;
 
-    struct Sector
+    class Sector
     {
+    public:
         IndexType p1;
         IndexType p2;
         IndexType p3;
