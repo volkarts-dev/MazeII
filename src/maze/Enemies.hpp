@@ -6,6 +6,7 @@
 #include "Macros.hpp"
 #include "MazeComponents.hpp"
 #include "Timer.hpp"
+#include <entt/fwd.hpp>
 #include <entt/signal/sigh.hpp>
 #include <glm/fwd.hpp>
 #include <random>
