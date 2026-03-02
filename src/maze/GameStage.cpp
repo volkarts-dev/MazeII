@@ -50,7 +50,7 @@ void GameStage::onActivate()
     level_ = new Level{app_};
 
     ActorCreateInfo createInfo{
-        .position = {96, 96},
+        .position = level()->navigationGraph()->midPoint(10),
         .rotation = glm::pi<float>(),
         .sprite = {
             .texCoords = {0, 0, 38, 40},
@@ -68,7 +68,17 @@ void GameStage::onActivate()
     registry_->emplace<PlayerTag>(playerGameState_.entity);
 
     enemies_ = new Enemies{this};
-    enemies_->createEnemy(34, 0.0f);
+    allEnemiesDownConn_ = enemies_->addAllEnemiesDownListener<&GameStage::handleAllEnemiesDown>(this);
+    enemies_->createEnemy(320, 0.0f);
+    enemies_->createEnemy(322, 0.0f);
+    //enemies_->createEnemy(324, 0.0f);
+    //enemies_->createEnemy(326, 0.0f);
+    //enemies_->createEnemy(328, 0.0f);
+    //enemies_->createEnemy(332, 0.0f);
+    //enemies_->createEnemy(334, 0.0f);
+    //enemies_->createEnemy(336, 0.0f);
+    //enemies_->createEnemy(338, 0.0f);
+    //enemies_->createEnemy(340, 0.0f);
 
     shots_ = new Shots{this};
 
@@ -81,6 +91,7 @@ void GameStage::onDeactivate()
 
     delete shots_;
 
+    allEnemiesDownConn_.release();
     delete enemies_;
 
     delete level_;
@@ -140,10 +151,14 @@ void GameStage::onUpdate(float deltaTime)
     // ****************************************************
 
     shots_->update(deltaTime);
+}
 
-    // ****************************************************
+void GameStage::onDraw(float deltaTime)
+{
+    NGN_UNUSED(deltaTime);
 
     const auto playerPos = registry_->get<const ngn::Position>(playerGameState_.entity).value;
+
     playerViewBounds_ = {
         playerPos - halfViewSize_,
         playerPos + halfViewSize_,
@@ -168,9 +183,11 @@ void GameStage::onUpdate(float deltaTime)
     // ****************************************************
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    enemies_->debugDraw();
+
     app_->debugRenderer()->updateView(playerView);
 
-    app_->world()->debugDrawState(app_->debugRenderer(), debugShowBodies_, debugShowBoundingBoxes_, false, true);
+    app_->world()->debugDrawState(app_->debugRenderer(), debugShowBodies_, debugShowBoundingBoxes_, false, debugShowBodies_);
     if (debugShowAIStates_)
         level_->debugDrawState(app_->debugRenderer());
 #endif
@@ -260,4 +277,20 @@ void GameStage::handlePlayerInput(float deltaTime)
             shots_->fireLaser(start, rot.angle, true);
         }
     }
+}
+
+void GameStage::handleAllEnemiesDown()
+{
+    resetPlayer();
+    enemies_->reset();
+    app_->setPause(true);
+}
+
+void GameStage::resetPlayer()
+{
+    auto [pos, rot] = registry_->get<ngn::Position, ngn::Rotation>(playerGameState_.entity);
+    pos.value = level()->navigationGraph()->midPoint(10);
+    rot.angle = glm::pi<float>();
+    rot.update();
+    registry_->emplace<ngn::TransformChangedTag>(playerGameState_.entity);
 }

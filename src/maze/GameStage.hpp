@@ -52,6 +52,7 @@ public:
     void onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods) override;
 
     void onUpdate(float deltaTime) override;
+    void onDraw(float deltaTime) override;
 
     const Resources& resources() const;
 
@@ -70,6 +71,8 @@ public:
 private:
     void handlePlayerInputEvents(ngn::InputAction action, int key, ngn::InputMods mods);
     void handlePlayerInput(float deltaTime);
+    void handleAllEnemiesDown();
+    void resetPlayer();
 
 private:
     MazeDelegate* delegate_;
@@ -80,6 +83,7 @@ private:
     Shots* shots_;
     Explosions* explosions_;
 
+    entt::connection allEnemiesDownConn_;
     PlayerGameState playerGameState_;
     glm::vec2 halfViewSize_;
     glm::vec4 playerViewBounds_;

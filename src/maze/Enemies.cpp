@@ -24,20 +24,21 @@
 
 namespace {
 
+constexpr float BodyRadius = 17.0f;
+constexpr float SightLength = 512.0f;
 constexpr float LinearForce = 500.0f;
 constexpr float AngularForce = 20.0f;
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
 constexpr float UpdateTimeout = 0.0f;
+#else
+constexpr float UpdateTimeout = 0.0625f;
+#endif
 
 class StartSector
 {
 public:
     NavIndex index;
-};
-
-class RespawnTimer
-{
-public:
-    float timeout;
 };
 
 //glm::vec2 steeringSeek(const glm::vec2& pos, const glm::vec2& vel, const glm::vec2& target)
@@ -91,7 +92,7 @@ void Enemies::createEnemy(NavIndex startSector, float angle)
             .invMass = 1.f / 10.f,
             .restitution = 1.5f,
         },
-        .shape = ngn::Shape{ngn::Circle{.center = {0, 2}, .radius = 17}},
+        .shape = ngn::Shape{ngn::Circle{.center = {0, 2}, .radius = BodyRadius}},
     };
     const auto enemy = gameStage_->createActor(createInfo);
 
@@ -105,47 +106,53 @@ void Enemies::createEnemy(NavIndex startSector, float angle)
     info.state = State::Wander;
     sectors.path[0] = startSector;
     points.path[0] = pos;
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    registry_->emplace<EnemyDebugState>(enemy);
+#endif
 }
 
 void Enemies::killEnemy(entt::entity enemy)
 {
     registry_->remove<ngn::ActiveTag>(enemy);
-    registry_->emplace<RespawnTimer>(enemy, 5.0f);
+    auto view = registry_->view<EnemyTag, ngn::ActiveTag>();
+    if (view.begin() == view.end())
+    {
+        allEnemiesDownSignal_.publish();
+    }
+}
+
+void Enemies::reset()
+{
+    auto view = registry_->view<
+            const StartSector,
+            ngn::Position,
+            ngn::Rotation,
+            EnemyPathSectors,
+            EnemyPathPoints,
+            EnemyInfo,
+            EnemyTag
+            >(entt::exclude<ngn::ActiveTag>);
+    for (auto [e, start, pos, rot, sectors, points, info] : view.each())
+    {
+        registry_->emplace<ngn::ActiveTag>(e);
+
+        pos.value = navigationGraph_->midPoint(start.index);
+        rot.angle = glm::pi<float>();
+        rot.update();
+
+        info.state = State::Wander;
+        sectors.path[0] = start.index;
+        std::fill(sectors.path.begin() + 1, sectors.path.end(), ngn::InvalidIndex<NavIndex>);
+        points.path[0] = pos.value;
+
+        registry_->emplace_or_replace<ngn::TransformChangedTag>(e);
+    }
 }
 
 void Enemies::update(float deltaTime)
 {
     updateTimer_.update(deltaTime);
-
-    auto respawnView = registry_->view<RespawnTimer>();
-    for (auto [e, timer] : respawnView.each())
-    {
-        timer.timeout -= deltaTime;
-        if (timer.timeout <= 0.0f)
-        {
-            registry_->remove<RespawnTimer>(e);
-            registry_->emplace<ngn::ActiveTag>(e);
-
-            auto [start, pos, rot, sectors, points, info] = registry_->get<
-                    const StartSector,
-                    ngn::Position,
-                    ngn::Rotation,
-                    EnemyPathSectors,
-                    EnemyPathPoints,
-                    EnemyInfo>(e);
-
-            pos.value = navigationGraph_->midPoint(start.index);
-            rot.angle = glm::pi<float>();
-            rot.update();
-
-            info.state = State::Wander;
-            sectors.path[0] = start.index;
-            std::fill(sectors.path.begin() + 1, sectors.path.end(), ngn::InvalidIndex<NavIndex>);
-            points.path[0] = pos.value;
-
-            registry_->emplace_or_replace<ngn::TransformChangedTag>(e);
-        }
-    }
 
     bool doUpdateStep = updateTimer_.elapsed(UpdateTimeout).first;
 
@@ -191,11 +198,45 @@ void Enemies::update(float deltaTime)
                     points.path[0] = navigationGraph_->midPoint(possibleNewSector);
                     std::fill(sectors.path.begin() + 1, sectors.path.end(), ngn::InvalidIndex<NavIndex>);
                 }
-                ngn::log::info("{}; {}-{}-{}", currentSector, sectors.path[0], sectors.path[1], sectors.path[2]);
             }
         }
 
-        const ngn::Line lineOfSight{pos.value, tPos.value};
+        // TODO This should also be guarded by doUpdateStep, but that would break the debug display
+        const auto lineToTarget = tPos.value - pos.value;
+        const auto lineToTargetLen = glm::length(lineToTarget);
+        const auto sightDir = lineToTarget / lineToTargetLen;
+        const auto sightDirTarget = pos.value + sightDir * glm::min(SightLength, lineToTargetLen);
+        const auto inRange = glm::length2(sightDirTarget - pos.value) < (SightLength * SightLength - 1.0f);
+        const auto targetInSight = inRange && testInSight(pos.value, sightDirTarget);
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+        auto& debugState = registry_->get<EnemyDebugState>(ent);
+        if (gameStage_->debugShowAIStates())
+        {
+            gameStage_->app()->debugRenderer()->drawArrow(
+                        pos.value, sightDirTarget, 20.0f,
+                        targetInSight ? ngn::Colors::Green : ngn::Colors::Red);
+        }
+#endif
+
+        if (info.state != State::Idle)
+        {
+            const auto searchWayStart = pos.value + rot.dir * BodyRadius;
+            const auto searchWayEnd = pos.value + rot.dir * BodyRadius * 5.0f;
+            const auto obstacle = findObstacle(ent, searchWayStart, searchWayEnd, BodyRadius);
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+            debugState.searchWayStart = searchWayStart;
+            debugState.searchWayEnd = searchWayEnd;
+            debugState.obstacle = obstacle;
+#endif
+
+            // TODO Take relative velocity into account
+            if (obstacle.found)
+            {
+                linForce.value += -obstacle.dir * obstacle.depth * 20.0f;
+            }
+        }
 
         switch (info.state)
         {
@@ -205,7 +246,7 @@ void Enemies::update(float deltaTime)
             {
                 if (doUpdateStep)
                 {
-                    if (testInSight(lineOfSight))
+                    if (targetInSight)
                     {
                         info.state = State::Persuit;
                         break;
@@ -219,7 +260,7 @@ void Enemies::update(float deltaTime)
             {
                 if (doUpdateStep)
                 {
-                    if (!testInSight(lineOfSight))
+                    if (!targetInSight)
                     {
                         info.state = State::Wander;
                         break;
@@ -238,13 +279,12 @@ void Enemies::update(float deltaTime)
 
             case Wander:
             {
-                if (testInSight(lineOfSight))
+                if (targetInSight)
                 {
                     info.state = State::Persuit;
                     break;
                 }
 
-                bool filled = false;
                 for (NavIndex i = 1; i < sectors.path.size(); i++)
                 {
                     if (sectors.path[i] == ngn::InvalidIndex<NavIndex>)
@@ -254,12 +294,7 @@ void Enemies::update(float deltaTime)
                         const auto next = findNextRandomSector(last, current);
                         sectors.path[i] = next;
                         points.path[i] = navigationGraph_->midPoint(next);
-                        filled = true;
                     }
-                }
-                if (filled)
-                {
-                    ngn::log::info("New Path: {}-{}-{}", sectors.path[0], sectors.path[1], sectors.path[2]);
                 }
 
                 auto headed = points.path[0];
@@ -312,29 +347,102 @@ NavIndex Enemies::findNextRandomSector(NavIndex last, NavIndex current)
     return possibilities[distrib(randGenerator_)];
 }
 
-bool Enemies::testInSight(const ngn::Line& lineOfSight)
+bool Enemies::testInSight(const glm::vec2& origin, const glm::vec2& target)
 {
-    const auto lineAABB = ngn::calculateAABB(lineOfSight);
+    const ngn::Line sightLine = {.start = origin, .end = target};
+    const auto lineAABB = ngn::calculateAABB(sightLine);
     bool blocking = false;
-    world_->query(lineAABB, LayerBoundaries, [this, &lineOfSight, &blocking](const ngn::TreeNode& node)
+    world_->query(lineAABB, LayerBoundaries, [this, &sightLine, &blocking](const ngn::TreeNode& node)
     {
         const auto shape = registry_->get<ngn::Shape>(node.entity);
         ngn::Collision collision;
-        blocking = ngn::testCollision(collision, lineOfSight, shape);
+        blocking = ngn::testCollision(collision, sightLine, shape);
         return !blocking;
     });
+    return !blocking;
+}
 
-    const auto diff2 = glm::length2(lineOfSight.end - lineOfSight.start);
-    const bool inSight = !blocking && diff2 < 262144.0f;
+Enemies::FindObstacleResult Enemies::findObstacle(entt::entity self, const glm::vec2& origin,
+                                                  const glm::vec2& target, float halfWidth)
+{
+    // TODO move findObstacle() to engine/ai
 
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    if (gameStage_->debugShowBodies())
+    // This function assumes, that origin is in front of the enemy
+
+    const ngn::Capsule way = {.start = origin, .end = target, .radius = halfWidth};
+    const auto lineAABB = ngn::calculateAABB(way);
+
+    FindObstacleResult result;
+    float closestDist2 = std::numeric_limits<float>::max();
+    ngn::Collision closestCollision;
+
+    constexpr auto ObstaclesLayers = LayerNavHelpers | LayerOpponents | LayerShots;
+
+    world_->query(lineAABB, ObstaclesLayers, [&](const ngn::TreeNode& node)
     {
-        gameStage_->app()->debugRenderer()->drawArrow(
-                    lineOfSight.start, lineOfSight.end, 20.0f,
-                    inSight ? ngn::Colors::Green : ngn::Colors::Red);
-    }
+        if (node.entity == self)
+            return true;
+
+        const auto shape = registry_->get<ngn::Shape>(node.entity);
+        ngn::Collision collision;
+        if (!ngn::testCollision(collision, way, shape))
+            return true;
+
+        const auto dist2 = glm::length2(collision.point - origin);
+        if (dist2 < closestDist2)
+        {
+            result.found = true;
+            closestDist2 = dist2;
+            closestCollision = collision;
+        }
+
+        return true;
+    });
+
+    if (result.found)
+    {
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+        registry_->get<EnemyDebugState>(self).closestCollision = closestCollision;
 #endif
 
-    return inSight;
+        const auto ot = target - origin;
+        const auto op = closestCollision.point - origin;
+        const auto t = glm::dot(ot, op) / glm::length2(ot);
+        const auto p = origin + ot * t;
+        auto pp = closestCollision.point - p;
+        if (ngn::math::nearZero(pp))
+            pp = glm::vec2{ot.y, -ot.x};
+        result.dir = glm::normalize(pp);
+        result.depth = closestCollision.penetration;
+    }
+
+    return result;
 }
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+
+void Enemies::debugDraw()
+{
+    if (gameStage_->debugShowAIStates())
+    {
+        auto view = registry_->view<const EnemyDebugState, ngn::ActiveTag>();
+        for (auto [e, state] : view.each())
+        {
+            gameStage_->app()->debugRenderer()->drawCapsule(
+                        state.searchWayStart, state.searchWayEnd, BodyRadius,
+                        ngn::Colors::Yellow);
+
+            if (state.closestCollision.colliding)
+                gameStage_->app()->debugRenderer()->drawCircle(state.closestCollision.point, 3, ngn::Colors::Yellow);
+
+            if (state.obstacle.found)
+                gameStage_->app()->debugRenderer()->drawArrow(
+                    state.searchWayStart,
+                    state.searchWayStart - state.obstacle.dir * state.obstacle.depth * 2.0f,
+                    10.0f,
+                    ngn::Colors::Green);
+        }
+    }
+}
+
+#endif
