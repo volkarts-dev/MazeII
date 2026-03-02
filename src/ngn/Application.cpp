@@ -288,8 +288,9 @@ void Application::update(float deltaTime)
 
 void Application::draw(float deltaTime)
 {
-    NGN_UNUSED(deltaTime);
     NGN_INSTRUMENT_FUNCTION();
+
+    stage_->onDraw(deltaTime);
 
     const auto imageIndex = renderer_->startFrame();
     if (imageIndex == ngn::InvalidIndex32)

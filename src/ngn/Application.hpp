@@ -66,6 +66,7 @@ public:
     virtual void onWindowResize(const glm::vec2& windowSize) { NGN_UNUSED(windowSize); }
     virtual void onKeyEvent(InputAction action, int key, InputMods mods) { NGN_UNUSED(action); NGN_UNUSED(key); NGN_UNUSED(mods); }
     virtual void onUpdate(float deltaTime) { NGN_UNUSED(deltaTime); }
+    virtual void onDraw(float deltaTime) { NGN_UNUSED(deltaTime); }
 };
 
 // *********************************************************************************************************************
