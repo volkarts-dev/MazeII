@@ -7,7 +7,7 @@
 #include "Macros.hpp"
 #include "Shapes.hpp"
 #include "phys/Collision.hpp"
-#include <entt/entt.hpp>
+#include <entt/signal/sigh.hpp>
 
 namespace ngn {
 
@@ -45,10 +45,8 @@ public:
 
     void setConfig(WorldConfig config);
 
-    template<auto Callback>
-    entt::connection addCollisionListener();
-    template<auto Callback, typename Type>
-    entt::connection addCollisionListener(Type arg);
+    template<auto Callback, typename... Args>
+    entt::connection addCollisionListener(Args&&... args);
 
     void createBody(entt::entity entity, const BodyCreateInfo& createInfo, Shape shape);
 
@@ -95,18 +93,11 @@ private:
     NGN_DISABLE_COPY_MOVE(World)
 };
 
-template<auto Callback>
-inline entt::connection World::addCollisionListener()
+template<auto Callback, typename... Args>
+inline entt::connection World::addCollisionListener(Args&&... args)
 {
     entt::sink s{collisionSignal_};
-    return s.connect<Callback>();
-}
-
-template<auto Callback, typename Type>
-inline entt::connection World::addCollisionListener(Type arg)
-{
-    entt::sink s{collisionSignal_};
-    return s.connect<Callback>(arg);
+    return s.connect<Callback>(std::forward<Args>(args)...);
 }
 
 } // namespace ngn

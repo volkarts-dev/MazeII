@@ -47,7 +47,6 @@ void GameStage::onActivate()
         .gravity{},
     });
 
-    delete level_;
     level_ = new Level{app_};
 
     ActorCreateInfo createInfo{

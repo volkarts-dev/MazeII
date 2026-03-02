@@ -15,6 +15,7 @@ public:
     UiRenderer(Renderer* renderer, uint32_t batchSize);
     ~UiRenderer();
 
+    // TODO Move font rendering to sprite renderer
     void setFontCollection(FontCollection* fontCollection);
 
     void writeText(uint32_t font, std::string_view text, uint32_t x, uint32_t y);

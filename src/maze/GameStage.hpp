@@ -45,13 +45,6 @@ public:
     ngn::Application* app() const { return app_; }
     Level* level() const { return level_; }
 
-#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-    bool debugShowBodies() const { return debugShowBodies_; }
-    bool debugShowBoundingBoxes() const { return debugShowBoundingBoxes_; }
-    bool debugShowAIStates() const { return debugShowAIStates_; }
-
-#endif
-
     void onActivate() override;
     void onDeactivate() override;
 
@@ -67,6 +60,12 @@ public:
     bool testInSight(const glm::vec2& pos);
 
     void killEnemy(entt::entity enemy);
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    bool debugShowBodies() const { return debugShowBodies_; }
+    bool debugShowBoundingBoxes() const { return debugShowBoundingBoxes_; }
+    bool debugShowAIStates() const { return debugShowAIStates_; }
+#endif
 
 private:
     void handlePlayerInputEvents(ngn::InputAction action, int key, ngn::InputMods mods);

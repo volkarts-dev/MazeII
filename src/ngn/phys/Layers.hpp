@@ -22,17 +22,17 @@ enum class Layers : uint32_t
     All = 0xFFFF'FFFF,
 };
 
-inline Layers operator|(Layers lhs, Layers rhs)
+inline constexpr Layers operator|(Layers lhs, Layers rhs)
 {
     return static_cast<Layers>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
 }
 
-inline Layers operator&(Layers lhs, Layers rhs)
+inline constexpr Layers operator&(Layers lhs, Layers rhs)
 {
     return static_cast<Layers>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
 }
 
-inline bool toBool(Layers layer)
+inline constexpr bool toBool(Layers layer)
 {
     return static_cast<uint32_t>(layer) != 0;
 }

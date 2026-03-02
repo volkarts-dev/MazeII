@@ -11,6 +11,7 @@
 #include "PhysComponents.hpp"
 #include "CollisionTests.hpp"
 #include "Solver.hpp"
+#include <entt/entt.hpp>
 #include <glm/gtx/norm.hpp>
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)

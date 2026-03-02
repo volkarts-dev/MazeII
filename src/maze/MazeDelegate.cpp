@@ -19,10 +19,10 @@ ngn::ApplicationConfig MazeDelegate::applicationConfig(ngn::Application* app)
         .windowHeight = 768,
         .windowTitle = "Maze ][",
 
-        .requiredMemory = 100 * 1024 * 1024, // TODO st correct memory amount
+        .requiredMemory = 100 * 1024 * 1024, // TODO Set correct memory amount
 
         .spriteRenderer = true,
-        .spriteBatchCount = 16384, // TODO set correct max sprite count
+        .spriteBatchCount = 16384, // TODO Set correct max sprite count
 
         .fontRenderer = true,
         .fontBatchCount = 16384,

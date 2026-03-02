@@ -155,6 +155,7 @@ void SpriteRenderer::updateView(const glm::mat4& view, uint32_t frameIndex)
 
     ubo.mapped[0].view = view;
 
+    // TODO Do not calculate projection matrix on every frame
     const auto halfWidth = static_cast<float>(screenSize.width) / 2.0f;
     const auto halfHeight = static_cast<float>(screenSize.height) / 2.0f;
     ubo.mapped[0].proj = glm::ortho(

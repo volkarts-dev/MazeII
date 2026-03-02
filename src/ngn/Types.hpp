@@ -3,9 +3,13 @@
 
 #pragma once
 
+// IWYU pragma: begin_exports
+
 #include <span>
 #include <cstdint>
 #include <limits>
+
+// IWYU pragma: end_exports
 
 namespace ngn {
 
