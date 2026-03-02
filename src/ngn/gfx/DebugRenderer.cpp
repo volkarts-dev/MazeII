@@ -187,7 +187,7 @@ void DebugRenderer::drawCapsule(const glm::vec2& start, const glm::vec2& end, fl
     drawLine(start2, end2, color);
     drawLine(start3, end3, color);
 
-    auto theta = atan2(-norm.y, norm.x);
+    auto theta = math::atan2(-norm.y, norm.x);
 
     std::size_t startIndex = 0;
     for ( ; startIndex < gCircleValues.size(); startIndex++)
@@ -291,7 +291,7 @@ void DebugRenderer::fillCapsule(const glm::vec2& start, const glm::vec2& end, fl
     fillTriangle(start2, end2, end3, color);
     fillTriangle(start2, end3, start3, color);
 
-    auto theta = atan2(-norm.y, norm.x);
+    auto theta = math::atan2(-norm.y, norm.x);
 
     std::size_t startIndex = 0;
     for ( ; startIndex < gCircleValues.size(); startIndex++)
