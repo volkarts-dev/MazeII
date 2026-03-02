@@ -5,7 +5,7 @@
 #include "Enemies.hpp"
 #include "Explosions.hpp"
 #include "Layers.hpp"
-#include "Level.hpp"
+#include "Board.hpp"
 #include "MazeComponents.hpp"
 #include "MazeDelegate.hpp"
 #include "Shots.hpp"
@@ -25,13 +25,15 @@ GameStage::GameStage(MazeDelegate* delegate) :
     delegate_{delegate},
     app_{delegate_->app()},
     registry_{app_->registry()},
-    level_{},
+    board_{},
     enemies_{},
     shots_{},
     explosions_{},
     playerGameState_{},
     halfViewSize_{},
-    playerViewBounds_{}
+    playerViewBounds_{},
+    level_{1},
+    pause_{}
 {
 }
 
@@ -47,10 +49,10 @@ void GameStage::onActivate()
         .gravity{},
     });
 
-    level_ = new Level{app_};
+    board_ = new Board{app_};
 
     ActorCreateInfo createInfo{
-        .position = level()->navigationGraph()->midPoint(10),
+        .position = board()->navigationGraph()->midPoint(10),
         .rotation = glm::pi<float>(),
         .sprite = {
             .texCoords = {0, 0, 38, 40},
@@ -83,6 +85,8 @@ void GameStage::onActivate()
     shots_ = new Shots{this};
 
     explosions_ = new Explosions{this};
+
+    pause_ = true;
 }
 
 void GameStage::onDeactivate()
@@ -94,7 +98,7 @@ void GameStage::onDeactivate()
     allEnemiesDownConn_.release();
     delete enemies_;
 
-    delete level_;
+    delete board_;
 
     registry_->destroy(playerGameState_.entity);
 }
@@ -117,6 +121,26 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
 {
     handlePlayerInputEvents(action, key, mods);
 
+    if (action == ngn::InputAction::Press)
+    {
+#if !defined(NGN_ENABLE_INSTRUMENTATION)
+        if (key == GLFW_KEY_P)
+        {
+            togglePause();
+        }
+#endif
+    }
+    else if (action == ngn::InputAction::Release)
+    {
+#if !defined(NGN_ENABLE_INSTRUMENTATION)
+        if (pause_ && key == GLFW_KEY_SPACE)
+        {
+            setPause(false);
+        }
+#endif
+    }
+
+
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     if (action == ngn::InputAction::Press)
     {
@@ -138,6 +162,9 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
 
 void GameStage::onUpdate(float deltaTime)
 {
+    if (pause_)
+        return;
+
     playerGameState_.laserReloadTimer.update(deltaTime);
 
     // ****************************************************
@@ -178,7 +205,8 @@ void GameStage::onDraw(float deltaTime)
 
     // ****************************************************
 
-    app_->uiRenderer()->writeText(0, "Hello Maze ][", 10, 25);
+    const auto levelInfo = fmt::format("Hello Maze ][ - Lvl:{}", level_);
+    app_->uiRenderer()->writeText(0, levelInfo, 10, 25);
 
     // ****************************************************
 
@@ -189,7 +217,7 @@ void GameStage::onDraw(float deltaTime)
 
     app_->world()->debugDrawState(app_->debugRenderer(), debugShowBodies_, debugShowBoundingBoxes_, false, debugShowBodies_);
     if (debugShowAIStates_)
-        level_->debugDrawState(app_->debugRenderer());
+        board_->debugDrawState(app_->debugRenderer());
 #endif
 }
 
@@ -283,14 +311,25 @@ void GameStage::handleAllEnemiesDown()
 {
     resetPlayer();
     enemies_->reset();
-    app_->setPause(true);
+    level_++;
+    setPause(true);
 }
 
 void GameStage::resetPlayer()
 {
-    auto [pos, rot] = registry_->get<ngn::Position, ngn::Rotation>(playerGameState_.entity);
-    pos.value = level()->navigationGraph()->midPoint(10);
+    auto [pos, rot, linVel, angVel, linFor, angFor] = registry_->get<
+            ngn::Position,
+            ngn::Rotation,
+            ngn::LinearVelocity,
+            ngn::AngularVelocity,
+            ngn::LinearForce,
+            ngn::AngularForce>(playerGameState_.entity);
+    pos.value = board()->navigationGraph()->midPoint(10);
     rot.angle = glm::pi<float>();
     rot.update();
+    linVel.value = {};
+    angVel.value = {};
+    linFor.value = {};
+    angFor.value = {};
     registry_->emplace<ngn::TransformChangedTag>(playerGameState_.entity);
 }

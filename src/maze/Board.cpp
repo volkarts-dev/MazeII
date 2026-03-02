@@ -1,7 +1,7 @@
 // Copyright 2026, Daniel Volk <mail@volkarts.com>
 // SPDX-License-Identifier: MIT
 
-#include "Level.hpp"
+#include "Board.hpp"
 
 #include "Layers.hpp"
 #include "MazeComponents.hpp"
@@ -53,7 +53,7 @@ const glm::vec4 ColorLightYellow = {1.0f, 1.0f, 0.5f, 0.2f};
 
 } // namespace
 
-Level::Level(ngn::Application *app) :
+Board::Board(ngn::Application *app) :
     app_{app} ,
     registry_{app_->registry()},
     navigationGraph_{new ngn::NavigationGraph{}}
@@ -63,7 +63,7 @@ Level::Level(ngn::Application *app) :
     createNavigationGraph();
 }
 
-Level::~Level()
+Board::~Board()
 {
     registry_->destroy(walls_.begin(), walls_.end());
     registry_->destroy(sprites_.begin(), sprites_.end());
@@ -71,7 +71,7 @@ Level::~Level()
     delete navigationGraph_;
 }
 
-void Level::createWalls()
+void Board::createWalls()
 {
     auto* world = app_->world();
 
@@ -134,7 +134,7 @@ void Level::createWalls()
     }
 }
 
-void Level::createSprites()
+void Board::createSprites()
 {
     const glm::vec2 tileBase{0, 41};
     const glm::vec2 tileSize{32, 32};
@@ -241,7 +241,7 @@ void Level::createSprites()
     }
 }
 
-void Level::createNavigationGraph()
+void Board::createNavigationGraph()
 {
     constexpr auto SectorsPerRow = MazeSize * 2 + 1;
     constexpr auto PointsPerRow = SectorsPerRow + 1;
@@ -335,7 +335,7 @@ void Level::createNavigationGraph()
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
 
-void Level::debugDrawState(ngn::DebugRenderer* debugRenderer)
+void Board::debugDrawState(ngn::DebugRenderer* debugRenderer)
 {
     for (NavIndex i = 0; i < navigationGraph_->sectorCount(); i++)
     {

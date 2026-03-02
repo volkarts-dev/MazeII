@@ -20,7 +20,7 @@ class World;
 } // namespace ngn
 
 class GameStage;
-class Level;
+class Board;
 
 class Enemies
 {

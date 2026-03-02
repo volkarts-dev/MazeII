@@ -108,6 +108,7 @@ public:
     Audio* audio() const { return audio_; }
 
     void activateStage(ApplicationStage* stage);
+
     void quit(int exitCode = 0);
 
     template<typename T>

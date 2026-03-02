@@ -18,11 +18,11 @@ class DebugRenderer;
 
 } // namespace ngn
 
-class Level
+class Board
 {
 public:
-    Level(ngn::Application* app);
-    ~Level();
+    Board(ngn::Application* app);
+    ~Board();
 
     ngn::NavigationGraph* navigationGraph() const { return navigationGraph_; }
 
@@ -44,5 +44,5 @@ private:
 
     ngn::NavigationGraph* navigationGraph_;
 
-    NGN_DISABLE_COPY_MOVE(Level)
+    NGN_DISABLE_COPY_MOVE(Board)
 };

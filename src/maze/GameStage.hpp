@@ -12,7 +12,7 @@
 class Enemies;
 class Explosions;
 class KeyboardHandler;
-class Level;
+class Board;
 class MazeDelegate;
 class Resources;
 class Shots;
@@ -43,7 +43,7 @@ public:
     ~GameStage() override;
 
     ngn::Application* app() const { return app_; }
-    Level* level() const { return level_; }
+    Board* board() const { return board_; }
 
     void onActivate() override;
     void onDeactivate() override;
@@ -62,6 +62,10 @@ public:
 
     void killEnemy(entt::entity enemy);
 
+    bool pause() const { return pause_; }
+    void setPause(bool pause) { pause_ = pause; }
+    void togglePause() { pause_ = !pause_; }
+
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugShowBodies() const { return debugShowBodies_; }
     bool debugShowBoundingBoxes() const { return debugShowBoundingBoxes_; }
@@ -78,7 +82,7 @@ private:
     MazeDelegate* delegate_;
     ngn::Application* app_;
     entt::registry* registry_;
-    Level* level_;
+    Board* board_;
     Enemies* enemies_;
     Shots* shots_;
     Explosions* explosions_;
@@ -87,6 +91,8 @@ private:
     PlayerGameState playerGameState_;
     glm::vec2 halfViewSize_;
     glm::vec4 playerViewBounds_;
+    uint32_t level_;
+    bool pause_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugShowBodies_{false};

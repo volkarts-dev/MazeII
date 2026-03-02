@@ -7,7 +7,7 @@
 #include "CommonComponents.hpp"
 #include "GameStage.hpp"
 #include "Layers.hpp"
-#include "Level.hpp"
+#include "Board.hpp"
 #include "Math.hpp"
 #include "ai/SteeringHelper.hpp"
 #include "glm/ext/scalar_constants.hpp"
@@ -63,7 +63,7 @@ Enemies::Enemies(GameStage* gameStage) :
     gameStage_{gameStage},
     registry_{gameStage_->app()->registry()},
     world_{gameStage_->app()->world()},
-    navigationGraph_{gameStage_->level()->navigationGraph()},
+    navigationGraph_{gameStage_->board()->navigationGraph()},
     updateTimer_{},
     randGenerator_{gameStage->app()->randomSeed()}
 {
@@ -128,18 +128,26 @@ void Enemies::reset()
             const StartSector,
             ngn::Position,
             ngn::Rotation,
+            ngn::LinearVelocity,
+            ngn::AngularVelocity,
+            ngn::LinearForce,
+            ngn::AngularForce,
             EnemyPathSectors,
             EnemyPathPoints,
             EnemyInfo,
             EnemyTag
             >(entt::exclude<ngn::ActiveTag>);
-    for (auto [e, start, pos, rot, sectors, points, info] : view.each())
+    for (auto [e, start, pos, rot, linVel, angVel, linFor, angFor, sectors, points, info] : view.each())
     {
         registry_->emplace<ngn::ActiveTag>(e);
 
         pos.value = navigationGraph_->midPoint(start.index);
         rot.angle = glm::pi<float>();
         rot.update();
+        linVel.value = {};
+        angVel.value = {};
+        linFor.value = {};
+        angFor.value = {};
 
         info.state = State::Wander;
         sectors.path[0] = start.index;
