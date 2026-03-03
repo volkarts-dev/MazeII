@@ -1,8 +1,19 @@
-# CodeQL Workflow Documentation
+# Security Scanning Workflows
 
 ## Overview
 
-This repository includes a CodeQL Advanced workflow for automated security scanning of C++ code. CodeQL is GitHub's semantic code analysis engine that helps identify security vulnerabilities and coding errors.
+This repository uses multiple complementary security scanning tools to provide broad coverage across different vulnerability categories.
+
+| Workflow | Tool | What it scans |
+|---|---|---|
+| `codeql.yml` | CodeQL Advanced | C++ semantic analysis – logic bugs and security vulnerabilities |
+| `trivy.yml` | Trivy | Secrets in code, YAML/CMake misconfigurations |
+| `osv-scanner.yml` | OSV-Scanner | Known CVEs in git-submodule dependencies |
+| `dependency-review.yml` | Dependency Review | Vulnerable dependencies introduced by a PR |
+
+---
+
+## CodeQL Workflow
 
 ## Workflow Configuration
 
@@ -89,3 +100,42 @@ To customize the analysis:
 - [CodeQL Documentation](https://codeql.github.com/docs/)
 - [Code Scanning Documentation](https://docs.github.com/en/code-security/code-scanning)
 - [CodeQL for C/C++](https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/codeql-code-scanning-for-compiled-languages)
+
+---
+
+## Trivy Workflow
+
+Trivy (`trivy.yml`) runs on push/PR to main.
+
+It performs a **filesystem scan** for:
+- **Secrets** – API keys, tokens, and credentials accidentally committed to source
+- **Misconfigurations** – insecure settings in GitHub Actions YAML and other config files
+
+Results are uploaded to the GitHub Security tab (SARIF format) under the `trivy` category.
+
+---
+
+## OSV-Scanner Workflow
+
+OSV-Scanner (`osv-scanner.yml`) runs on push/PR to main and weekly (Monday 08:15 UTC).
+
+It scans all git submodules recursively against the [OSV vulnerability database](https://osv.dev/), which aggregates CVEs from NVD, GitHub Advisory Database, and other sources.
+
+Results are uploaded to the GitHub Security tab (SARIF format) under the `osv-scanner` category.
+
+---
+
+## Dependency Review Workflow
+
+Dependency Review (`dependency-review.yml`) runs only on **pull requests** to main.
+
+It compares the dependency manifest snapshot of the base and head commits and fails the check if any newly introduced dependency has a known vulnerability rated **Critical** or **High**. A summary comment is automatically posted on the PR.
+
+---
+
+## Viewing All Security Results
+
+CodeQL, Trivy, and OSV-Scanner each upload SARIF results to GitHub's Security tab (Dependency Review posts its findings directly as a PR comment instead):
+1. Go to the **Security** tab in the GitHub repository
+2. Click **Code scanning** in the left sidebar
+3. Use the **Tool** filter to switch between CodeQL, Trivy, and OSV-Scanner results

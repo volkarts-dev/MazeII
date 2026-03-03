@@ -1,0 +1,53 @@
+name: "OSV-Scanner"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    # Run weekly on Monday at 08:15 UTC to catch newly disclosed vulnerabilities
+    - cron: '15 8 * * 1'
+  workflow_dispatch:
+
+jobs:
+  osv-scan:
+    name: OSV Vulnerability Scan
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Pre-create SARIF output file
+      run: touch osv-results.sarif
+
+    - name: Run OSV-Scanner
+      uses: google/osv-scanner-action/osv-scanner-action@v1.9.2
+      with:
+        scan-args: |-
+          --recursive
+          --skip-git
+          --format=sarif
+          --output=osv-results.sarif
+          ./
+      continue-on-error: true
+
+    - name: Ensure valid SARIF file for upload
+      if: always()
+      run: |
+        if [ ! -s osv-results.sarif ]; then
+          printf '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"osv-scanner","rules":[]}},"results":[]}]}' > osv-results.sarif
+        fi
+
+    - name: Upload OSV-Scanner SARIF results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v4
+      if: always()
+      with:
+        sarif_file: 'osv-results.sarif'
+        category: 'osv-scanner'
