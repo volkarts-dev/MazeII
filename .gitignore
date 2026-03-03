@@ -2,3 +2,4 @@
 /.qtcreator/
 /CMakeLists.txt.user*
 /build/
+/_codeql_detected_source_root
