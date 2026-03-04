@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Application.hpp"
+#include "gfx/GfxIds.hpp"
 
 namespace ngn {
 class AudioBuffer;
@@ -14,7 +15,7 @@ class GameStage;
 class Resources
 {
 public:
-    uint32_t textureAtlas;
+    ngn::ImageId textureAtlas;
     ngn::AudioBuffer* playerShotSoundData;
     ngn::AudioBuffer* enemyShotSoundData;
     ngn::AudioBuffer* explosionSoundData;

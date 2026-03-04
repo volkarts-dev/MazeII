@@ -8,6 +8,7 @@
 #include "CommandBuffer.hpp"
 #include "Image.hpp"
 #include "Instrumentation.hpp"
+#include "gfx/FontCollection.hpp"
 #include "gfx/GFXComponents.hpp"
 #include "gfx/Renderer.hpp"
 #include <entt/entt.hpp>
@@ -17,7 +18,8 @@ namespace ngn {
 
 SpriteRenderer::SpriteRenderer(Renderer* renderer, uint32_t batchSize) :
     renderer_{renderer},
-    spritePipeline_{new SpritePipeline{renderer_}}
+    spritePipeline_{new SpritePipeline{renderer_}},
+    fontCollection_{}
 {
     BufferConfig uniformBufferConfig{
         renderer_,
@@ -83,6 +85,8 @@ SpriteRenderer::SpriteRenderer(Renderer* renderer, uint32_t batchSize) :
 
 SpriteRenderer::~SpriteRenderer()
 {
+    delete fontCollection_;
+
     for (uint32_t f = 0; f < ngn::MaxFramesInFlight; f++)
     {
         batches_[f].buffer->unmap();
@@ -106,7 +110,7 @@ SpriteRenderer::~SpriteRenderer()
     delete spritePipeline_;
 }
 
-uint32_t SpriteRenderer::addImages(std::span<const BufferView> images)
+ImageId SpriteRenderer::addImages(std::span<const BufferView> images)
 {
     const uint32_t startIndex = static_cast<uint32_t>(textures_.size());
     const uint32_t endIndex = startIndex + static_cast<uint32_t>(images.size());
@@ -122,10 +126,10 @@ uint32_t SpriteRenderer::addImages(std::span<const BufferView> images)
         addImage(i, new Image{textureAtlasLoader}, true);
     }
 
-    return startIndex;
+    return ImageId{startIndex};
 }
 
-uint32_t SpriteRenderer::addImages(std::span<const Image* const> images)
+ImageId SpriteRenderer::addImages(std::span<const Image* const> images)
 {
     const uint32_t startIndex = static_cast<uint32_t>(textures_.size());
     const uint32_t endIndex = startIndex + static_cast<uint32_t>(images.size());
@@ -139,7 +143,14 @@ uint32_t SpriteRenderer::addImages(std::span<const Image* const> images)
         addImage(i, images[i - startIndex], false);
     }
 
-    return startIndex;
+    return ImageId{startIndex};
+}
+
+ImageId SpriteRenderer::setFontCollection(FontCollection* fontCollection)
+{
+    fontCollection_ = fontCollection;
+    fontImageId_ = addImages({{fontCollection_->image()}});
+    return fontImageId_;
 }
 
 void SpriteRenderer::updateView(const glm::mat4& view)
@@ -149,20 +160,19 @@ void SpriteRenderer::updateView(const glm::mat4& view)
 
 void SpriteRenderer::updateView(const glm::mat4& view, uint32_t frameIndex)
 {
-    const auto screenSize = renderer_->swapChainExtent();
-
     auto& ubo = uniformBuffers_[frameIndex];
-
     ubo.mapped[0].view = view;
+}
 
-    // TODO Do not calculate projection matrix on every frame
-    const auto halfWidth = static_cast<float>(screenSize.width) / 2.0f;
-    const auto halfHeight = static_cast<float>(screenSize.height) / 2.0f;
-    ubo.mapped[0].proj = glm::ortho(
-                -halfWidth, halfWidth,
-                -halfHeight, halfHeight,
-                -1.0f, 1.0f
-                );
+void SpriteRenderer::updateProj(const glm::mat4& proj)
+{
+    updateProj(proj, renderer_->currentFrame());
+}
+
+void SpriteRenderer::updateProj(const glm::mat4& proj, uint32_t frameIndex)
+{
+    auto& ubo = uniformBuffers_[frameIndex];
+    ubo.mapped[0].proj = proj;
 }
 
 void SpriteRenderer::addImage(uint32_t index, const Image* image, bool owning)
@@ -194,6 +204,27 @@ void SpriteRenderer::renderSprite(const SpriteVertex& vertex)
     std::memcpy(&batch.mapped[batch.count], &vertex, sizeof(SpriteVertex));
 
     batch.count++;
+}
+
+void SpriteRenderer::renderText(FontId font, std::string_view text, uint32_t x, uint32_t y)
+{
+    glm::vec2 pos{x, y};
+
+    for (uint32_t i = 0; i < text.size(); i++)
+    {
+        const auto& glyph = fontCollection_->glyphInfo(font)[static_cast<uint8_t>(text[i]) - 32];
+
+        renderSprite(SpriteVertex{
+            .position = pos + glyph.size / 2.f + glyph.bearing,
+            .rotation = 0.0f,
+            .scale = glyph.size,
+            .color = {1.0, 1.0, 1.0, 1.0},
+            .texCoords = glyph.texCoords,
+            .texIndex = std::to_underlying(fontImageId_),
+        });
+
+        pos.x += glyph.advance;
+    }
 }
 
 void SpriteRenderer::renderSpriteComponents(entt::registry* registry)

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Macros.hpp"
+#include "gfx/GfxIds.hpp"
 #include <glm/glm.hpp>
 
 namespace ngn {
@@ -25,7 +26,7 @@ public:
     FontCollection(std::vector<std::vector<GlyphInfo>>&& glyphInfo, Image* image);
     ~FontCollection();
 
-    const std::vector<GlyphInfo>& glyphInfo(uint32_t fontIndex) const { return glyphInfo_[fontIndex]; }
+    const std::vector<GlyphInfo>& glyphInfo(FontId font) const { return glyphInfo_[std::to_underlying(font)]; }
     const Image* image() const { return image_; }
 
 private:

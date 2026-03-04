@@ -4,6 +4,7 @@
 #include "TestBedStage.hpp"
 
 #include "gfx/SpriteAnimator.hpp"
+#include "glm/ext/matrix_clip_space.hpp"
 #include "phys/Functions.hpp"
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
@@ -132,13 +133,24 @@ void TestBedStage::onDeactivate()
 
 void TestBedStage::onWindowResize(const glm::vec2& windowSize)
 {
+    const auto halfSize = windowSize * 0.5f;
+
+    const auto proj = glm::ortho(
+        -halfSize.x, halfSize.x,
+        -halfSize.y, halfSize.y,
+        -1.0f, 1.0f
+    );
+
     for (uint32_t i = 0; i < ngn::MaxFramesInFlight; i++)
     {
+        app_->spriteRenderer()->updateProj(proj, i);
+
         app_->uiRenderer()->updateView(glm::lookAt(
-            glm::vec3{windowSize / 2.0f, 0.5f},
-            glm::vec3{windowSize / 2.0f, 0.0f},
+            glm::vec3{halfSize, 0.5f},
+            glm::vec3{halfSize, 0.0f},
             glm::vec3{0.0f, 1.0f, 0.0f}
         ), i);
+        app_->uiRenderer()->updateProj(proj, i);
     }
 }
 
@@ -197,7 +209,7 @@ void TestBedStage::onUpdate(float deltaTime)
 
     // ****************************************************
 
-    app_->uiRenderer()->writeText(0, "Hello Maze ][", 40, 50);
+    app_->uiRenderer()->renderText(ngn::FontId{0}, "Hello Maze ][", 40, 50);
 
     // ****************************************************
 

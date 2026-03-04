@@ -7,12 +7,14 @@
 #include "Types.hpp"
 #include "SpritePipeline.hpp"
 #include "Uniforms.hpp"
+#include "gfx/GfxIds.hpp"
 #include <entt/fwd.hpp>
 
 namespace ngn {
 
 class Buffer;
 class CommandBuffer;
+class FontCollection;
 class Image;
 class ImageView;
 class Renderer;
@@ -22,14 +24,19 @@ class SpriteRenderer
 {
 public:
     SpriteRenderer(Renderer* renderer, uint32_t batchSize);
-    ~SpriteRenderer();
+    virtual ~SpriteRenderer();
 
-    uint32_t addImages(std::span<const BufferView> images);
-    uint32_t addImages(std::span<const Image* const> images);
+    ImageId addImages(std::span<const BufferView> images);
+    ImageId addImages(std::span<const Image* const> images);
+    ImageId setFontCollection(FontCollection* fontCollection);
 
     void updateView(const glm::mat4& view);
     void updateView(const glm::mat4& view, uint32_t frameIndex);
+    void updateProj(const glm::mat4& proj);
+    void updateProj(const glm::mat4& proj, uint32_t frameIndex);
+
     void renderSprite(const SpriteVertex& vertex);
+    void renderText(FontId font, std::string_view text, uint32_t x, uint32_t y);
 
     void renderSpriteComponents(entt::registry* registry);
 
@@ -68,6 +75,8 @@ private:
     SpritePipeline* spritePipeline_;
     std::array<UniformBuffer, MaxFramesInFlight> uniformBuffers_;
     std::vector<Texture> textures_;
+    FontCollection* fontCollection_;
+    ImageId fontImageId_;
     std::array<Batch, MaxFramesInFlight> batches_;
 
     NGN_DISABLE_COPY_MOVE(SpriteRenderer)

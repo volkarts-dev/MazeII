@@ -12,6 +12,7 @@
 #include "gfx/UiRenderer.hpp"
 #include "gfx/GFXComponents.hpp"
 #include "gfx/SpriteRenderer.hpp"
+#include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
@@ -107,13 +108,25 @@ void GameStage::onWindowResize(const glm::vec2& windowSize)
 {
     halfViewSize_ = (windowSize + 50.0f) * 0.5f;
 
+    const auto halfSize = windowSize * 0.5f;
+
+    const auto proj = glm::ortho(
+        -halfSize.x, halfSize.x,
+        -halfSize.y, halfSize.y,
+        -1.0f, 1.0f
+    );
+
+
     for (uint32_t i = 0; i < ngn::MaxFramesInFlight; i++)
     {
+        app_->spriteRenderer()->updateProj(proj, i);
+
         app_->uiRenderer()->updateView(glm::lookAt(
-            glm::vec3{windowSize / 2.0f, 0.5f},
-            glm::vec3{windowSize / 2.0f, 0.0f},
+            glm::vec3{halfSize, 0.5f},
+            glm::vec3{halfSize, 0.0f},
             glm::vec3{0.0f, 1.0f, 0.0f}
         ), i);
+        app_->uiRenderer()->updateProj(proj, i);
     }
 }
 
@@ -124,18 +137,18 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
     if (action == ngn::InputAction::Press)
     {
 #if !defined(NGN_ENABLE_INSTRUMENTATION)
-        if (key == GLFW_KEY_P)
+        if (!pause() && key == GLFW_KEY_P)
         {
-            togglePause();
+            cyclePause();
         }
 #endif
     }
     else if (action == ngn::InputAction::Release)
     {
 #if !defined(NGN_ENABLE_INSTRUMENTATION)
-        if (pause_ && key == GLFW_KEY_SPACE)
+        if (pause() && (key == GLFW_KEY_P || key == GLFW_KEY_SPACE))
         {
-            setPause(false);
+            cyclePause();
         }
 #endif
     }
@@ -206,7 +219,7 @@ void GameStage::onDraw(float deltaTime)
     // ****************************************************
 
     const auto levelInfo = fmt::format("Hello Maze ][ - Lvl:{}", level_);
-    app_->uiRenderer()->writeText(0, levelInfo, 10, 25);
+    app_->uiRenderer()->renderText(ngn::FontId{0}, levelInfo, 10, 25);
 
     // ****************************************************
 
