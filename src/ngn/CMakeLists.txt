@@ -11,7 +11,7 @@ add_library(ngn STATIC
     gfx/Colors.hpp gfx/Colors.cpp
     gfx/FontCollection.hpp gfx/FontCollection.cpp
     gfx/FontMaker.hpp gfx/FontMaker.cpp
-    gfx/GFXComponents.hpp
+    gfx/GfxComponents.hpp
     gfx/GfxIds.hpp
     gfx/Image.hpp gfx/Image.cpp
     gfx/Pipeline.hpp gfx/Pipeline.cpp

@@ -5,7 +5,7 @@
 
 #include "CommonComponents.hpp"
 #include "SpriteAnimation.hpp"
-#include "gfx/GFXComponents.hpp"
+#include "gfx/GfxComponents.hpp"
 #include <entt/entt.hpp>
 
 namespace ngn {

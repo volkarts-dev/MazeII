@@ -6,7 +6,7 @@
 #include "Layers.hpp"
 #include "MazeComponents.hpp"
 #include "Application.hpp"
-#include "gfx/GFXComponents.hpp"
+#include "gfx/GfxComponents.hpp"
 #include "phys/World.hpp"
 #include <entt/entt.hpp>
 

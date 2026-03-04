@@ -4,7 +4,7 @@
 #pragma once
 
 #include "Timer.hpp"
-#include "gfx/GFXComponents.hpp"
+#include "gfx/GfxComponents.hpp"
 #include "phys/Shapes.hpp"
 #include "phys/World.hpp"
 #include "Application.hpp"

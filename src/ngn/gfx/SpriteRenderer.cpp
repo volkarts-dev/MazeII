@@ -9,7 +9,7 @@
 #include "Image.hpp"
 #include "Instrumentation.hpp"
 #include "gfx/FontCollection.hpp"
-#include "gfx/GFXComponents.hpp"
+#include "gfx/GfxComponents.hpp"
 #include "gfx/Renderer.hpp"
 #include <entt/entt.hpp>
 #include <glm/gtc/matrix_transform.hpp>

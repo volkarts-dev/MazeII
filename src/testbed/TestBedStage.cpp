@@ -10,7 +10,7 @@
 #include "phys/World.hpp"
 #include "gfx/FontMaker.hpp"
 #include "gfx/UiRenderer.hpp"
-#include "gfx/GFXComponents.hpp"
+#include "gfx/GfxComponents.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "CommonComponents.hpp"
 #include "TestBedAssets.hpp"
