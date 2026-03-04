@@ -86,7 +86,7 @@ void GameStage::onActivate()
 
     explosions_ = new Explosions{this};
 
-    pause_ = true;
+    pause_ = Pause::On;
 }
 
 void GameStage::onDeactivate()
@@ -174,7 +174,7 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
 
 void GameStage::onUpdate(float deltaTime)
 {
-    if (pause_)
+    if (pause())
         return;
 
     playerGameState_.laserReloadTimer.update(deltaTime);
@@ -217,7 +217,8 @@ void GameStage::onDraw(float deltaTime)
 
     // ****************************************************
 
-    const auto levelInfo = fmt::format("Hello Maze ][ - Lvl:{}", level_);
+    const auto pauseInfo = pause() ? " - Pause (P or Space to start)"sv : ""sv;
+    const auto levelInfo = fmt::format("Maze ][ - Lvl:{}{}", level_, pauseInfo);
     app_->uiRenderer()->renderText(ngn::FontId{0}, levelInfo, 10, 25);
 
     // ****************************************************
@@ -260,6 +261,14 @@ void GameStage::killEnemy(entt::entity enemy)
     explosions_->showExplosion(pos.value, Explosions::Type::One);
 
     enemies_->killEnemy(enemy);
+}
+
+void GameStage::cyclePause()
+{
+    if (pause_ == Pause::On)
+        pause_ = Pause::Off;
+    else
+        pause_ = static_cast<Pause>(static_cast<uint32_t>(pause_) + 1);
 }
 
 void GameStage::handlePlayerInputEvents(ngn::InputAction action, int key, ngn::InputMods mods)
@@ -324,7 +333,7 @@ void GameStage::handleAllEnemiesDown()
     resetPlayer();
     enemies_->reset();
     level_++;
-    setPause(true);
+    pause_ = Pause::On;
 }
 
 void GameStage::resetPlayer()

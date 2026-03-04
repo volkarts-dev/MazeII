@@ -5,11 +5,14 @@
 
 // IWYU pragma: begin_exports
 
-#include <span>
-#include <cstdint>
 #include <limits>
+#include <span>
+#include <string_view>
+#include <cstdint>
 
 // IWYU pragma: end_exports
+
+using namespace std::literals;
 
 namespace ngn {
 

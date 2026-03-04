@@ -38,6 +38,14 @@ public:
 
 class GameStage : public ngn::ApplicationStage
 {
+private:
+    enum class Pause : uint32_t
+    {
+        Off,
+        Init,
+        On,
+    };
+
 public:
     GameStage(MazeDelegate* delegate);
     ~GameStage() override;
@@ -62,9 +70,8 @@ public:
 
     void killEnemy(entt::entity enemy);
 
-    bool pause() const { return pause_; }
-    void setPause(bool pause) { pause_ = pause; }
-    void togglePause() { pause_ = !pause_; }
+    bool pause() const { return pause_ != Pause::Off; }
+    void cyclePause();
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugShowBodies() const { return debugShowBodies_; }
@@ -92,7 +99,7 @@ private:
     glm::vec2 halfViewSize_;
     glm::vec4 playerViewBounds_;
     uint32_t level_;
-    bool pause_;
+    Pause pause_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugShowBodies_{false};
