@@ -1,3 +1,8 @@
+add_library(ext STATIC
+    ext/StbImage.cpp ext/StbImage.hpp
+    ext/StbVorbis.hpp ext/StbVorbis.cpp
+)
+
 add_library(ngn STATIC
     ai/NavigationGraph.hpp ai/NavigationGraph.cpp
     ai/SteeringHelper.hpp ai/SteeringHelper.cpp

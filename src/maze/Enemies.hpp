@@ -91,8 +91,6 @@ private:
         glm::vec2 searchWayEnd;
         FindObstacleResult obstacle;
     };
-
-
 #endif
 
     NGN_DISABLE_COPY_MOVE(Enemies)

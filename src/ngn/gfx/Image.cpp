@@ -5,7 +5,7 @@
 
 #include "Buffer.hpp"
 #include "Renderer.hpp"
-#include "StbImage.hpp"
+#include "ext/StbImage.hpp"
 
 namespace ngn {
 

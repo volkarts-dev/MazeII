@@ -4,7 +4,7 @@
 #include "Audio.hpp"
 
 #include "AudioBuffer.hpp"
-#include "StbVorbis.hpp"
+#include "ext/StbVorbis.hpp"
 #include <AL/al.h>
 
 namespace ngn {
