@@ -36,6 +36,8 @@ class SpriteAnimator
 public:
     SpriteAnimator(entt::registry* registry);
 
+    std::size_t runningCount() const;
+
     void createAnimation(entt::entity entity, const SpriteAnimationBuilder& builder);
     void startAnimation(entt::entity entity);
     void stopAnimation(entt::entity entity);

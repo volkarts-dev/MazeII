@@ -4,16 +4,15 @@
 #include "GameStage.hpp"
 #include "Enemies.hpp"
 #include "Explosions.hpp"
-#include "Layers.hpp"
 #include "Board.hpp"
-#include "MazeComponents.hpp"
+#include "Math.hpp"
 #include "MazeDelegate.hpp"
+#include "Player.hpp"
 #include "Shots.hpp"
 #include "gfx/UiRenderer.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
 #include <GLFW/glfw3.h>
 
@@ -26,14 +25,15 @@ GameStage::GameStage(MazeDelegate* delegate) :
     app_{delegate_->app()},
     registry_{app_->registry()},
     board_{},
+    player_{},
     enemies_{},
     shots_{},
     explosions_{},
-    playerGameState_{},
     halfViewSize_{},
     playerViewBounds_{},
     level_{1},
-    pause_{}
+    pause_{},
+    state_{}
 {
 }
 
@@ -51,28 +51,14 @@ void GameStage::onActivate()
 
     board_ = new Board{app_};
 
-    ActorCreateInfo createInfo{
-        .position = board()->navigationGraph()->midPoint(10),
-        .rotation = glm::pi<float>(),
-        .sprite = {
-            .texCoords = {0, 0, 38, 40},
-            .size = {39, 41},
-            .texture = 1,
-        },
-        .body = {
-            .layers = LayerPlayer,
-            .invMass = 1.f / 10.f,
-            .restitution = 1.5f,
-        },
-        .shape = ngn::Shape{ngn::Circle{.center = {0, 2}, .radius = 17}},
-    };
-    playerGameState_.entity = createActor(createInfo);
-    registry_->emplace<PlayerTag>(playerGameState_.entity);
+    player_ = new Player{this};
 
     enemies_ = new Enemies{this};
     allEnemiesDownConn_ = enemies_->addAllEnemiesDownListener<&GameStage::handleAllEnemiesDown>(this);
-    enemies_->createEnemy(320, 0.0f);
-    enemies_->createEnemy(322, 0.0f);
+    enemies_->createEnemy(41, ngn::math::PI);
+    enemies_->createEnemy(43, ngn::math::PI);
+    //enemies_->createEnemy(320, 0.0f);
+    //enemies_->createEnemy(322, 0.0f);
     //enemies_->createEnemy(324, 0.0f);
     //enemies_->createEnemy(326, 0.0f);
     //enemies_->createEnemy(328, 0.0f);
@@ -87,6 +73,7 @@ void GameStage::onActivate()
     explosions_ = new Explosions{this};
 
     pause_ = Pause::On;
+    state_ = State::Active;
 }
 
 void GameStage::onDeactivate()
@@ -98,9 +85,9 @@ void GameStage::onDeactivate()
     allEnemiesDownConn_.release();
     delete enemies_;
 
-    delete board_;
+    delete player_;
 
-    registry_->destroy(playerGameState_.entity);
+    delete board_;
 }
 
 void GameStage::onWindowResize(const glm::vec2& windowSize)
@@ -131,10 +118,16 @@ void GameStage::onWindowResize(const glm::vec2& windowSize)
 
 void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods)
 {
-    handlePlayerInputEvents(action, key, mods);
+    player_->handleInputEvents(action, key, mods);
 
     if (action == ngn::InputAction::Press)
     {
+        if (key == GLFW_KEY_ESCAPE)
+        {
+            app_->quit();
+            return;
+        }
+
 #if !defined(NGN_ENABLE_INSTRUMENTATION)
         if (!pause() && key == GLFW_KEY_P)
         {
@@ -151,7 +144,6 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
         }
 #endif
     }
-
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     if (action == ngn::InputAction::Press)
@@ -177,11 +169,14 @@ void GameStage::onUpdate(float deltaTime)
     if (pause())
         return;
 
-    playerGameState_.laserReloadTimer.update(deltaTime);
-
+    if (state_ == State::Inactive)
+    {
+        if (explosions_->allDone())
+            resetGame();
+    }
     // ****************************************************
 
-    handlePlayerInput(deltaTime);
+    player_->update(deltaTime);
 
     // ****************************************************
 
@@ -196,7 +191,7 @@ void GameStage::onDraw(float deltaTime)
 {
     NGN_UNUSED(deltaTime);
 
-    const auto playerPos = registry_->get<const ngn::Position>(playerGameState_.entity).value;
+    const auto playerPos = player_->position();
 
     playerViewBounds_ = {
         playerPos - halfViewSize_,
@@ -256,101 +251,39 @@ bool GameStage::testInSight(const glm::vec2& pos)
 
 void GameStage::killEnemy(entt::entity enemy)
 {
-    const auto& pos = registry_->get<const ngn::Position>(enemy);
-
-    explosions_->showExplosion(pos.value, Explosions::Type::One);
-
     enemies_->killEnemy(enemy);
+}
+
+void GameStage::killPlayer()
+{
+    player_->kill();
+
+    newLevel_ = 1;
+    state_ = State::Inactive;
 }
 
 void GameStage::cyclePause()
 {
-    if (pause_ == Pause::On)
-        pause_ = Pause::Off;
-    else
-        pause_ = static_cast<Pause>(static_cast<uint32_t>(pause_) + 1);
-}
-
-void GameStage::handlePlayerInputEvents(ngn::InputAction action, int key, ngn::InputMods mods)
-{
-    NGN_UNUSED(mods);
-
-    if (action == ngn::InputAction::Press)
+    switch (pause_)
     {
-        if (key == GLFW_KEY_ESCAPE)
-        {
-            app_->quit();
-            return;
-        }
-        else if (key == GLFW_KEY_SPACE)
-        {
-            playerGameState_.laserReloadTimer.restart(true);
-        }
-    }
-}
-
-void GameStage::handlePlayerInput(float deltaTime)
-{
-    NGN_UNUSED(deltaTime);
-
-    if (app_->isKeyDown(GLFW_KEY_LEFT))
-    {
-        auto& force = registry_->get<ngn::AngularForce>(playerGameState_.entity).value;
-        force += 20.0f;
-    }
-    if (app_->isKeyDown(GLFW_KEY_RIGHT))
-    {
-        auto& force = registry_->get<ngn::AngularForce>(playerGameState_.entity).value;
-        force -= 20.0f;
-    }
-    if (app_->isKeyDown(GLFW_KEY_UP))
-    {
-        const auto factor = app_->isKeyDown(GLFW_KEY_Q) ? 5000.0f : 2000.0f;
-        auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(playerGameState_.entity);
-        force.value -= rot.dir * factor;
-    }
-    if (app_->isKeyDown(GLFW_KEY_DOWN))
-    {
-        auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(playerGameState_.entity);
-        force.value += rot.dir * 2000.0f;
-    }
-
-    // ****************************************************
-
-    if (app_->isKeyDown(GLFW_KEY_SPACE))
-    {
-        if (playerGameState_.laserReloadTimer.elapsed(0.5f).first)
-        {
-            auto [pos, rot] = registry_->get<const ngn::Position, const ngn::Rotation>(playerGameState_.entity);
-            const auto start = pos.value - rot.dir * 20.0f;
-            shots_->fireLaser(start, rot.angle, true);
-        }
+        case Pause::Off:  pause_ = Pause::Init; break;
+        case Pause::Init: pause_ = Pause::On; break;
+        case Pause::On:   pause_ = Pause::Off; break;
     }
 }
 
 void GameStage::handleAllEnemiesDown()
 {
-    resetPlayer();
-    enemies_->reset();
-    level_++;
-    pause_ = Pause::On;
+    newLevel_ = level_ + 1;
+    state_ = State::Inactive;
 }
 
-void GameStage::resetPlayer()
+void GameStage::resetGame()
 {
-    auto [pos, rot, linVel, angVel, linFor, angFor] = registry_->get<
-            ngn::Position,
-            ngn::Rotation,
-            ngn::LinearVelocity,
-            ngn::AngularVelocity,
-            ngn::LinearForce,
-            ngn::AngularForce>(playerGameState_.entity);
-    pos.value = board()->navigationGraph()->midPoint(10);
-    rot.angle = glm::pi<float>();
-    rot.update();
-    linVel.value = {};
-    angVel.value = {};
-    linFor.value = {};
-    angFor.value = {};
-    registry_->emplace<ngn::TransformChangedTag>(playerGameState_.entity);
+    player_->reset();
+    enemies_->reset();
+    shots_->reset();
+    level_ = newLevel_;
+    pause_ = Pause::On;
+    state_ = State::Active;
 }

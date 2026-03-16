@@ -48,6 +48,11 @@ SpriteAnimator::SpriteAnimator(entt::registry* registry) :
 {
 }
 
+std::size_t SpriteAnimator::runningCount() const
+{
+    return registry_->storage<SpriteAnimation>().size();
+}
+
 void SpriteAnimator::createAnimation(entt::entity entity, const SpriteAnimationBuilder& builder)
 {
     auto& info = registry_->emplace<SpriteAnimationInfo>(entity);

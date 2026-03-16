@@ -20,6 +20,8 @@ public:
 
     void update(float deltaTime);
 
+    void reset();
+
 private:
     void handleCollision(const ngn::CollisionInfo& collision);
 

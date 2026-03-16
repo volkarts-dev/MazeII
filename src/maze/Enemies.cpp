@@ -4,11 +4,13 @@
 #include "Enemies.hpp"
 
 #include "Application.hpp"
+#include "Board.hpp"
 #include "CommonComponents.hpp"
+#include "Explosions.hpp"
 #include "GameStage.hpp"
 #include "Layers.hpp"
-#include "Board.hpp"
 #include "Math.hpp"
+#include "Shots.hpp"
 #include "ai/SteeringHelper.hpp"
 #include "glm/ext/scalar_constants.hpp"
 #include "phys/CollisionTests.hpp"
@@ -39,6 +41,13 @@ class StartSector
 {
 public:
     NavIndex index;
+    float angle;
+};
+
+class EvasionTimer
+{
+public:
+    float timeout;
 };
 
 //glm::vec2 steeringSeek(const glm::vec2& pos, const glm::vec2& vel, const glm::vec2& target)
@@ -56,6 +65,17 @@ inline void steeringSeek(ngn::LinearForce& linForce, ngn::AngularForce& angForce
     const auto dir = target - pos.value;
     angForce.value += ngn::computeAngularForce(rot.angle, ngn::math::atan2(dir.x, dir.y), maxAngForce);
 }
+
+inline void steeringFlee(ngn::LinearForce& linForce, ngn::AngularForce& angForce,
+                         const ngn::Position& pos, const ngn::Rotation& rot,
+                         const glm::vec2& target, float maxLinForce, float maxAngForce)
+{
+    linForce.value += rot.dir * maxLinForce;
+
+    const auto dir = pos.value - target;
+    angForce.value += ngn::computeAngularForce(rot.angle, ngn::math::atan2(dir.x, dir.y), maxAngForce);
+}
+
 
 } // namespace
 
@@ -103,6 +123,7 @@ void Enemies::createEnemy(NavIndex startSector, float angle)
     auto& points = registry_->emplace<EnemyPathPoints>(enemy);
 
     start.index = startSector;
+    start.angle = angle;
     info.state = State::Wander;
     sectors.path[0] = startSector;
     points.path[0] = pos;
@@ -114,6 +135,9 @@ void Enemies::createEnemy(NavIndex startSector, float angle)
 
 void Enemies::killEnemy(entt::entity enemy)
 {
+    const auto& pos = registry_->get<const ngn::Position>(enemy);
+    gameStage_->explosions()->doExplosion(pos.value, Explosions::Type::Two);
+
     registry_->remove<ngn::ActiveTag>(enemy);
     auto view = registry_->view<EnemyTag, ngn::ActiveTag>();
     if (view.begin() == view.end())
@@ -142,7 +166,7 @@ void Enemies::reset()
         registry_->emplace<ngn::ActiveTag>(e);
 
         pos.value = navigationGraph_->midPoint(start.index);
-        rot.angle = glm::pi<float>();
+        rot.angle = start.angle;
         rot.update();
         linVel.value = {};
         angVel.value = {};
@@ -227,42 +251,25 @@ void Enemies::update(float deltaTime)
         }
 #endif
 
-        if (info.state != State::Idle)
-        {
-            const auto searchWayStart = pos.value + rot.dir * BodyRadius;
-            const auto searchWayEnd = pos.value + rot.dir * BodyRadius * 5.0f;
-            const auto obstacle = findObstacle(ent, searchWayStart, searchWayEnd, BodyRadius);
+        const auto searchWayStart = pos.value + rot.dir * BodyRadius;
+        const auto searchWayEnd = pos.value + rot.dir * BodyRadius * 5.0f;
+        const auto obstacle = findObstacle(ent, searchWayStart, searchWayEnd, BodyRadius);
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
-            debugState.searchWayStart = searchWayStart;
-            debugState.searchWayEnd = searchWayEnd;
-            debugState.obstacle = obstacle;
+        debugState.searchWayStart = searchWayStart;
+        debugState.searchWayEnd = searchWayEnd;
+        debugState.obstacle = obstacle;
 #endif
 
-            // TODO Take relative velocity into account
-            if (obstacle.found)
-            {
-                linForce.value += -obstacle.dir * obstacle.depth * 20.0f;
-            }
+        // TODO Take relative velocity into account
+        if (obstacle.found)
+        {
+            linForce.value += -obstacle.dir * obstacle.depth * 20.0f;
         }
 
         switch (info.state)
         {
             using enum State;
-
-            case Idle:
-            {
-                if (doUpdateStep)
-                {
-                    if (targetInSight)
-                    {
-                        info.state = State::Persuit;
-                        break;
-                    }
-                }
-
-                break;
-            }
 
             case Persuit:
             {
@@ -271,6 +278,15 @@ void Enemies::update(float deltaTime)
                     if (!targetInSight)
                     {
                         info.state = State::Wander;
+                        break;
+                    }
+                    else if (testOrientation(pos.value, rot.angle, sightDirTarget))
+                    {
+                        // TODO Use a propability based on current level to deside to shot or not
+                        const auto start = pos.value + rot.dir * 20.0f;
+                        gameStage_->shots()->fireLaser(start, rot.angle, false);
+                        registry_->emplace_or_replace<EvasionTimer>(ent, 5.0f);
+                        info.state = State::Evasion;
                         break;
                     }
                 }
@@ -282,6 +298,21 @@ void Enemies::update(float deltaTime)
 
             case Evasion:
             {
+                auto timer = registry_->try_get<EvasionTimer>(ent);
+                if (timer)
+                {
+                    timer->timeout -= deltaTime;
+                    if (timer->timeout > 0.0f)
+                    {
+                        steeringFlee(linForce, angForce, pos, rot, tPos.value, LinearForce, AngularForce);
+                        break;
+                    }
+                    registry_->remove<EvasionTimer>(ent);
+                }
+                if (targetInSight)
+                    info.state = State::Persuit;
+                else
+                    info.state = State::Wander;
                 break;
             }
 
@@ -368,6 +399,13 @@ bool Enemies::testInSight(const glm::vec2& origin, const glm::vec2& target)
         return !blocking;
     });
     return !blocking;
+}
+
+bool Enemies::testOrientation(const glm::vec2& origin, float dir, const glm::vec2& target)
+{
+    const auto ot = target - origin;
+    const auto dirToTarget = ngn::math::atan2(ot.x, ot.y);
+    return ngn::math::angleDiff(dir, dirToTarget) < ngn::math::TwoPI * 0.035f;
 }
 
 Enemies::FindObstacleResult Enemies::findObstacle(entt::entity self, const glm::vec2& origin,

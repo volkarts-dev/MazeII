@@ -18,7 +18,8 @@ public:
     ngn::ImageId textureAtlas;
     ngn::AudioBuffer* playerShotSoundData;
     ngn::AudioBuffer* enemyShotSoundData;
-    ngn::AudioBuffer* explosionSoundData;
+    ngn::AudioBuffer* explosionOneSoundData;
+    ngn::AudioBuffer* explosionTwoSoundData;
     ngn::AudioBuffer* laserHitWallSoundData;
 };
 

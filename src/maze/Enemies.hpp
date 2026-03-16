@@ -20,8 +20,8 @@ class Application;
 class World;
 } // namespace ngn
 
-class GameStage;
 class Board;
+class GameStage;
 
 class Enemies
 {
@@ -46,7 +46,6 @@ public:
 private:
     enum class State
     {
-        Idle,
         Persuit,
         Evasion,
         Wander,
@@ -55,7 +54,7 @@ private:
     class EnemyInfo
     {
     public:
-        State state{State::Idle};
+        State state{State::Wander};
     };
 
     class FindObstacleResult
@@ -69,6 +68,7 @@ private:
 private:
     NavIndex findNextRandomSector(NavIndex last, NavIndex current);
     bool testInSight(const glm::vec2& origin, const glm::vec2& target);
+    bool testOrientation(const glm::vec2& origin, float dir, const glm::vec2& target);
     FindObstacleResult findObstacle(entt::entity self, const glm::vec2& origin, const glm::vec2& target, float halfWidth);
 
 private:

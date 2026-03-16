@@ -16,13 +16,16 @@ public:
     enum class Type
     {
         One,
+        Two,
     };
 
 public:
     Explosions(GameStage* gameStage);
     ~Explosions();
 
-    void showExplosion(const glm::vec2& position, Type type);
+    bool allDone() const;
+
+    void doExplosion(const glm::vec2& position, Type type);
 
     void update(float deltaTime);
 

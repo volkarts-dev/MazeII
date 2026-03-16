@@ -1,5 +1,5 @@
 /.temp/
 /.qtcreator/
-/CMakeLists.txt.user*
+/.idea/
 /build/
-/_codeql_detected_source_root
+/CMakeLists.txt.user*

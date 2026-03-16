@@ -92,7 +92,8 @@ void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
     rot.angle = rotation;
     rot.update();
 
-    vel.value = -rot.dir * 400.0f;
+    // TODO Make enemies shots speed dependend of level
+    vel.value = rot.dir * (player ? 400.0f : 40.0f);
 
     spr.texCoords = player ? glm::vec4{84, 0, 87, 11} : glm::vec4{84, 12, 87, 23};
 
@@ -116,8 +117,16 @@ void Shots::update(float deltaTime)
     }
 }
 
-void Shots::handleCollision(const ngn::CollisionInfo& collision)
+void Shots::reset()
+{
+    auto view = registry_->view<ShotTag, ngn::ActiveTag>();
+    for (auto e : view)
+    {
+        registry_->remove<ngn::ActiveTag>(e);
+    }
+}
 
+void Shots::handleCollision(const ngn::CollisionInfo& collision)
 {
     const auto shotA = registry_->any_of<ShotTag>(collision.pair.bodyA);
     const auto shotB = registry_->any_of<ShotTag>(collision.pair.bodyB);
@@ -139,7 +148,7 @@ void Shots::handleCollision(const ngn::CollisionInfo& collision)
         }
         else if (isPlayer)
         {
-            // TODO kill player
+            gameStage_->killPlayer();
         }
         else
         {
@@ -148,7 +157,9 @@ void Shots::handleCollision(const ngn::CollisionInfo& collision)
         }
     };
 
-    if (shotA)
+    if (shotA && shotB)
+        return;
+    else if (shotA)
         handleHit(collision.pair.bodyA, collision.pair.bodyB);
     else if (shotB)
         handleHit(collision.pair.bodyB, collision.pair.bodyA);

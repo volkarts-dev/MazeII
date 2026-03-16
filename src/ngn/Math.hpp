@@ -39,4 +39,14 @@ inline float det(const glm::vec2& a, const glm::vec2& b)
     return a.x * b.y - a.y * b.x;
 }
 
+inline float angleDiff(float a, float b)
+{
+    if (a < b)
+        std::swap(a, b);
+    const auto rawDiff = a - b;
+    if (rawDiff > PI)
+        return (TwoPI - a) + b;
+    return rawDiff;
+}
+
 } // namespace ngn::math

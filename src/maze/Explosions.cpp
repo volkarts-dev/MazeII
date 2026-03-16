@@ -24,7 +24,12 @@ Explosions::~Explosions()
     registry_->destroy(view.begin(), view.end());
 }
 
-void Explosions::showExplosion(const glm::vec2& position, Type type)
+bool Explosions::allDone() const
+{
+    return gameStage_->app()->spriteAnimationHandler()->runningCount() == 0;
+}
+
+void Explosions::doExplosion(const glm::vec2& position, Type type)
 {
     entt::entity entity{};
 
@@ -48,13 +53,13 @@ void Explosions::showExplosion(const glm::vec2& position, Type type)
         // TODO support different sprites for different types
         ngn::SpriteAnimationBuilder animationBuilder{};
         animationBuilder
-                .addFrame(glm::vec4{0, 137, 9, 146}, 1, 0.1f)
-                .addFrame(glm::vec4{0, 147, 16, 162}, 1, 0.1f)
-                .addFrame(glm::vec4{17, 137, 66, 183}, 1, 0.1f)
-                .addFrame(glm::vec4{115, 137, 166, 193}, 1, 0.1f)
-                .addFrame(glm::vec4{167, 137, 198, 165}, 1, 0.1f)
-                .addFrame(glm::vec4{167, 166, 197, 195}, 1, 0.1f)
-                ;
+            .addFrame(glm::vec4{0, 137, 9, 146}, 1, 0.1f)
+            .addFrame(glm::vec4{0, 147, 16, 162}, 1, 0.1f)
+            .addFrame(glm::vec4{17, 137, 66, 183}, 1, 0.1f)
+            .addFrame(glm::vec4{115, 137, 166, 193}, 1, 0.1f)
+            .addFrame(glm::vec4{167, 137, 198, 165}, 1, 0.1f)
+            .addFrame(glm::vec4{167, 166, 197, 195}, 1, 0.1f)
+            ;
         gameStage_->app()->spriteAnimationHandler()->createAnimation(entity, animationBuilder);
 
         registry_->emplace<ngn::Sound>(entity);
@@ -68,8 +73,16 @@ void Explosions::showExplosion(const glm::vec2& position, Type type)
 
     pos.value = position;
 
-    NGN_UNUSED(type); // TODO Use different sounds for different explosion types
-    snd.setBuffer(gameStage_->resources().explosionSoundData);
+    switch (type)
+    {
+        case Type::One:
+            snd.setBuffer(gameStage_->resources().explosionOneSoundData);
+            break;
+        case Type::Two:
+            snd.setBuffer(gameStage_->resources().explosionTwoSoundData);
+            break;
+    }
+
     snd.play();
 
     registry_->emplace_or_replace<ngn::TransformChangedTag>(entity);

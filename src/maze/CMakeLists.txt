@@ -9,6 +9,7 @@ add_executable(maze
     MazeComponents.hpp
     MazeDelegate.hpp MazeDelegate.cpp
     Pch.hpp
+    Player.hpp Player.cpp
     Shots.hpp Shots.cpp
 )
 
@@ -29,7 +30,8 @@ target_assets(maze
     ASSET_FILES
         assets/boost.ogg
         assets/enemy-shoot.ogg
-        assets/explode.ogg
+        assets/explosion_one.ogg
+        assets/explosion_two.ogg
         assets/laser-hit-wall.ogg
         assets/liberation-mono.ttf
         assets/shoot.ogg

@@ -14,6 +14,7 @@ class Explosions;
 class KeyboardHandler;
 class Board;
 class MazeDelegate;
+class Player;
 class Resources;
 class Shots;
 
@@ -29,13 +30,6 @@ public:
     bool active{true};
 };
 
-class PlayerGameState
-{
-public:
-    ngn::Timer laserReloadTimer{};
-    entt::entity entity{};
-};
-
 class GameStage : public ngn::ApplicationStage
 {
 private:
@@ -47,11 +41,20 @@ private:
     };
 
 public:
+    enum class State : uint32_t
+    {
+        Active,
+        Inactive,
+    };
+
+public:
     GameStage(MazeDelegate* delegate);
     ~GameStage() override;
 
     ngn::Application* app() const { return app_; }
     Board* board() const { return board_; }
+    Shots* shots() const { return shots_; }
+    Explosions* explosions() const { return explosions_; }
 
     void onActivate() override;
     void onDeactivate() override;
@@ -69,9 +72,11 @@ public:
     bool testInSight(const glm::vec2& pos);
 
     void killEnemy(entt::entity enemy);
+    void killPlayer();
 
     bool pause() const { return pause_ != Pause::Off; }
     void cyclePause();
+    State state() const { return state_; }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugShowBodies() const { return debugShowBodies_; }
@@ -80,26 +85,26 @@ public:
 #endif
 
 private:
-    void handlePlayerInputEvents(ngn::InputAction action, int key, ngn::InputMods mods);
-    void handlePlayerInput(float deltaTime);
     void handleAllEnemiesDown();
-    void resetPlayer();
+    void resetGame();
 
 private:
     MazeDelegate* delegate_;
     ngn::Application* app_;
     entt::registry* registry_;
     Board* board_;
+    Player* player_;
     Enemies* enemies_;
     Shots* shots_;
     Explosions* explosions_;
 
     entt::connection allEnemiesDownConn_;
-    PlayerGameState playerGameState_;
     glm::vec2 halfViewSize_;
     glm::vec4 playerViewBounds_;
     uint32_t level_;
+    uint32_t newLevel_;
     Pause pause_;
+    State state_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugShowBodies_{false};
