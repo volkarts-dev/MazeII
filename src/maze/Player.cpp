@@ -150,7 +150,7 @@ void Player::handleInput(float deltaTime)
 
         if (app->isKeyDown(GLFW_KEY_SPACE))
         {
-            if (laserReloadTimer_.elapsed(0.5f).first)
+            if (laserReloadTimer_.isElapsed(0.5f).first)
             {
                 auto [pos, rot] = registry_->get<const ngn::Position, const ngn::Rotation>(entity_);
                 const auto start = pos.value + rot.dir * 20.0f;

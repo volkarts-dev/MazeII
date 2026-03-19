@@ -21,21 +21,13 @@ void Timer::restart(bool hot)
     time_ = hot ? std::numeric_limits<float>::max() : 0.0f;
 }
 
-std::pair<bool, float> Timer::elapsed(bool reset)
+std::pair<bool, float> Timer::isElapsed(float secs, bool reset)
 {
     const auto time = time_;
-    if (reset)
+    const auto elapsed = time >= secs;
+    if (elapsed && reset)
         time_ = 0.0f;
-    return std::make_pair(false, time);
-}
-
-std::pair<bool, float> Timer::elapsed(float secs)
-{
-    const auto time = time_;
-    const auto reset = time >= secs;
-    if (reset)
-        time_ = 0.0f;
-    return std::make_pair(reset, time);
+    return std::make_pair(elapsed, time);
 }
 
 } // namespace ngn

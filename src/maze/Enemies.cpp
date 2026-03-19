@@ -186,7 +186,7 @@ void Enemies::update(float deltaTime)
 {
     updateTimer_.update(deltaTime);
 
-    bool doUpdateStep = updateTimer_.elapsed(UpdateTimeout).first;
+    bool doUpdateStep = updateTimer_.isElapsed(UpdateTimeout).first;
 
     const auto targetView = registry_->view<
             const ngn::Position,

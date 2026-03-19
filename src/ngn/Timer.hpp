@@ -13,8 +13,8 @@ public:
     void update(float deltaTime);
 
     void restart(bool hot = false);
-    std::pair<bool, float> elapsed(bool reset = false);
-    std::pair<bool, float> elapsed(float secs);
+    float elapsedTime() { return time_; }
+    std::pair<bool, float> isElapsed(float secs, bool reset = true);
 
 private:
     float time_;

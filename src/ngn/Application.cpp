@@ -241,7 +241,7 @@ int Application::exec()
 #if defined(NGN_ENABLE_INSTRUMENTATION)
         if (const auto stat = statTimer.elapsed(); frameCount >= 5000.0)
 #else
-        if (const auto stat = statTimer.elapsed(5.0f); stat.first)
+        if (const auto stat = statTimer.isElapsed(5.0f); stat.first)
 #endif
         {
             ngn::log::info("FPS: {:.1f}, F-MEM: {}/{}, alloc: {} ({}), dealloc: {} ({})",
