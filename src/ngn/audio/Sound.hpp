@@ -20,6 +20,7 @@ public:
 
     void setBuffer(uint32_t bufferId);
     void setBuffer(AudioBuffer* buffer);
+    void setRepeat(bool repeat);
 
     void play() const;
     void stop() const;

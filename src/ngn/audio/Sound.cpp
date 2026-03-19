@@ -42,6 +42,11 @@ void Sound::setBuffer(AudioBuffer* buffer)
     setBuffer(buffer->handle());
 }
 
+void Sound::setRepeat(bool repeat)
+{
+    alCall(alSourcei, source_, AL_LOOPING, repeat ? AL_TRUE : AL_FALSE);
+}
+
 void Sound::play() const
 {
     alCall(alSourcePlay, source_);
