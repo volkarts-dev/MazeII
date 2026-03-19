@@ -85,6 +85,7 @@ public:
 #endif
 
 private:
+    void updateProjections();
     void handleAllEnemiesDown();
     void resetGame();
 
@@ -105,6 +106,8 @@ private:
     uint32_t newLevel_;
     Pause pause_;
     State state_;
+
+    float zoom_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     bool debugShowBodies_{false};

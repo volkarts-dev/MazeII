@@ -21,6 +21,9 @@ public:
     ~DebugRenderer();
 
     void updateView(const glm::mat4& view);
+    void updateView(const glm::mat4& view, uint32_t frameIndex);
+    void updateProj(const glm::mat4& proj);
+    void updateProj(const glm::mat4& proj, uint32_t frameIndex);
 
     void drawLine(const glm::vec2& start, const glm::vec2& end, const glm::vec4 color = Colors::White);
     void drawArrow(const glm::vec2& start, const glm::vec2& end, float size, const glm::vec4 color = Colors::White);

@@ -151,6 +151,10 @@ void TestBedStage::onWindowResize(const glm::vec2& windowSize)
             glm::vec3{0.0f, 1.0f, 0.0f}
         ), i);
         app_->uiRenderer()->updateProj(proj, i);
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+        app_->debugRenderer()->updateProj(proj, i);
+#endif
     }
 }
 

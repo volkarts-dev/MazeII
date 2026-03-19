@@ -33,7 +33,8 @@ GameStage::GameStage(MazeDelegate* delegate) :
     playerViewBounds_{},
     level_{1},
     pause_{},
-    state_{}
+    state_{},
+    zoom_{1.0f}
 {
 }
 
@@ -92,28 +93,9 @@ void GameStage::onDeactivate()
 
 void GameStage::onWindowResize(const glm::vec2& windowSize)
 {
-    halfViewSize_ = (windowSize + 50.0f) * 0.5f;
+    NGN_UNUSED(windowSize);
 
-    const auto halfSize = windowSize * 0.5f;
-
-    const auto proj = glm::ortho(
-        -halfSize.x, halfSize.x,
-        -halfSize.y, halfSize.y,
-        -1.0f, 1.0f
-    );
-
-
-    for (uint32_t i = 0; i < ngn::MaxFramesInFlight; i++)
-    {
-        app_->spriteRenderer()->updateProj(proj, i);
-
-        app_->uiRenderer()->updateView(glm::lookAt(
-            glm::vec3{halfSize, 0.5f},
-            glm::vec3{halfSize, 0.0f},
-            glm::vec3{0.0f, 1.0f, 0.0f}
-        ), i);
-        app_->uiRenderer()->updateProj(proj, i);
-    }
+    updateProjections();
 }
 
 void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods)
@@ -126,6 +108,21 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
         {
             app_->quit();
             return;
+        }
+        else if (mods == ngn::InputMods::Ctrl && key == GLFW_KEY_PAGE_UP)
+        {
+            zoom_ = glm::min(zoom_ + 0.5f, 5.0f);
+            updateProjections();
+        }
+        else if (mods == ngn::InputMods::Ctrl && key == GLFW_KEY_PAGE_DOWN)
+        {
+            zoom_ = glm::max(zoom_ - 0.5f, 0.5f);
+            updateProjections();
+        }
+        else if (mods == ngn::InputMods::Ctrl && key == GLFW_KEY_0)
+        {
+            zoom_ = 1.0f;
+            updateProjections();
         }
 
 #if !defined(NGN_ENABLE_INSTRUMENTATION)
@@ -269,6 +266,43 @@ void GameStage::cyclePause()
         case Pause::Off:  pause_ = Pause::Init; break;
         case Pause::Init: pause_ = Pause::On; break;
         case Pause::On:   pause_ = Pause::Off; break;
+    }
+}
+
+void GameStage::updateProjections()
+{
+    const auto windowSize = app_->windowSize();
+
+    halfViewSize_ = (windowSize + 50.0f) * 0.5f;
+
+    const auto halfSize = windowSize * 0.5f * zoom_;
+    const auto proj = glm::ortho(
+        -halfSize.x, halfSize.x,
+        -halfSize.y, halfSize.y,
+        -1.0f, 1.0f
+    );
+
+    const auto uiHalfSize = windowSize * 0.5f;
+    const auto uiProj = glm::ortho(
+        -uiHalfSize.x, uiHalfSize.x,
+        -uiHalfSize.y, uiHalfSize.y,
+        -1.0f, 1.0f
+    );
+
+    for (uint32_t i = 0; i < ngn::MaxFramesInFlight; i++)
+    {
+        app_->spriteRenderer()->updateProj(proj, i);
+
+        app_->uiRenderer()->updateView(glm::lookAt(
+            glm::vec3{uiHalfSize, 0.5f},
+            glm::vec3{uiHalfSize, 0.0f},
+            glm::vec3{0.0f, 1.0f, 0.0f}
+        ), i);
+        app_->uiRenderer()->updateProj(uiProj, i);
+
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+        app_->debugRenderer()->updateProj(proj, i);
+#endif
     }
 }
 

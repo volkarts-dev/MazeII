@@ -106,19 +106,24 @@ DebugRenderer::~DebugRenderer()
 
 void DebugRenderer::updateView(const glm::mat4& view)
 {
-    const auto screenSize = renderer_->swapChainExtent();
+    updateView(view, renderer_->currentFrame());
+}
 
-    auto& ubo = uniformBuffers_[renderer_->currentFrame()];
-
+void DebugRenderer::updateView(const glm::mat4& view, uint32_t frameIndex)
+{
+    auto& ubo = uniformBuffers_[frameIndex];
     ubo.mapped[0].view = view;
+}
 
-    const auto halfWidth = static_cast<float>(screenSize.width) / 2.0f;
-    const auto halfHeight = static_cast<float>(screenSize.height) / 2.0f;
-    ubo.mapped[0].proj = glm::ortho(
-                -halfWidth, halfWidth,
-                -halfHeight, halfHeight,
-                -1.0f, 1.0f
-                );
+void DebugRenderer::updateProj(const glm::mat4& proj)
+{
+    updateProj(proj, renderer_->currentFrame());
+}
+
+void DebugRenderer::updateProj(const glm::mat4& proj, uint32_t frameIndex)
+{
+    auto& ubo = uniformBuffers_[frameIndex];
+    ubo.mapped[0].proj = proj;
 }
 
 void DebugRenderer::drawLine(const glm::vec2& start, const glm::vec2& end, const glm::vec4 color)
