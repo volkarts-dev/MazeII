@@ -108,7 +108,7 @@ void Player::reset()
     angVel.value = {};
     linFor.value = {};
     angFor.value = {};
-    registry_->emplace<ngn::TransformChangedTag>(entity_);
+    registry_->emplace_or_replace<ngn::TransformChangedTag>(entity_);
     registry_->emplace_or_replace<ngn::ActiveTag>(entity_);
 }
 
