@@ -21,6 +21,7 @@ public:
     ngn::AudioBuffer* explosionOneSoundData;
     ngn::AudioBuffer* explosionTwoSoundData;
     ngn::AudioBuffer* laserHitWallSoundData;
+    ngn::AudioBuffer* boostSoundData;
 };
 
 class MazeDelegate : public ngn::ApplicationDelegate

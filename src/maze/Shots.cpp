@@ -8,21 +8,8 @@
 #include "Layers.hpp"
 #include "MazeComponents.hpp"
 #include "MazeDelegate.hpp"
-#include "audio/Sound.hpp"
 #include "phys/PhysComponents.hpp"
 #include <glm/gtx/norm.hpp>
-
-namespace {
-
-class ShotSound : public ngn::Sound
-{
-};
-
-class HitWallSound : public ngn::Sound
-{
-};
-
-} // namespace
 
 Shots::Shots(GameStage* gameStage) :
     gameStage_{gameStage},

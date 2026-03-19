@@ -37,25 +37,6 @@ constexpr float UpdateTimeout = 0.0f;
 constexpr float UpdateTimeout = 0.0625f;
 #endif
 
-class StartSector
-{
-public:
-    NavIndex index;
-    float angle;
-};
-
-class EvasionTimer
-{
-public:
-    float timeout;
-};
-
-//glm::vec2 steeringSeek(const glm::vec2& pos, const glm::vec2& vel, const glm::vec2& target)
-//{
-//    const auto desiredVel = glm::normalize(target - pos) * linearForce;
-//    return desiredVel - vel;
-//}
-
 inline void steeringSeek(ngn::LinearForce& linForce, ngn::AngularForce& angForce,
                          const ngn::Position& pos, const ngn::Rotation& rot,
                          const glm::vec2& target, float maxLinForce, float maxAngForce)
@@ -95,13 +76,13 @@ Enemies::~Enemies()
     registry_->destroy(view.begin(), view.end());
 }
 
-void Enemies::createEnemy(NavIndex startSector, float angle)
+void Enemies::createEnemy(NavIndex startSector, float startOrientation)
 {
     const auto pos = navigationGraph_->midPoint(startSector);
 
     ActorCreateInfo createInfo{
         .position = pos,
-        .rotation = angle,
+        .rotation = startOrientation,
         .sprite = {
             .texCoords = {39, 0, 84, 35},
             .size = {46, 36},
@@ -117,13 +98,14 @@ void Enemies::createEnemy(NavIndex startSector, float angle)
     const auto enemy = gameStage_->createActor(createInfo);
 
     registry_->emplace<EnemyTag>(enemy);
+    registry_->emplace<EvasionTimer>(enemy);
     auto& start = registry_->emplace<StartSector>(enemy);
     auto& info = registry_->emplace<EnemyInfo>(enemy);
     auto& sectors = registry_->emplace<EnemyPathSectors>(enemy);
     auto& points = registry_->emplace<EnemyPathPoints>(enemy);
 
     start.index = startSector;
-    start.angle = angle;
+    start.orientation = startOrientation;
     info.state = State::Wander;
     sectors.path[0] = startSector;
     points.path[0] = pos;
@@ -160,13 +142,14 @@ void Enemies::reset()
             EnemyPathPoints,
             EnemyInfo,
             EnemyTag
-            >(entt::exclude<ngn::ActiveTag>);
+            >();
     for (auto [e, start, pos, rot, linVel, angVel, linFor, angFor, sectors, points, info] : view.each())
     {
-        registry_->emplace<ngn::ActiveTag>(e);
+        if (!registry_->all_of<ngn::ActiveTag>(e))
+            registry_->emplace<ngn::ActiveTag>(e);
 
         pos.value = navigationGraph_->midPoint(start.index);
-        rot.angle = start.angle;
+        rot.angle = start.orientation;
         rot.update();
         linVel.value = {};
         angVel.value = {};
@@ -203,34 +186,16 @@ void Enemies::update(float deltaTime)
             EnemyInfo,
             EnemyPathSectors,
             EnemyPathPoints,
+            EvasionTimer,
             EnemyTag,
             ngn::ActiveTag>();
-    for (auto [ent, pos, rot, linVel, linForce, angForce, info, sectors, points] : view.each())
+    for (auto [ent, pos, rot, linVel, linForce, angForce, info, sectors, points, et] : view.each())
     {
         if (doUpdateStep)
         {
-            auto& currentSector = sectors.path[0];
-            auto possibleNewSector = navigationGraph_->findNearerSector(currentSector, pos.value);
-            if (possibleNewSector != currentSector) // Moved to other sector
-            {
-                sectors.last = sectors.path[0];
+            et.update(deltaTime);
 
-                if (possibleNewSector == sectors.path[1])
-                {
-                    for (NavIndex i = 1; i < sectors.path.size(); i++)
-                    {
-                        sectors.path[i - 1] = sectors.path[i];
-                        points.path[i - 1] = points.path[i];
-                    }
-                    sectors.path[sectors.path.size() - 1] = ngn::InvalidIndex<NavIndex>;
-                }
-                else
-                {
-                    sectors.path[0] = possibleNewSector;
-                    points.path[0] = navigationGraph_->midPoint(possibleNewSector);
-                    std::fill(sectors.path.begin() + 1, sectors.path.end(), ngn::InvalidIndex<NavIndex>);
-                }
-            }
+            trackVisitedSectors(sectors, points, pos.value);
         }
 
         // TODO This should also be guarded by doUpdateStep, but that would break the debug display
@@ -285,7 +250,6 @@ void Enemies::update(float deltaTime)
                         // TODO Use a propability based on current level to deside to shot or not
                         const auto start = pos.value + rot.dir * 20.0f;
                         gameStage_->shots()->fireLaser(start, rot.angle, false);
-                        registry_->emplace_or_replace<EvasionTimer>(ent, 5.0f);
                         info.state = State::Evasion;
                         break;
                     }
@@ -298,27 +262,20 @@ void Enemies::update(float deltaTime)
 
             case Evasion:
             {
-                auto timer = registry_->try_get<EvasionTimer>(ent);
-                if (timer)
-                {
-                    timer->timeout -= deltaTime;
-                    if (timer->timeout > 0.0f)
-                    {
-                        steeringFlee(linForce, angForce, pos, rot, tPos.value, LinearForce, AngularForce);
-                        break;
-                    }
-                    registry_->remove<EvasionTimer>(ent);
-                }
-                if (targetInSight)
-                    info.state = State::Persuit;
-                else
-                    info.state = State::Wander;
+                et.restart();
+
+                sectors.path[1] = sectors.last;
+                points.path[1] = navigationGraph_->midPoint(sectors.last);
+                std::fill(sectors.path.begin() + 2, sectors.path.end(), ngn::InvalidIndex<NavIndex>);
+
+                info.state = State::Wander;
+
                 break;
             }
 
             case Wander:
             {
-                if (targetInSight)
+                if (et.elapsedTime() > 5.0f && targetInSight)
                 {
                     info.state = State::Persuit;
                     break;
@@ -371,7 +328,33 @@ void Enemies::update(float deltaTime)
     }
 }
 
-NavIndex Enemies::findNextRandomSector(NavIndex last, NavIndex current)
+inline void Enemies::trackVisitedSectors(EnemyPathSectors& sectors, EnemyPathPoints& points, const glm::vec2& pos)
+{
+    auto& currentSector = sectors.path[0];
+    auto possibleNewSector = navigationGraph_->findNearerSector(currentSector, pos);
+    if (possibleNewSector != currentSector) // Moved to other sector
+    {
+        sectors.last = sectors.path[0];
+
+        if (possibleNewSector == sectors.path[1])
+        {
+            for (NavIndex i = 1; i < sectors.path.size(); i++)
+            {
+                sectors.path[i - 1] = sectors.path[i];
+                points.path[i - 1] = points.path[i];
+            }
+            sectors.path[sectors.path.size() - 1] = ngn::InvalidIndex<NavIndex>;
+        }
+        else
+        {
+            sectors.path[0] = possibleNewSector;
+            points.path[0] = navigationGraph_->midPoint(possibleNewSector);
+            std::fill(sectors.path.begin() + 1, sectors.path.end(), ngn::InvalidIndex<NavIndex>);
+        }
+    }
+}
+
+inline NavIndex Enemies::findNextRandomSector(NavIndex last, NavIndex current)
 {
     NavSectorVector<NavSectorEdgeCount> possibilities;
     const auto& connections = navigationGraph_->connections(current);
@@ -405,7 +388,7 @@ bool Enemies::testOrientation(const glm::vec2& origin, float dir, const glm::vec
 {
     const auto ot = target - origin;
     const auto dirToTarget = ngn::math::atan2(ot.x, ot.y);
-    return ngn::math::angleDiff(dir, dirToTarget) < ngn::math::TwoPI * 0.035f;
+    return ngn::math::angleDiff(dir, dirToTarget) < ngn::math::TwoPI * 0.017f;
 }
 
 Enemies::FindObstacleResult Enemies::findObstacle(entt::entity self, const glm::vec2& origin,

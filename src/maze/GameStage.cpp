@@ -52,22 +52,38 @@ void GameStage::onActivate()
 
     board_ = new Board{app_};
 
-    player_ = new Player{this};
+    player_ = new Player{this, 6, 0.0f};
 
     enemies_ = new Enemies{this};
     allEnemiesDownConn_ = enemies_->addAllEnemiesDownListener<&GameStage::handleAllEnemiesDown>(this);
-    enemies_->createEnemy(41, ngn::math::PI);
-    enemies_->createEnemy(43, ngn::math::PI);
-    //enemies_->createEnemy(320, 0.0f);
-    //enemies_->createEnemy(322, 0.0f);
-    //enemies_->createEnemy(324, 0.0f);
-    //enemies_->createEnemy(326, 0.0f);
-    //enemies_->createEnemy(328, 0.0f);
-    //enemies_->createEnemy(332, 0.0f);
-    //enemies_->createEnemy(334, 0.0f);
-    //enemies_->createEnemy(336, 0.0f);
-    //enemies_->createEnemy(338, 0.0f);
-    //enemies_->createEnemy(340, 0.0f);
+
+    // TEMP
+    //enemies_->createEnemy(25, ngn::math::PI);
+    //enemies_->createEnemy(27, ngn::math::PI);
+
+    // BIG
+    //enemies_->createEnemy(320, ngn::math::PI);
+    //enemies_->createEnemy(322, ngn::math::PI);
+    //enemies_->createEnemy(324, ngn::math::PI);
+    //enemies_->createEnemy(326, ngn::math::PI);
+    //enemies_->createEnemy(328, ngn::math::PI);
+    //enemies_->createEnemy(332, ngn::math::PI);
+    //enemies_->createEnemy(334, ngn::math::PI);
+    //enemies_->createEnemy(336, ngn::math::PI);
+    //enemies_->createEnemy(338, ngn::math::PI);
+    //enemies_->createEnemy(340, ngn::math::PI);
+
+    // SMALL
+    enemies_->createEnemy(80, ngn::math::PI);
+    enemies_->createEnemy(100, ngn::math::PI);
+    enemies_->createEnemy(120, ngn::math::PI);
+    enemies_->createEnemy(122, ngn::math::PI);
+    enemies_->createEnemy(124, ngn::math::PI);
+    enemies_->createEnemy(128, ngn::math::PI);
+    enemies_->createEnemy(130, ngn::math::PI);
+    enemies_->createEnemy(132, ngn::math::PI);
+    enemies_->createEnemy(112, ngn::math::PI);
+    enemies_->createEnemy(92, ngn::math::PI);
 
     shots_ = new Shots{this};
 
@@ -188,7 +204,7 @@ void GameStage::onDraw(float deltaTime)
 {
     NGN_UNUSED(deltaTime);
 
-    const auto playerPos = player_->position();
+    const auto playerPos = registry_->get<const ngn::Position>(player_->entity()).value;
 
     playerViewBounds_ = {
         playerPos - halfViewSize_,

@@ -72,4 +72,5 @@ void MazeDelegate::loadAssets(ngn::Application* app)
     resources_.explosionOneSoundData = app->audio()->loadOGG(maze::assets::explosion_one_ogg());
     resources_.explosionTwoSoundData = app->audio()->loadOGG(maze::assets::explosion_two_ogg());
     resources_.laserHitWallSoundData = app->audio()->loadOGG(maze::assets::laser_hit_wall_ogg());
+    resources_.boostSoundData = app->audio()->loadOGG(maze::assets::boost_ogg());
 }

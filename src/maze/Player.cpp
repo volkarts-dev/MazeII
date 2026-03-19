@@ -7,20 +7,22 @@
 #include "Explosions.hpp"
 #include "GameStage.hpp"
 #include "Layers.hpp"
-#include "MazeComponents.hpp"
+#include "MazeDelegate.hpp"
 #include "Shots.hpp"
-#include "ai/NavigationGraph.hpp"
+#include "audio/Sound.hpp"
 #include "gfx/SpriteAnimator.hpp"
 #include "phys/PhysComponents.hpp"
 #include <entt/entt.hpp>
 
-Player::Player(GameStage* gameStage) :
+Player::Player(GameStage* gameStage, NavIndex startSector, float startOrientation) :
     gameStage_{gameStage},
-    registry_{gameStage_->app()->registry()}
+    registry_{gameStage_->app()->registry()},
+    startSector_{startSector},
+    startOrientation_{startOrientation}
 {
     ActorCreateInfo createInfo{
-        .position = gameStage_->board()->navigationGraph()->midPoint(10),
-        .rotation = 0.0f,
+        .position = gameStage_->board()->navigationGraph()->midPoint(startSector_),
+        .rotation = startOrientation_,
         .sprite = {
             .texCoords = {0, 0, 38, 40},
             .size = {39, 41},
@@ -36,48 +38,58 @@ Player::Player(GameStage* gameStage) :
     entity_ = gameStage_->createActor(createInfo);
     registry_->emplace<PlayerTag>(entity_);
 
-    //boosterEntity_ = registry_->create();
-    //registry_->emplace<ngn::Position>(boosterEntity_);
-    //registry_->emplace<ngn::Sprite>(boosterEntity_, ngn::Sprite{
-    //    .texCoords = {88, 0, 100, 10},
-    //    .size{1, 1},
-    //    .texture = 1,
-    //});
-    //ngn::SpriteAnimationBuilder animationBuilder{};
-    //animationBuilder
-    //    .addFrame(glm::vec4{88, 0, 102, 11}, 1, 0.1f)
-    //    .addFrame(glm::vec4{88, 12, 102, 23}, 1, 0.1f)
-    //    .addFrame(glm::vec4{103, 0, 117, 11}, 1, 0.1f)
-    //    .addFrame(glm::vec4{103, 12, 117, 23}, 1, 0.1f)
-    //    .setRepeat(true)
-    //    ;
-    //gameStage_->app()->spriteAnimationHandler()->createAnimation(boosterEntity_, animationBuilder);
+    boosterEntity_ = registry_->create();
+    registry_->emplace<ngn::Position>(boosterEntity_);
+    registry_->emplace<ngn::Rotation>(boosterEntity_);
+    registry_->emplace<ngn::Sprite>(boosterEntity_, ngn::Sprite{
+        .texCoords = {88, 0, 100, 10},
+        .size{1, 1},
+        .texture = 1,
+    });
+    ngn::SpriteAnimationBuilder animationBuilder{};
+    animationBuilder
+        .addFrame(glm::vec4{88, 0, 102, 11}, 1, 0.05f)
+        .addFrame(glm::vec4{88, 12, 102, 23}, 1, 0.05f)
+        .addFrame(glm::vec4{103, 0, 117, 11}, 1, 0.05f)
+        .addFrame(glm::vec4{103, 12, 117, 23}, 1, 0.05f)
+        .setRepeat(true)
+        ;
+    gameStage_->app()->spriteAnimationHandler()->createAnimation(boosterEntity_, animationBuilder);
+    auto& snd = registry_->emplace<ngn::Sound>(boosterEntity_, gameStage_->resources().boostSoundData);
+    snd.setRepeat(true);
 }
 
 Player::~Player()
 {
-    //registry_->destroy(boosterEntity_);
+    registry_->destroy(boosterEntity_);
     registry_->destroy(entity_);
-}
-
-const glm::vec2& Player::position() const
-{
-    return registry_->get<const ngn::Position>(entity_).value;
 }
 
 void Player::update(float deltaTime)
 {
     laserReloadTimer_.update(deltaTime);
+
     handleInput(deltaTime);
+
+    if (boosterActive_)
+    {
+        auto [pPos, pRot] = registry_->get<const ngn::Position, const ngn::Rotation>(entity_);
+        auto [bPos, bRot] = registry_->get<ngn::Position, ngn::Rotation>(boosterEntity_);
+
+        bPos.value = pPos.value - 28.0f * pRot.dir;
+        bRot.angle = pRot.angle;
+        bRot.update();
+    }
 }
 
 void Player::kill()
 {
-    gameStage_->explosions()->doExplosion(position(), Explosions::Type::One);
+    const auto playerPos = registry_->get<const ngn::Position>(entity_).value;
+    gameStage_->explosions()->doExplosion(playerPos, Explosions::Type::One);
 
     registry_->remove<ngn::ActiveTag>(entity_);
 
-    //gameStage_->app()->spriteAnimationHandler()->stopAnimation(boosterEntity_);
+    gameStage_->app()->spriteAnimationHandler()->stopAnimation(boosterEntity_);
 }
 
 void Player::reset()
@@ -89,8 +101,8 @@ void Player::reset()
         ngn::AngularVelocity,
         ngn::LinearForce,
         ngn::AngularForce>(entity_);
-    pos.value = gameStage_->board()->navigationGraph()->midPoint(10);
-    rot.angle = 0.0f;
+    pos.value = gameStage_->board()->navigationGraph()->midPoint(startSector_);
+    rot.angle = startOrientation_;
     rot.update();
     linVel.value = {};
     angVel.value = {};
@@ -122,6 +134,8 @@ void Player::handleInput(float deltaTime)
 
     if (gameStage_->state() == GameStage::State::Active)
     {
+        bool boosterActive = false;
+
         auto* app = gameStage_->app();
 
         if (app->isKeyDown(GLFW_KEY_LEFT))
@@ -136,7 +150,8 @@ void Player::handleInput(float deltaTime)
         }
         if (app->isKeyDown(GLFW_KEY_UP))
         {
-            const auto factor = app->isKeyDown(GLFW_KEY_Q) ? 7000.0f : 2000.0f;
+            boosterActive = app->isKeyDown(GLFW_KEY_Q);
+            const auto factor = boosterActive ? 7000.0f : 2000.0f;
             auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(entity_);
             force.value += rot.dir * factor;
         }
@@ -157,5 +172,24 @@ void Player::handleInput(float deltaTime)
                 gameStage_->shots()->fireLaser(start, rot.angle, true);
             }
         }
+
+        handleBoosterAction(boosterActive);
     }
+}
+
+void Player::handleBoosterAction(bool shouldBeActive)
+{
+    if (!boosterActive_ && shouldBeActive)
+    {
+        gameStage_->app()->spriteAnimationHandler()->startAnimation(boosterEntity_);
+        const auto& snd = registry_->get<const ngn::Sound>(boosterEntity_);
+        snd.play();
+    }
+    if (boosterActive_ && !shouldBeActive)
+    {
+        gameStage_->app()->spriteAnimationHandler()->stopAnimation(boosterEntity_);
+        const auto& snd = registry_->get<const ngn::Sound>(boosterEntity_);
+        snd.stop();
+    }
+    boosterActive_ = shouldBeActive;
 }

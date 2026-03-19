@@ -32,7 +32,7 @@ public:
     template<auto Callback, typename... Args>
     entt::connection addAllEnemiesDownListener(Args&&... args);
 
-    void createEnemy(NavIndex startSector, float angle);
+    void createEnemy(NavIndex startSector, float startOrientation);
     void killEnemy(entt::entity enemy);
 
     void reset();
@@ -66,6 +66,7 @@ private:
     };
 
 private:
+    void trackVisitedSectors(EnemyPathSectors& sectors, EnemyPathPoints& points, const glm::vec2& pos);
     NavIndex findNextRandomSector(NavIndex last, NavIndex current);
     bool testInSight(const glm::vec2& origin, const glm::vec2& target);
     bool testOrientation(const glm::vec2& origin, float dir, const glm::vec2& target);

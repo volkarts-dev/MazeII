@@ -3,7 +3,9 @@
 
 #pragma once
 
+#include "Timer.hpp"
 #include "Types.hpp"
+#include "audio/Sound.hpp"
 #include "ai/NavigationGraph.hpp"
 #include "utils/StaticVector.hpp"
 
@@ -68,4 +70,23 @@ class ShotInfo
 {
 public:
     ActorType sourceType{};
+};
+
+class ShotSound : public ngn::Sound
+{
+};
+
+class HitWallSound : public ngn::Sound
+{
+};
+
+class StartSector
+{
+public:
+    NavIndex index;
+    float orientation;
+};
+
+class EvasionTimer : public ngn::Timer
+{
 };
