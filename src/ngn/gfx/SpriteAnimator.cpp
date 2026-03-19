@@ -71,15 +71,18 @@ void SpriteAnimator::createAnimation(entt::entity entity, const SpriteAnimationB
 void SpriteAnimator::startAnimation(entt::entity entity)
 {
     auto& info = registry_->get<SpriteAnimationInfo>(entity);
-    registry_->emplace<SpriteAnimation>(entity, 0, frames_[info.framesStart].time);
-    registry_->emplace<ngn::ActiveTag>(entity);
+    registry_->emplace_or_replace<SpriteAnimation>(entity, info.framesStart, frames_[info.framesStart].time);
+    registry_->emplace_or_replace<ngn::ActiveTag>(entity);
     updateSprite(entity, info.framesStart);
 }
 
 void SpriteAnimator::stopAnimation(entt::entity entity)
 {
-    registry_->remove<ActiveTag>(entity);
-    registry_->remove<SpriteAnimation>(entity);
+    if (registry_->all_of<SpriteAnimation>(entity))
+    {
+        registry_->remove<SpriteAnimation>(entity);
+        registry_->remove<ActiveTag>(entity);
+    }
 }
 
 void SpriteAnimator::update(float deltaTime)
@@ -98,7 +101,7 @@ void SpriteAnimator::update(float deltaTime)
             {
                 if (info.repeat)
                 {
-                    anim.frame = 0;
+                    anim.frame = info.framesStart;
                     anim.timeout = frames_[anim.frame].time;
                     updateSprite(e, anim.frame);
                 }
