@@ -110,6 +110,7 @@ void Player::reset()
     angFor.value = {};
     registry_->emplace_or_replace<ngn::TransformChangedTag>(entity_);
     registry_->emplace_or_replace<ngn::ActiveTag>(entity_);
+    boosterActive_ = false;
 }
 
 void Player::handleInputEvents(ngn::InputAction action, int key, ngn::InputMods mods)
