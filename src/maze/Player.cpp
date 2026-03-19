@@ -151,7 +151,7 @@ void Player::handleInput(float deltaTime)
         if (app->isKeyDown(GLFW_KEY_UP))
         {
             boosterActive = app->isKeyDown(GLFW_KEY_Q);
-            const auto factor = boosterActive ? 7000.0f : 2000.0f;
+            const auto factor = boosterActive ? 11000.0f : 5000.0f;
             auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(entity_);
             force.value += rot.dir * factor;
         }
