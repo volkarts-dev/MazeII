@@ -30,8 +30,6 @@ namespace ngn {
 
 namespace {
 
-Application* gApplication{};
-
 void errorCallback(int error, const char* description)
 {
     log::error("GLFW error: {} ({})", description, error);
@@ -60,9 +58,6 @@ Application::Application(ApplicationDelegate* delegate) :
     nextStage_{},
     exitCode_{0}
 {
-    assert(!gApplication);
-    gApplication = this;
-
     log::set_level(log::level::trace);
 
     if (!glfwInit())
@@ -151,8 +146,6 @@ Application::~Application()
     glfwDestroyWindow(window_);
 
     glfwTerminate();
-
-    gApplication = nullptr;
 }
 
 glm::vec2 Application::windowSize() const

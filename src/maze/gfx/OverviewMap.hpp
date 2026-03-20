@@ -1,5 +1,5 @@
 // Copyright 2026, Daniel Volk <mail@volkarts.com>
-// SPDX-License-Identifier: <LICENSE>
+// SPDX-License-Identifier: MIT
 
 #pragma once
 
