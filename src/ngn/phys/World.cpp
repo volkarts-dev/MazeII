@@ -333,8 +333,8 @@ CollisionInfoList World::findActualCollsions(const CollisionPairSet& collisionPa
             debugCollisions_.insert_or_assign(col, collision.coll);
 #endif
 
-            const auto bodyA = registry_->get<const Body>(col.bodyA);
-            const auto bodyB = registry_->get<const Body>(col.bodyB);
+            const auto& bodyA = registry_->get<const Body>(col.bodyA);
+            const auto& bodyB = registry_->get<const Body>(col.bodyB);
 
             const auto sensor = bodyA.sensor || bodyB.sensor;
 

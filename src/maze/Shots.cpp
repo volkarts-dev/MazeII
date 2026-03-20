@@ -120,6 +120,10 @@ void Shots::handleCollision(const ngn::CollisionInfo& collision)
 
     auto handleHit = [this](entt::entity shot, entt::entity otherBody)
     {
+        const auto otherSensor = registry_->get<const ngn::Body>(otherBody).sensor;
+        if (otherSensor)
+            return;
+
         const auto sourceType = registry_->get<const ShotInfo>(shot).sourceType;
         const auto isEnemy = registry_->any_of<EnemyTag>(otherBody);
         const auto isPlayer = registry_->any_of<PlayerTag>(otherBody);
