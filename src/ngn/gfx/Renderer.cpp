@@ -8,6 +8,7 @@
 #include "Image.hpp"
 #include "Pipeline.hpp"
 #include "Types.hpp"
+#include "gfx/RenderTarget.hpp"
 #include <GLFW/glfw3.h>
 #include <map>
 
@@ -73,8 +74,7 @@ Renderer::Renderer(GLFWwindow* window) :
     createLogicalDevice();
     createSwapChain();
     createImageViews();
-    createRenderPass();
-    createFramebuffers();
+    createRenderTarget();
     createSyncObjects();
     createCommandPools();
     createCommandBuffers();
@@ -218,24 +218,61 @@ void Renderer::createSwapChain()
 {
     const auto surfaceDetails = queryDeviceSurfaceDetails(physicalDevice_);
 
-    const auto surfaceFormat = chooseSwapSurfaceFormat(surfaceDetails.formats);
-    const auto presentMode = chooseSwapPresentMode(surfaceDetails.presentModes);
-    const auto extent = chooseSwapExtent(surfaceDetails.capabilities);
+    swapChainImageFormat_ = [](const auto& formats)
+    {
+        for (const auto& format : formats)
+        {
+            if (format.format == vk::Format::eB8G8R8A8Srgb && format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
+                return format;
+        }
+        return formats[0];
+    }(surfaceDetails.formats);
+
+    const auto presentMode = [](const auto& modes)
+    {
+        // prefer mailbox over fifo when available
+        for (const auto& mode : modes)
+        {
+            if (mode == vk::PresentModeKHR::eMailbox)
+                return mode;
+        }
+        return vk::PresentModeKHR::eFifo;
+    }(surfaceDetails.presentModes);
+
+    const auto extent = [](const auto& capabilities, auto actualExtent)
+    {
+        if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+        {
+            return capabilities.currentExtent;
+        }
+        else
+        {
+            actualExtent.width =
+                    std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+            actualExtent.height =
+                    std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+            return actualExtent;
+        }
+    }(surfaceDetails.capabilities, getFramebufferSize());
 
     auto imageCount = surfaceDetails.capabilities.minImageCount + 1;
 
-    if (surfaceDetails.capabilities.maxImageCount > 0 && imageCount > surfaceDetails.capabilities.maxImageCount)
+    if (surfaceDetails.capabilities.maxImageCount > 0 &&
+        imageCount > surfaceDetails.capabilities.maxImageCount)
+    {
         imageCount = surfaceDetails.capabilities.maxImageCount;
+    }
 
     vk::SwapchainCreateInfoKHR createInfo{
         .surface = surface_,
         .minImageCount = imageCount,
-        .imageFormat = surfaceFormat.format,
-        .imageColorSpace = surfaceFormat.colorSpace,
+        .imageFormat = swapChainImageFormat_.format,
+        .imageColorSpace = swapChainImageFormat_.colorSpace,
         .imageExtent = extent,
         .imageArrayLayers = 1,
         .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
-        .preTransform =surfaceDetails.capabilities.currentTransform,
+        .preTransform = surfaceDetails.capabilities.currentTransform,
         .compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
         .presentMode = presentMode,
         .clipped = true,
@@ -258,7 +295,6 @@ void Renderer::createSwapChain()
     swapChain_ = device_.createSwapchainKHR(createInfo);
 
     swapChainImages_ = device_.getSwapchainImagesKHR(swapChain_);
-    swapChainImageFormat_ = surfaceFormat.format;
     swapChainExtent_ = extent;
 }
 
@@ -268,67 +304,29 @@ void Renderer::createImageViews()
 
     for (const auto& image : swapChainImages_)
     {
-        swapChainImageViews_.push_back(new ImageView{this, swapChainImageFormat_, image});
+        swapChainImageViews_.push_back(new ImageView{this, swapChainImageFormat_.format, image});
     }
 }
 
-void Renderer::createRenderPass()
+void Renderer::createRenderTarget()
 {
-    vk::AttachmentDescription colorAttachment{
-        .format = swapChainImageFormat_,
-        .samples = vk::SampleCountFlagBits::e1,
-        .loadOp = vk::AttachmentLoadOp::eClear,
-        .storeOp = vk::AttachmentStoreOp::eStore,
-        .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-        .initialLayout = vk::ImageLayout::eUndefined,
-        .finalLayout = vk::ImageLayout::ePresentSrcKHR,
+    RenderTargetCreateInfo createInfo{
+        .renderer = this,
+        .imagesSize = swapChainExtent_,
+        .imagesFormat = swapChainImageFormat_.format,
+        .finalImagesLayout = vk::ImageLayout::ePresentSrcKHR,
+        .colorAttachments = swapChainImageViews_,
+        .dependencies = vk::SubpassDependency{
+            .srcSubpass = vk::SubpassExternal,
+            .dstSubpass = 0,
+            .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            .srcAccessMask = {},
+            .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite,
+        },
     };
 
-    vk::AttachmentReference colorAttachmentRef{
-        .attachment = 0,
-        .layout = vk::ImageLayout::eColorAttachmentOptimal,
-    };
-
-    vk::SubpassDescription subpass{
-        .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
-    };
-    subpass.setColorAttachments(colorAttachmentRef);
-
-    vk::SubpassDependency dependency{
-        .srcSubpass = vk::SubpassExternal,
-        .dstSubpass = 0,
-        .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        .srcAccessMask = {},
-        .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite,
-    };
-
-    vk::RenderPassCreateInfo createInfo{
-    };
-    createInfo.setAttachments(colorAttachment);
-    createInfo.setSubpasses(subpass);
-    createInfo.setDependencies(dependency);
-
-    renderPass_ = device_.createRenderPass(createInfo);
-}
-
-void Renderer::createFramebuffers()
-{
-    swapChainFramebuffers_.reserve(swapChainImageViews_.size());
-
-    for ( auto& imageView : swapChainImageViews_)
-    {
-        vk::FramebufferCreateInfo createInfo{
-            .renderPass = renderPass_,
-            .width = swapChainExtent_.width,
-            .height = swapChainExtent_.height,
-            .layers = 1,
-        };
-        createInfo.setAttachments(imageView->handle());
-
-        swapChainFramebuffers_.push_back(device_.createFramebuffer(createInfo));
-    }
+    renderTarget_ = new RenderTarget{createInfo};
 }
 
 void Renderer::createSyncObjects()
@@ -383,6 +381,7 @@ void Renderer::createDescriptorPool()
             + MaxFramesInFlight // Font sprite pipeline
             + MaxFramesInFlight // Debug triangle pipeline
             + MaxFramesInFlight // Debug line pipeline
+            + MaxFramesInFlight // !!! Maze OverviewMap pipeline
             ;
     constexpr auto SamplerDescriptorCount = 0
             + MaxFramesInFlight * MaxSpritePipelineTextures // Sprite pipeline
@@ -393,6 +392,7 @@ void Renderer::createDescriptorPool()
             + MaxFramesInFlight // Font sprite pipeline
             + MaxFramesInFlight // Debug triangle pipeline
             + MaxFramesInFlight // Debug line pipeline
+            + MaxFramesInFlight // !!! Maze OverviewMap pipeline
             ;
 
     std::array poolSizes{
@@ -435,7 +435,7 @@ Renderer::~Renderer()
         device_.destroySemaphore(imageAvailableSemaphores_[i]);
     }
 
-    device_.destroyRenderPass(renderPass_);
+    delete renderTarget_;
 
     destroySwapChain();
 
@@ -617,12 +617,6 @@ void Renderer::transitionImageLayout(Image* image, vk::ImageLayout srcLayout, vk
 
 void Renderer::destroySwapChain()
 {
-    for (const auto& framebuffer: swapChainFramebuffers_)
-    {
-        device_.destroyFramebuffer(framebuffer);
-    }
-    swapChainFramebuffers_.clear();
-
     for (auto& imageView : swapChainImageViews_)
     {
         delete imageView;
@@ -647,7 +641,8 @@ void Renderer::recreateSwapChain()
 
     createSwapChain();
     createImageViews();
-    createFramebuffers();
+
+    renderTarget_->recreateFramebuffers(swapChainExtent_, swapChainImageViews_);
 }
 
 // *********************************************************************************************************************
@@ -708,12 +703,11 @@ DeviceQueueFamilies Renderer::queryQueueFamilies(vk::PhysicalDevice device) cons
 
 DeviceSurfaceDetails Renderer::queryDeviceSurfaceDetails(vk::PhysicalDevice device) const
 {
-    DeviceSurfaceDetails details{
+    return {
         .capabilities = device.getSurfaceCapabilitiesKHR(surface_),
         .formats = device.getSurfaceFormatsKHR(surface_),
         .presentModes = device.getSurfacePresentModesKHR(surface_),
     };
-    return details;
 }
 
 bool Renderer::checkDeviceExtensionSupport(vk::PhysicalDevice device) const
@@ -749,45 +743,6 @@ vk::SampleCountFlagBits Renderer::maxUsableSampleCount(vk::PhysicalDevicePropert
         return vk::SampleCountFlagBits::e2;
 
     return vk::SampleCountFlagBits::e1;
-}
-vk::SurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) const
-{
-    for (const auto& format : availableFormats)
-    {
-        if (format.format == vk::Format::eB8G8R8A8Srgb && format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
-            return format;
-    }
-    return availableFormats[0];
-}
-
-vk::PresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) const
-{
-    // prefer mailbox over fifo when available
-    for (const auto& mode : availablePresentModes)
-    {
-        if (mode == vk::PresentModeKHR::eMailbox)
-            return mode;
-    }
-    return vk::PresentModeKHR::eFifo;
-}
-
-vk::Extent2D Renderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities) const
-{
-    if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-    {
-        return capabilities.currentExtent;
-    }
-    else
-    {
-        auto actualExtent = getFramebufferSize();
-
-        actualExtent.width =
-                std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-        actualExtent.height =
-                std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-
-        return actualExtent;
-    }
 }
 
 vk::Extent2D Renderer::getFramebufferSize() const

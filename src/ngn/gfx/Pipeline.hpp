@@ -10,6 +10,7 @@
 namespace ngn {
 
 class Renderer;
+class RenderTarget;
 
 class PipelineConfig
 {
@@ -19,6 +20,7 @@ public:
     Renderer* const renderer;
 
     vk::PipelineBindPoint bindPoint{vk::PipelineBindPoint::eGraphics};
+    RenderTarget* renderTarget{};
     BufferView vertexShaderCode{};
     BufferView geometryShaderCode{};
     BufferView fragmentShaderCode{};

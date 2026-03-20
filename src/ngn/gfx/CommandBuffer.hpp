@@ -10,6 +10,7 @@ namespace ngn {
 
 class Buffer;
 class Renderer;
+class RenderTarget;
 class Pipeline;
 
 class CommandBufferConfig
@@ -28,8 +29,11 @@ public:
 
     vk::CommandBuffer handle() const { return commandBuffer_; }
 
-    void begin(uint32_t imageIndex);
+    void begin();
     void end();
+
+    void beginRenderPass(ngn::RenderTarget* renderTarget, uint32_t imageIndex);
+    void endRenderPass();
 
     void bindPipeline(Pipeline* pipeline);
     void bindDescriptorSet(Pipeline* pipeline, vk::DescriptorSet descriptorSet);

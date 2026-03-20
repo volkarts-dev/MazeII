@@ -6,7 +6,6 @@
 #include "Macros.hpp"
 #include "Types.hpp"
 #include <vulkan/vulkan.hpp>
-#include <memory>
 
 namespace ngn {
 
@@ -16,6 +15,7 @@ class Renderer;
 class ImageLoader
 {
 public:
+    static ImageLoader createEmpty(Renderer* renderer, vk::Format format, uint32_t width, uint32_t height);
     static ImageLoader createFromBitmap(Renderer* renderer, uint32_t width, uint32_t height, const BufferView buffer);
     static ImageLoader loadFromBuffer(Renderer* renderer, const BufferView buffer);
 
@@ -24,12 +24,13 @@ public:
     NGN_DEFAULT_MOVE(ImageLoader)
 
 private:
-    ImageLoader();
+    ImageLoader(Renderer* renderer, vk::Format format, uint32_t width, uint32_t height);
 
     Renderer* renderer_;
-    std::unique_ptr<Buffer> buffer_;
+    vk::Format format_;
     uint32_t width_;
     uint32_t height_;
+    Buffer* buffer_{};
 
     NGN_DISABLE_COPY(ImageLoader)
 

@@ -4,6 +4,7 @@
 #include "Pipeline.hpp"
 
 #include "Renderer.hpp"
+#include "gfx/RenderTarget.hpp"
 
 namespace ngn {
 
@@ -184,7 +185,7 @@ Pipeline::Pipeline(const PipelineConfig& config) :
         .pColorBlendState = &colorBlendingCreateInfo,
         .pDynamicState = &dynamicStateCreateInfo,
         .layout = pipelineLayout_,
-        .renderPass = renderer_->renderPass(),
+        .renderPass = config.renderTarget->renderPass(),
         .subpass = 0,
         .basePipelineHandle = nullptr,
         .basePipelineIndex = -1,

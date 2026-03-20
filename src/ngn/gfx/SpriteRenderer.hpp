@@ -26,6 +26,9 @@ public:
     SpriteRenderer(Renderer* renderer, uint32_t batchSize);
     virtual ~SpriteRenderer();
 
+    SpritePipeline* pipeline() const { return spritePipeline_; }
+
+    ImageId reserveTextureSlot();
     ImageId addImages(std::span<const BufferView> images);
     ImageId addImages(std::span<const Image* const> images);
     ImageId setFontCollection(FontCollection* fontCollection);

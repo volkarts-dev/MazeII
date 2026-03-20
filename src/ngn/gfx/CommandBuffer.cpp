@@ -6,6 +6,7 @@
 #include "Buffer.hpp"
 #include "Renderer.hpp"
 #include "Pipeline.hpp"
+#include "gfx/RenderTarget.hpp"
 
 namespace ngn {
 
@@ -32,7 +33,7 @@ CommandBuffer::~CommandBuffer()
 {
 }
 
-void CommandBuffer::begin(uint32_t imageIndex)
+void CommandBuffer::begin()
 {
     commandBuffer_.reset();
 
@@ -40,15 +41,25 @@ void CommandBuffer::begin(uint32_t imageIndex)
     };
 
     commandBuffer_.begin(beginInfo);
+}
 
-    vk::ClearValue clearColor = {
-        .color = {{{0.0f, 0.0f, 0.0f, 1.0f}}},
+void CommandBuffer::end()
+{
+    commandBuffer_.end();
+}
+
+void CommandBuffer::beginRenderPass(RenderTarget* renderTarget, uint32_t imageIndex)
+{
+    const auto& cc = renderTarget->clearColor();
+
+    vk::ClearValue clearColor{
+        .color = {.float32 = std::array{cc.r, cc.g, cc.b, cc.a}},
     };
 
     vk::RenderPassBeginInfo renderPassBeginInfo{
-        .renderPass = renderer_->renderPass(),
-        .framebuffer = renderer_->swapChainFramebuffer(imageIndex),
-        .renderArea = {{0, 0}, renderer_->swapChainExtent()},
+        .renderPass = renderTarget->renderPass(),
+        .framebuffer = renderTarget->framebuffer(imageIndex),
+        .renderArea = {{0, 0}, renderTarget->framebuffersSize()},
 
     };
     renderPassBeginInfo.setClearValues(clearColor);
@@ -57,23 +68,22 @@ void CommandBuffer::begin(uint32_t imageIndex)
 
     vk::Viewport viewport{
         0.0f, 0.0f,
-        static_cast<float>(renderer_->swapChainExtent().width),
-        static_cast<float>(renderer_->swapChainExtent().height),
+        static_cast<float>(renderTarget->framebuffersSize().width),
+        static_cast<float>(renderTarget->framebuffersSize().height),
         0.0f, 1.0f,
     };
     commandBuffer_.setViewport(0, viewport);
 
     vk::Rect2D scissor{
         {0, 0},
-        renderer_->swapChainExtent(),
+        renderTarget->framebuffersSize(),
     };
     commandBuffer_.setScissor(0, scissor);
 }
 
-void CommandBuffer::end()
+void CommandBuffer::endRenderPass()
 {
     commandBuffer_.endRenderPass();
-    commandBuffer_.end();
 }
 
 void CommandBuffer::bindPipeline(Pipeline* pipeline)

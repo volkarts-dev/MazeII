@@ -67,6 +67,7 @@ public:
     virtual void onKeyEvent(InputAction action, int key, InputMods mods) { NGN_UNUSED(action); NGN_UNUSED(key); NGN_UNUSED(mods); }
     virtual void onUpdate(float deltaTime) { NGN_UNUSED(deltaTime); }
     virtual void onDraw(float deltaTime) { NGN_UNUSED(deltaTime); }
+    virtual void onCustomRenderPasses(CommandBuffer* commandBuffer) { NGN_UNUSED(commandBuffer); }
 };
 
 // *********************************************************************************************************************

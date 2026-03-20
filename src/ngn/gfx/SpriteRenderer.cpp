@@ -110,6 +110,18 @@ SpriteRenderer::~SpriteRenderer()
     delete spritePipeline_;
 }
 
+ImageId SpriteRenderer::reserveTextureSlot()
+{
+    textures_.push_back({
+        .image = nullptr,
+        .view = nullptr,
+        .sampler = nullptr,
+        .owning = false,
+    });
+
+    return static_cast<ImageId>(textures_.size() - 1);
+}
+
 ImageId SpriteRenderer::addImages(std::span<const BufferView> images)
 {
     const uint32_t startIndex = static_cast<uint32_t>(textures_.size());
@@ -267,7 +279,6 @@ void SpriteRenderer::draw(CommandBuffer* commandBuffer)
     commandBuffer->bindDescriptorSet(spritePipeline_->pipeline(), spritePipeline_->descriptorSet(frameIndex));
 
     auto& batch = batches_[frameIndex];
-
     commandBuffer->bindVertexBuffer(batch.buffer);
     commandBuffer->draw(batch.count);
 

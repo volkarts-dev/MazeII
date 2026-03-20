@@ -17,6 +17,7 @@ class CommandBuffer;
 class Image;
 class ImageView;
 class Pipeline;
+class RenderTarget;
 
 class DeviceQueueFamilies
 {
@@ -69,9 +70,8 @@ public:
     const vk::PhysicalDeviceProperties& physicalDeviceProperties() const { return physicalDeviceProperties_; }
     const vk::Device& device() const { return device_; }
     const vk::Extent2D& swapChainExtent() const { return swapChainExtent_; }
-    const vk::RenderPass& renderPass() const { return renderPass_; }
+    RenderTarget* renderTarget() const { return renderTarget_; }
     const vk::CommandPool& commandPool() const { return commandPool_; }
-    const vk::Framebuffer& swapChainFramebuffer(uint32_t imageIndex) const { return swapChainFramebuffers_[imageIndex]; }
     void triggerFramebufferResized() { framebufferResized_ = true; }
     uint32_t currentFrame() const { return currentFrame_; }
     CommandBuffer* currentCommandBuffer() { return commandBuffers_[currentFrame_]; }
@@ -94,8 +94,7 @@ private:
     void createLogicalDevice();
     void createSwapChain();
     void createImageViews();
-    void createRenderPass();
-    void createFramebuffers();
+    void createRenderTarget();
     void createSyncObjects();
     void createCommandPools();
     void createCommandBuffers();
@@ -109,9 +108,6 @@ private:
     DeviceSurfaceDetails queryDeviceSurfaceDetails(vk::PhysicalDevice device) const;
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device) const;
     vk::SampleCountFlagBits maxUsableSampleCount(vk::PhysicalDeviceProperties properties) const;
-    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) const;
-    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) const;
-    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities) const;
     vk::Extent2D getFramebufferSize() const;
 
     vk::CommandBuffer beginImmediateCommands();
@@ -133,11 +129,10 @@ private:
     vk::Queue transferQueue_;
     vk::SwapchainKHR swapChain_;
     std::vector<vk::Image> swapChainImages_;
-    vk::Format swapChainImageFormat_;
+    vk::SurfaceFormatKHR swapChainImageFormat_;
     vk::Extent2D swapChainExtent_;
     std::vector<ImageView*> swapChainImageViews_;
-    vk::RenderPass renderPass_;
-    std::vector<vk::Framebuffer> swapChainFramebuffers_;
+    RenderTarget* renderTarget_;
     std::array<vk::Semaphore, MaxFramesInFlight> imageAvailableSemaphores_;
     std::array<vk::Semaphore, MaxFramesInFlight> renderFinishedSemaphores_;
     std::array<vk::Fence, MaxFramesInFlight> inFlightFences_;

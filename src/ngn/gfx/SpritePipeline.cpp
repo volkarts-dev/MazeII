@@ -16,6 +16,8 @@ SpritePipeline::SpritePipeline(Renderer* renderer) :
 {
     PipelineConfig config{renderer_};
 
+    config.renderTarget = renderer_->renderTarget();
+
     config.topology = vk::PrimitiveTopology::ePointList;
 
     config.vertexShaderCode = assets::shader_Sprite_vert_spv();

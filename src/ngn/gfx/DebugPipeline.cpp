@@ -15,6 +15,8 @@ DebugPipeline::DebugPipeline(Renderer* renderer, Mode mode) :
 {
     PipelineConfig config{renderer_};
 
+    config.renderTarget = renderer_->renderTarget();
+
     switch (mode)
     {
         using enum Mode;

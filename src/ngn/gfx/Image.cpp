@@ -9,12 +9,14 @@
 
 namespace ngn {
 
+ImageLoader ImageLoader::createEmpty(Renderer* renderer, vk::Format format, uint32_t width, uint32_t height)
+{
+    return ImageLoader{renderer, format, width, height};
+}
+
 ImageLoader ImageLoader::createFromBitmap(Renderer* renderer, uint32_t width, uint32_t height, const BufferView buffer)
 {
-    ImageLoader loader;
-    loader.renderer_ = renderer;
-    loader.width_ = width;
-    loader.height_ = height;
+    auto loader = createEmpty(renderer, vk::Format::eR8G8B8A8Srgb, width, height);
 
     const vk::DeviceSize imageSize = loader.width_ * loader.height_ * 4;
     if (imageSize != buffer.size())
@@ -22,7 +24,7 @@ ImageLoader ImageLoader::createFromBitmap(Renderer* renderer, uint32_t width, ui
 
     BufferConfig config{renderer, vk::BufferUsageFlagBits::eTransferSrc, imageSize};
     config.hostVisible = true;
-    loader.buffer_ = std::make_unique<Buffer>(config);
+    loader.buffer_ = new Buffer{config};
 
     auto range = loader.buffer_->map();
     std::memcpy(range.data(), buffer.data(), imageSize);
@@ -59,20 +61,29 @@ ImageLoader ImageLoader::loadFromBuffer(Renderer* renderer, const BufferView buf
     return loader;
 }
 
-ImageLoader::ImageLoader()
+ImageLoader::ImageLoader(Renderer* renderer, vk::Format format, uint32_t width, uint32_t height) :
+    renderer_{renderer},
+    format_{format},
+    width_{width},
+    height_{height}
 {
 }
 
 ImageLoader::~ImageLoader()
 {
+    delete buffer_;
 }
 
 // *********************************************************************************************************************
 
 Image::Image(const ImageLoader& loader) :
     renderer_{loader.renderer_},
-    format_{vk::Format::eR8G8B8A8Srgb}
+    format_{loader.format_}
 {
+    vk::ImageUsageFlags imageUsage = loader.buffer_ ?
+                vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled :
+                vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled;
+
     vk::ImageCreateInfo createInfo{
         .imageType = vk::ImageType::e2D,
         .format = format_,
@@ -85,10 +96,11 @@ Image::Image(const ImageLoader& loader) :
         .arrayLayers = 1,
         .samples = vk::SampleCountFlagBits::e1,
         .tiling = vk::ImageTiling::eOptimal,
-        .usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+        .usage = imageUsage,
         .sharingMode = vk::SharingMode::eExclusive,
         .initialLayout = vk::ImageLayout::eUndefined,
     };
+    // FIXME vk::ImageUsageFlagBits::eTransferDst is not needed when we have no data
 
     image_ = renderer_->device().createImage(createInfo);
 
@@ -105,9 +117,12 @@ Image::Image(const ImageLoader& loader) :
 
     renderer_->device().bindImageMemory(image_, memory_, 0);
 
-    renderer_->transitionImageLayout(this, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-    renderer_->copyBuffer(loader.buffer_.get(), this, {}, {loader.width_, loader.height_});
-    renderer_->transitionImageLayout(this, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+    if (loader.buffer_)
+    {
+        renderer_->transitionImageLayout(this, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+        renderer_->copyBuffer(loader.buffer_, this, {}, {loader.width_, loader.height_});
+        renderer_->transitionImageLayout(this, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+    }
 }
 
 Image::~Image()

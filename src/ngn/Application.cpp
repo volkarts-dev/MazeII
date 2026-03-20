@@ -298,7 +298,11 @@ void Application::draw(float deltaTime)
 
     auto* commandBuffer = renderer_->currentCommandBuffer();
 
-    commandBuffer->begin(imageIndex);
+    commandBuffer->begin();
+
+    stage_->onCustomRenderPasses(commandBuffer);
+
+    commandBuffer->beginRenderPass(renderer_->renderTarget(), imageIndex);
 
     if (spriteRenderer_)
         spriteRenderer_->draw(commandBuffer);
@@ -310,6 +314,9 @@ void Application::draw(float deltaTime)
     if (debugRenderer_)
         debugRenderer_->draw(commandBuffer);
 #endif
+
+    commandBuffer->endRenderPass();
+
     commandBuffer->end();
 
     renderer_->submit(commandBuffer);
