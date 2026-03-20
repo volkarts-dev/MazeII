@@ -9,6 +9,9 @@
 #include "MazeDelegate.hpp"
 #include "Player.hpp"
 #include "Shots.hpp"
+#include "gfx/CommandBuffer.hpp"
+#include "gfx/Image.hpp"
+#include "gfx/OverviewMap.hpp"
 #include "gfx/UiRenderer.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
@@ -29,6 +32,7 @@ GameStage::GameStage(MazeDelegate* delegate) :
     enemies_{},
     shots_{},
     explosions_{},
+    overviewMap_{},
     halfViewSize_{},
     playerViewBounds_{},
     level_{1},
@@ -50,9 +54,15 @@ void GameStage::onActivate()
         .gravity{},
     });
 
+    // ****************************************************
+
     board_ = new Board{app_};
 
+    // ****************************************************
+
     player_ = new Player{this, 6, 0.0f};
+
+    // ****************************************************
 
     enemies_ = new Enemies{this};
     allEnemiesDownConn_ = enemies_->addAllEnemiesDownListener<&GameStage::handleAllEnemiesDown>(this);
@@ -85,9 +95,34 @@ void GameStage::onActivate()
     enemies_->createEnemy(112, ngn::math::PI);
     enemies_->createEnemy(92, ngn::math::PI);
 
+    // ****************************************************
+
     shots_ = new Shots{this};
 
+    // ****************************************************
+
     explosions_ = new Explosions{this};
+
+    // ****************************************************
+
+    overviewMap_ = new OverviewMap{this, glm::u32vec2{100, 100}, 16};
+
+    overviewMapTexture_ = app_->uiRenderer()->reserveTextureSlot();
+
+    overviewMapSampler_ =
+            new ngn::Sampler{app_->renderer(), vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, true};
+
+    for (uint32_t f = 0; f < ngn::MaxFramesInFlight; f++)
+    {
+        vk::DescriptorImageInfo imageInfo{
+            .sampler = overviewMapSampler_->handle(),
+            .imageView = overviewMap_->mapImageView(f)->handle(),
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        };
+        app_->uiRenderer()->pipeline()->updateDescriptorSet(imageInfo, f, 1, static_cast<uint32_t>(overviewMapTexture_));
+    }
+
+    // ****************************************************
 
     pause_ = Pause::On;
     state_ = State::Active;
@@ -95,6 +130,9 @@ void GameStage::onActivate()
 
 void GameStage::onDeactivate()
 {
+    delete overviewMapSampler_;
+    delete overviewMap_;
+
     delete explosions_;
 
     delete shots_;
@@ -225,9 +263,22 @@ void GameStage::onDraw(float deltaTime)
 
     // ****************************************************
 
+    overviewMap_->renderPoints();
+
+    // ****************************************************
+
     const auto pauseInfo = pause() ? " - Pause (P or Space to start)"sv : ""sv;
     const auto levelInfo = fmt::format("Maze ][ - Lvl:{}{}", level_, pauseInfo);
     app_->uiRenderer()->renderText(ngn::FontId{0}, levelInfo, 10, 25);
+
+    app_->uiRenderer()->renderSprite({
+        .position = glm::vec2{1024 - 60, 60},
+        .rotation = 0.0f,
+        .scale = glm::vec2{100, 100},
+        .color = {1.0f, 1.0f, 1.0f, 1.0f},
+        .texCoords = glm::vec4{0, 0, 100, 100},
+        .texIndex = static_cast<uint32_t>(overviewMapTexture_),
+    });
 
     // ****************************************************
 
@@ -240,6 +291,15 @@ void GameStage::onDraw(float deltaTime)
     if (debugShowAIStates_)
         board_->debugDrawState(app_->debugRenderer());
 #endif
+}
+
+void GameStage::onCustomRenderPasses(ngn::CommandBuffer* commandBuffer)
+{
+    commandBuffer->beginRenderPass(overviewMap_->renderTarget(), app_->renderer()->currentFrame());
+
+    overviewMap_->draw(commandBuffer);
+
+    commandBuffer->endRenderPass();
 }
 
 const Resources& GameStage::resources() const

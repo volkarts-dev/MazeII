@@ -89,6 +89,11 @@ Board::~Board()
     delete navigationGraph_;
 }
 
+glm::vec2 Board::dimension() const
+{
+    return Offset * 2.0f + glm::vec2{1} * static_cast<float>(BlockSize * (MazeSize * 2 + 1));
+}
+
 void Board::createWalls()
 {
     auto* world = app_->world();

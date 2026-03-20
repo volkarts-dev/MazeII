@@ -24,6 +24,7 @@ public:
     Board(ngn::Application* app);
     ~Board();
 
+    glm::vec2 dimension() const;
     ngn::NavigationGraph* navigationGraph() const { return navigationGraph_; }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)

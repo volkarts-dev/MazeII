@@ -1,4 +1,6 @@
 add_executable(maze
+    gfx/OverviewMap.hpp gfx/OverviewMap.cpp
+
     Board.hpp Board.cpp
     Enemies.hpp Enemies.cpp
     Explosions.hpp Explosions.cpp
@@ -11,6 +13,20 @@ add_executable(maze
     Pch.hpp
     Player.hpp Player.cpp
     Shots.hpp Shots.cpp
+)
+
+set(VULKAN_SHADER_SOURCES
+    assets/shader/OverviewMap.frag
+    assets/shader/OverviewMap.vert
+)
+
+target_sources(maze PRIVATE
+    ${VULKAN_SHADER_SOURCES}
+)
+
+compile_shader_files(
+    VAR COMPILED_SHADER_FILES
+    SHADER_FILES ${VULKAN_SHADER_SOURCES}
 )
 
 target_include_directories(maze PRIVATE . ${CMAKE_CURRENT_BINARY_DIR})
@@ -28,6 +44,7 @@ target_assets(maze
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
         "${CMAKE_CURRENT_BINARY_DIR}/assets"
     ASSET_FILES
+        ${COMPILED_SHADER_FILES}
         assets/boost.ogg
         assets/enemy-shoot.ogg
         assets/explosion_one.ogg

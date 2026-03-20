@@ -3,17 +3,22 @@
 
 #pragma once
 
-#include "Timer.hpp"
+#include "Application.hpp"
 #include "gfx/GfxComponents.hpp"
+#include "gfx/GfxIds.hpp"
 #include "phys/Shapes.hpp"
 #include "phys/World.hpp"
-#include "Application.hpp"
+
+namespace ngn {
+class Sampler;
+} // namespace ngn
 
 class Enemies;
 class Explosions;
 class KeyboardHandler;
 class Board;
 class MazeDelegate;
+class OverviewMap;
 class Player;
 class Resources;
 class Shots;
@@ -64,6 +69,7 @@ public:
 
     void onUpdate(float deltaTime) override;
     void onDraw(float deltaTime) override;
+    void onCustomRenderPasses(ngn::CommandBuffer* commandBuffer) override;
 
     const Resources& resources() const;
 
@@ -93,11 +99,15 @@ private:
     MazeDelegate* delegate_;
     ngn::Application* app_;
     entt::registry* registry_;
+
     Board* board_;
     Player* player_;
     Enemies* enemies_;
     Shots* shots_;
     Explosions* explosions_;
+    OverviewMap* overviewMap_;
+    ngn::ImageId overviewMapTexture_;
+    ngn::Sampler* overviewMapSampler_;
 
     entt::connection allEnemiesDownConn_;
     glm::vec2 halfViewSize_;
