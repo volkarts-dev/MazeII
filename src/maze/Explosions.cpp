@@ -50,7 +50,6 @@ void Explosions::doExplosion(const glm::vec2& position, Type type)
             .texture = 1,
         });
 
-        // TODO support different sprites for different types
         ngn::SpriteAnimationBuilder animationBuilder{};
         animationBuilder
             .addFrame(glm::vec4{0, 137, 9, 146}, 1, 0.1f)
@@ -93,6 +92,4 @@ void Explosions::doExplosion(const glm::vec2& position, Type type)
 void Explosions::update(float deltaTime)
 {
     NGN_UNUSED(deltaTime);
-
-    // TODO handle animation end
 }

@@ -69,7 +69,10 @@ void Player::update(float deltaTime)
 {
     laserReloadTimer_.update(deltaTime);
 
-    handleInput(deltaTime);
+    if (gameStage_->state() == GameStage::State::Active)
+    {
+        handleInput(deltaTime);
+    }
 
     if (boosterActive_)
     {
@@ -117,14 +120,11 @@ void Player::handleInputEvents(ngn::InputAction action, int key, ngn::InputMods 
 {
     NGN_UNUSED(mods);
 
-    if (gameStage_->state() == GameStage::State::Active)
+    if (action == ngn::InputAction::Press)
     {
-        if (action == ngn::InputAction::Press)
+        if (key == GLFW_KEY_SPACE)
         {
-            if (key == GLFW_KEY_SPACE)
-            {
-                laserReloadTimer_.restart(true);
-            }
+            laserReloadTimer_.restart(true);
         }
     }
 }
@@ -133,49 +133,46 @@ void Player::handleInput(float deltaTime)
 {
     NGN_UNUSED(deltaTime);
 
-    if (gameStage_->state() == GameStage::State::Active)
+    bool boosterActive = false;
+
+    auto* app = gameStage_->app();
+
+    if (app->isKeyDown(GLFW_KEY_LEFT))
     {
-        bool boosterActive = false;
-
-        auto* app = gameStage_->app();
-
-        if (app->isKeyDown(GLFW_KEY_LEFT))
-        {
-            auto& force = registry_->get<ngn::AngularForce>(entity_).value;
-            force += 20.0f;
-        }
-        if (app->isKeyDown(GLFW_KEY_RIGHT))
-        {
-            auto& force = registry_->get<ngn::AngularForce>(entity_).value;
-            force -= 20.0f;
-        }
-        if (app->isKeyDown(GLFW_KEY_UP))
-        {
-            boosterActive = app->isKeyDown(GLFW_KEY_Q);
-            const auto factor = boosterActive ? 11000.0f : 5000.0f;
-            auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(entity_);
-            force.value += rot.dir * factor;
-        }
-        if (app->isKeyDown(GLFW_KEY_DOWN))
-        {
-            auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(entity_);
-            force.value -= rot.dir * 2000.0f;
-        }
-
-        // ****************************************************
-
-        if (app->isKeyDown(GLFW_KEY_SPACE))
-        {
-            if (laserReloadTimer_.isElapsed(0.5f).first)
-            {
-                auto [pos, rot] = registry_->get<const ngn::Position, const ngn::Rotation>(entity_);
-                const auto start = pos.value + rot.dir * 20.0f;
-                gameStage_->shots()->fireLaser(start, rot.angle, true);
-            }
-        }
-
-        handleBoosterAction(boosterActive);
+        auto& force = registry_->get<ngn::AngularForce>(entity_).value;
+        force += 20.0f;
     }
+    if (app->isKeyDown(GLFW_KEY_RIGHT))
+    {
+        auto& force = registry_->get<ngn::AngularForce>(entity_).value;
+        force -= 20.0f;
+    }
+    if (app->isKeyDown(GLFW_KEY_UP))
+    {
+        boosterActive = app->isKeyDown(GLFW_KEY_Q);
+        const auto factor = boosterActive ? 11000.0f : 5000.0f;
+        auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(entity_);
+        force.value += rot.dir * factor;
+    }
+    if (app->isKeyDown(GLFW_KEY_DOWN))
+    {
+        auto [force, rot] = registry_->get<ngn::LinearForce, const ngn::Rotation>(entity_);
+        force.value -= rot.dir * 2000.0f;
+    }
+
+    // ****************************************************
+
+    if (app->isKeyDown(GLFW_KEY_SPACE))
+    {
+        if (laserReloadTimer_.isElapsed(0.5f).first)
+        {
+            auto [pos, rot] = registry_->get<const ngn::Position, const ngn::Rotation>(entity_);
+            const auto start = pos.value + rot.dir * 20.0f;
+            gameStage_->shots()->fireLaser(start, rot.angle, true);
+        }
+    }
+
+    handleBoosterAction(boosterActive);
 }
 
 void Player::handleBoosterAction(bool shouldBeActive)

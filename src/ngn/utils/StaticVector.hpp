@@ -98,6 +98,14 @@ public:
         std::destroy_at(data_ + size_);
     }
 
+    void clear()
+    {
+        while (!empty())
+        {
+            pop_back();
+        }
+    }
+
 private:
     T data_[Capacity];
     SizeT size_{};

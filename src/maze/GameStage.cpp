@@ -10,6 +10,7 @@
 #include "Player.hpp"
 #include "Shots.hpp"
 #include "gfx/CommandBuffer.hpp"
+#include "gfx/Dialog.hpp"
 #include "gfx/Image.hpp"
 #include "gfx/OverviewMap.hpp"
 #include "gfx/UiRenderer.hpp"
@@ -17,6 +18,7 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "phys/World.hpp"
+#include <entt/entt.hpp>
 #include <GLFW/glfw3.h>
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
@@ -27,6 +29,7 @@ GameStage::GameStage(MazeDelegate* delegate) :
     delegate_{delegate},
     app_{delegate_->app()},
     registry_{app_->registry()},
+    dialog_{},
     board_{},
     player_{},
     enemies_{},
@@ -36,7 +39,6 @@ GameStage::GameStage(MazeDelegate* delegate) :
     halfViewSize_{},
     playerViewBounds_{},
     level_{1},
-    pause_{},
     state_{},
     zoom_{1.0f}
 {
@@ -53,6 +55,10 @@ void GameStage::onActivate()
         .angularDamping = 1.0f,
         .gravity{},
     });
+
+    // ****************************************************
+
+    dialog_ = new Dialog{this};
 
     // ****************************************************
 
@@ -107,30 +113,35 @@ void GameStage::onActivate()
 
     overviewMap_ = new OverviewMap{this, glm::u32vec2{100, 100}, 16};
 
-    overviewMapTexture_ = app_->uiRenderer()->reserveTextureSlot();
-
-    overviewMapSampler_ =
-            new ngn::Sampler{app_->renderer(), vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, true};
+    overviewMapTexture_ = app_->uiRenderer()->reserveTexture();
 
     for (uint32_t f = 0; f < ngn::MaxFramesInFlight; f++)
     {
-        vk::DescriptorImageInfo imageInfo{
-            .sampler = overviewMapSampler_->handle(),
-            .imageView = overviewMap_->mapImageView(f)->handle(),
-            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-        };
-        app_->uiRenderer()->pipeline()->updateDescriptorSet(imageInfo, f, 1, static_cast<uint32_t>(overviewMapTexture_));
+        app_->uiRenderer()->updateSamplerDescriptor(overviewMapTexture_, f, overviewMap_->mapImageView(f));
     }
 
     // ****************************************************
 
-    pause_ = Pause::On;
     state_ = State::Active;
+
+    // ****************************************************
+
+#if !defined(NGN_ENABLE_INSTRUMENTATION)
+    DialogData data{
+        .size = {256, 256},
+        .title = "Welcome",
+        .text = "Welcome to Maze ][",
+        .button1 = "Start",
+        .button2 = "Quit",
+        .defaultButton = DialogButton::One,
+    };
+    data.button2Callback.connect<&GameStage::triggerNormalQuit>(this);
+    dialog_->show(data);
+#endif
 }
 
 void GameStage::onDeactivate()
 {
-    delete overviewMapSampler_;
     delete overviewMap_;
 
     delete explosions_;
@@ -143,6 +154,8 @@ void GameStage::onDeactivate()
     delete player_;
 
     delete board_;
+
+    delete dialog_;
 }
 
 void GameStage::onWindowResize(const glm::vec2& windowSize)
@@ -154,16 +167,18 @@ void GameStage::onWindowResize(const glm::vec2& windowSize)
 
 void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods)
 {
-    player_->handleInputEvents(action, key, mods);
+#if !defined(NGN_ENABLE_INSTRUMENTATION)
+    if (dialog_->handleInputEvents(action, key, mods))
+        return;
+
+    if (state_ == GameStage::State::Active)
+    {
+        player_->handleInputEvents(action, key, mods);
+    }
 
     if (action == ngn::InputAction::Press)
     {
-        if (key == GLFW_KEY_ESCAPE)
-        {
-            app_->quit();
-            return;
-        }
-        else if (mods == ngn::InputMods::Ctrl && key == GLFW_KEY_PAGE_UP)
+        if (mods == ngn::InputMods::Ctrl && key == GLFW_KEY_PAGE_UP)
         {
             zoom_ = glm::min(zoom_ + 0.5f, 5.0f);
             updateProjections();
@@ -178,20 +193,40 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
             zoom_ = 1.0f;
             updateProjections();
         }
-
-#if !defined(NGN_ENABLE_INSTRUMENTATION)
-        if (!pause() && key == GLFW_KEY_P)
+        else if (key == GLFW_KEY_F1)
         {
-            cyclePause();
+            DialogData data{
+                .size = {256, 256},
+                .title = "Help",
+                .text = "Key Bindings:\n[Arrows]: Move\n[Space]: Fire\nP: Pause\nF1: Help",
+                .button1 = "OK",
+                .defaultButton = DialogButton::One,
+            };
+            dialog_->show(data);
+            return;
         }
-#endif
-    }
-    else if (action == ngn::InputAction::Release)
-    {
-#if !defined(NGN_ENABLE_INSTRUMENTATION)
-        if (pause() && (key == GLFW_KEY_P || key == GLFW_KEY_SPACE))
+        else if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_P)
         {
-            cyclePause();
+            DialogData data{
+                .size = {256, 256},
+                .title = "Pause",
+                .text = "",
+                .button1 = "Resume",
+                .button2 = "Quit",
+                .defaultButton = DialogButton::One,
+            };
+            data.button2Callback.connect<&GameStage::triggerNormalQuit>(this);
+            dialog_->show(data);
+            return;
+        }
+
+        if (mods == ngn::InputMods::Ctrl && key == GLFW_KEY_K)
+        {
+            auto view = registry_->view<EnemyTag, ngn::ActiveTag>();
+            for (const auto e : view)
+            {
+                killEnemy(e);
+            }
         }
 #endif
     }
@@ -217,23 +252,50 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
 
 void GameStage::onUpdate(float deltaTime)
 {
-    if (pause())
+    if (dialog_->isFinished())
+    {
+        // callbacks already fired
+        dialog_->reset();
+    }
+    else if (dialog_->isActive())
+    {
+        dialog_->update(deltaTime);
         return;
+    }
 
-    if (state_ == State::Inactive)
+    if (state_ == State::LevelEnded)
     {
         if (explosions_->allDone())
-            resetGame();
+        {
+            DialogData data{
+                .size = {256, 256},
+            };
+            if (newLevel_ == 1)
+            {
+                data.title = "Game over";
+                data.text = "Ready to restart";
+                data.button1 = "Restart";
+                data.button2 = "Quit";
+                data.defaultButton = DialogButton::One;
+            }
+            else
+            {
+                data.title = "Excellent";
+                data.text = "Reached next level";
+                data.button1 = "Continue";
+                data.button2 = "Quit";
+                data.defaultButton = DialogButton::One;
+            }
+            data.button1Callback.connect<&GameStage::resetGame>(this);
+            data.button2Callback.connect<&GameStage::triggerNormalQuit>(this);
+            dialog_->show(data);
+        }
+        return;
     }
-    // ****************************************************
 
     player_->update(deltaTime);
 
-    // ****************************************************
-
     enemies_->update(deltaTime);
-
-    // ****************************************************
 
     shots_->update(deltaTime);
 }
@@ -267,9 +329,8 @@ void GameStage::onDraw(float deltaTime)
 
     // ****************************************************
 
-    const auto pauseInfo = pause() ? " - Pause (P or Space to start)"sv : ""sv;
-    const auto levelInfo = fmt::format("Maze ][ - Lvl:{}{}", level_, pauseInfo);
-    app_->uiRenderer()->renderText(ngn::FontId{0}, levelInfo, 10, 25);
+    const auto levelInfo = fmt::format("Maze ][ - Lvl:{}", level_);
+    app_->uiRenderer()->renderText(ngn::FontId{0}, levelInfo, {10, 25});
 
     app_->uiRenderer()->renderSprite({
         .position = glm::vec2{1024 - 60, 60},
@@ -291,6 +352,10 @@ void GameStage::onDraw(float deltaTime)
     if (debugShowAIStates_)
         board_->debugDrawState(app_->debugRenderer());
 #endif
+
+    // ****************************************************
+
+    dialog_->draw();
 }
 
 void GameStage::onCustomRenderPasses(ngn::CommandBuffer* commandBuffer)
@@ -322,27 +387,9 @@ bool GameStage::testInSight(const glm::vec2& pos)
         (pos.x <= playerViewBounds_.z) & (pos.y <= playerViewBounds_.w);
 }
 
-void GameStage::killEnemy(entt::entity enemy)
+void GameStage::triggerNormalQuit()
 {
-    enemies_->killEnemy(enemy);
-}
-
-void GameStage::killPlayer()
-{
-    player_->kill();
-
-    newLevel_ = 1;
-    state_ = State::Inactive;
-}
-
-void GameStage::cyclePause()
-{
-    switch (pause_)
-    {
-        case Pause::Off:  pause_ = Pause::Init; break;
-        case Pause::Init: pause_ = Pause::On; break;
-        case Pause::On:   pause_ = Pause::Off; break;
-    }
+    app_->quit(0);
 }
 
 void GameStage::updateProjections()
@@ -382,10 +429,23 @@ void GameStage::updateProjections()
     }
 }
 
+void GameStage::killEnemy(entt::entity enemy)
+{
+    enemies_->killEnemy(enemy);
+}
+
+void GameStage::killPlayer()
+{
+    player_->kill();
+
+    newLevel_ = 1;
+    state_ = State::LevelEnded;
+}
+
 void GameStage::handleAllEnemiesDown()
 {
     newLevel_ = level_ + 1;
-    state_ = State::Inactive;
+    state_ = State::LevelEnded;
 }
 
 void GameStage::resetGame()
@@ -394,6 +454,5 @@ void GameStage::resetGame()
     enemies_->reset();
     shots_->reset();
     level_ = newLevel_;
-    pause_ = Pause::On;
     state_ = State::Active;
 }

@@ -1,4 +1,5 @@
 add_executable(maze
+    gfx/Dialog.hpp gfx/Dialog.cpp
     gfx/OverviewMap.hpp gfx/OverviewMap.cpp
 
     Board.hpp Board.cpp
