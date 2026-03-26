@@ -79,8 +79,16 @@ void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
     rot.angle = rotation;
     rot.update();
 
-    // TODO Make enemies shots speed dependend of level
-    vel.value = rot.dir * (player ? 400.0f : 40.0f);
+    if (player)
+    {
+        const auto dyn = static_cast<float>(gameStage_->level() - 1) * 2.0f;
+        vel.value = rot.dir * (400.0f + dyn);
+    }
+    else
+    {
+        const auto dyn = static_cast<float>(gameStage_->level() - 1) * 4.0f;
+        vel.value = rot.dir * (80.0f + dyn);
+    }
 
     spr.texCoords = player ? glm::vec4{84, 0, 87, 11} : glm::vec4{84, 12, 87, 23};
 

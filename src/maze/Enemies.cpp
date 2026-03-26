@@ -47,17 +47,6 @@ inline void steeringSeek(ngn::LinearForce& linForce, ngn::AngularForce& angForce
     angForce.value += ngn::computeAngularForce(rot.angle, ngn::math::atan2(dir.x, dir.y), maxAngForce);
 }
 
-inline void steeringFlee(ngn::LinearForce& linForce, ngn::AngularForce& angForce,
-                         const ngn::Position& pos, const ngn::Rotation& rot,
-                         const glm::vec2& target, float maxLinForce, float maxAngForce)
-{
-    linForce.value += rot.dir * maxLinForce;
-
-    const auto dir = pos.value - target;
-    angForce.value += ngn::computeAngularForce(rot.angle, ngn::math::atan2(dir.x, dir.y), maxAngForce);
-}
-
-
 } // namespace
 
 Enemies::Enemies(GameStage* gameStage) :
@@ -247,7 +236,6 @@ void Enemies::update(float deltaTime)
                     }
                     else if (testOrientation(pos.value, rot.angle, sightDirTarget))
                     {
-                        // TODO Use a propability based on current level to deside to shot or not
                         const auto start = pos.value + rot.dir * 20.0f;
                         gameStage_->shots()->fireLaser(start, rot.angle, false);
                         info.state = State::Evasion;
@@ -277,7 +265,18 @@ void Enemies::update(float deltaTime)
             {
                 if (et.elapsedTime() > 5.0f && targetInSight)
                 {
-                    info.state = State::Persuit;
+                    std::uniform_real_distribution<float> distrib(0.0f, 1.0f);
+                    const auto prop = distrib(randGenerator_);
+
+                    if (prop < (0.1f + static_cast<float>(gameStage_->level() - 1) * 0.05f))
+                    {
+                        info.state = State::Persuit;
+                    }
+                    else
+                    {
+                        et.restart();
+                    }
+
                     break;
                 }
 
@@ -386,6 +385,7 @@ bool Enemies::testInSight(const glm::vec2& origin, const glm::vec2& target)
 
 bool Enemies::testOrientation(const glm::vec2& origin, float dir, const glm::vec2& target)
 {
+    // TODO Fix false positives in opposite direction
     const auto ot = target - origin;
     const auto dirToTarget = ngn::math::atan2(ot.x, ot.y);
     return ngn::math::angleDiff(dir, dirToTarget) < ngn::math::TwoPI * 0.017f;
@@ -401,9 +401,10 @@ Enemies::FindObstacleResult Enemies::findObstacle(entt::entity self, const glm::
     const ngn::Capsule way = {.start = origin, .end = target, .radius = halfWidth};
     const auto lineAABB = ngn::calculateAABB(way);
 
-    FindObstacleResult result;
+    FindObstacleResult result{};
     float closestDist2 = std::numeric_limits<float>::max();
-    ngn::Collision closestCollision;
+    ngn::Collision closestCollision{};
+    entt::entity closestEntity{};
 
     constexpr auto ObstaclesLayers = LayerNavHelpers | LayerOpponents | LayerShots;
 
@@ -423,6 +424,7 @@ Enemies::FindObstacleResult Enemies::findObstacle(entt::entity self, const glm::
             result.found = true;
             closestDist2 = dist2;
             closestCollision = collision;
+            closestEntity = node.entity;
         }
 
         return true;
@@ -433,17 +435,34 @@ Enemies::FindObstacleResult Enemies::findObstacle(entt::entity self, const glm::
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
         registry_->get<EnemyDebugState>(self).closestCollision = closestCollision;
 #endif
+        const auto dynamic = registry_->all_of<const ngn::Body, const ngn::LinearVelocity>(closestEntity);
 
         const auto ot = target - origin;
         const auto op = closestCollision.point - origin;
         const auto t = glm::dot(ot, op) / glm::length2(ot);
         const auto p = origin + ot * t;
-        auto pp = closestCollision.point - p;
-        if (ngn::math::nearZero(pp))
+        glm::vec2 pp{};
+        if (dynamic)
+        {
+            // always evade to the same direction when the obstacle is also able to avoid
             pp = glm::vec2{ot.y, -ot.x};
+        }
+        else
+        {
+            // otherwise evade away from obstacle
+            pp = closestCollision.point - p;
+            if (glm::length2(pp) < 25.0f)
+                pp = glm::vec2{ot.y, -ot.x};
+        }
         result.dir = glm::normalize(pp);
         result.depth = closestCollision.penetration;
     }
+#if defined(NGN_ENABLE_VISUAL_DEBUGGING)
+    else
+    {
+        registry_->get<EnemyDebugState>(self).closestCollision = {};
+    }
+#endif
 
     return result;
 }
