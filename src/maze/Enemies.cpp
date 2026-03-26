@@ -385,7 +385,6 @@ bool Enemies::testInSight(const glm::vec2& origin, const glm::vec2& target)
 
 bool Enemies::testOrientation(const glm::vec2& origin, float dir, const glm::vec2& target)
 {
-    // TODO Fix false positives in opposite direction
     const auto ot = target - origin;
     const auto dirToTarget = ngn::math::atan2(ot.x, ot.y);
     return ngn::math::angleDiff(dir, dirToTarget) < ngn::math::TwoPI * 0.017f;

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "Math.hpp"
 #include <glm/glm.hpp>
 
 namespace ngn {
@@ -25,6 +26,7 @@ public:
 
     inline void update()
     {
+        angle = glm::mod(angle, math::TwoPI);
         dir = {glm::sin(angle), glm::cos(angle)};
     }
 };

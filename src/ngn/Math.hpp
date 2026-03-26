@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
 #include <numbers>
 
@@ -41,12 +42,8 @@ inline float det(const glm::vec2& a, const glm::vec2& b)
 
 inline float angleDiff(float a, float b)
 {
-    if (a < b)
-        std::swap(a, b);
-    const auto rawDiff = a - b;
-    if (rawDiff > PI)
-        return (TwoPI - a) + b;
-    return rawDiff;
+    const auto diff = glm::abs(a - b);
+    return diff > PI ? TwoPI - diff : diff;
 }
 
 } // namespace ngn::math
