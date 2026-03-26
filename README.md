@@ -89,5 +89,5 @@ This project uses the following third-party libraries and assets:
 - **Shoot'em Up asset pack** by timberlate007
   https://timberlate007.itch.io/shootem-up
 
-- ** Sci-Fi UI pack  by Anton Revin
+- ** Sci-Fi UI pack**  by Anton Revin
   https://opengameart.org/content/scifi-ui

@@ -12,7 +12,6 @@
 #include "Math.hpp"
 #include "Shots.hpp"
 #include "ai/SteeringHelper.hpp"
-#include "glm/ext/scalar_constants.hpp"
 #include "phys/CollisionTests.hpp"
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
@@ -34,7 +33,8 @@ constexpr float AngularForce = 20.0f;
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
 constexpr float UpdateTimeout = 0.0f;
 #else
-constexpr float UpdateTimeout = 0.0625f;
+// TODO Support ai update at a given time interval and not on every frame
+constexpr float UpdateTimeout = 0.0f; // 0.0625f;
 #endif
 
 inline void steeringSeek(ngn::LinearForce& linForce, ngn::AngularForce& angForce,
