@@ -2,7 +2,9 @@
 
 A simple arcade-like game written in C++ using Vulkan for graphics, OpenAL for audio, and GLFW for windowing.
 
-Currently the main target is x64 Linux.
+Currently then only testet target is x64 Linux. But as it has no special requirements to the OS, it should be possible
+to compile and run it on every system/OS that is supported be a C++23 compiler and has vulkan libs (OpenAL and GLFW can
+have other system requirements as well).
 
 ## Prerequisites
 
@@ -81,8 +83,10 @@ See [LICENSE](LICENSE) file for details.
 This project uses the following third-party libraries and assets:
 
 - **STB libraries** (stb_image and stb_vorbis) - Public domain image loader and audio decoder
-  - Located in `src/ext/`
-  - https://github.com/nothings/stb
+  https://github.com/nothings/stb
 
 - **Shoot'em Up asset pack** by timberlate007
-  - https://timberlate007.itch.io/shootem-up
+  https://timberlate007.itch.io/shootem-up
+
+- ** Sci-Fi UI pack  by Anton Revin
+  https://opengameart.org/content/scifi-ui

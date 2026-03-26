@@ -1,5 +1,5 @@
 // Coyright 2025, Daniel Volk <mail@volkarts.com>
-// SDX-License-Identifier: <LICENSE>
+// SPDX-License-Identifier: MIT
 
 #pragma once
 
