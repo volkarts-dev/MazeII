@@ -63,12 +63,12 @@ Application::Application(ApplicationDelegate* delegate) :
     if (!glfwInit())
         throw std::runtime_error("Failed to init glfw");
 
+    const auto config = delegate->applicationConfig(this);
+
     glfwSetErrorCallback(errorCallback);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-    const auto config = delegate->applicationConfig(this);
+    glfwWindowHint(GLFW_RESIZABLE, config.windowResizeable ? GLFW_TRUE : GLFW_FALSE);
 
     window_ = glfwCreateWindow(config.windowWidth, config.windowHeight, config.windowTitle, nullptr, nullptr);
     if (!window_)

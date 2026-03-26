@@ -36,6 +36,7 @@ public:
     int windowWidth{};
     int windowHeight{};
     const char* windowTitle{};
+    bool windowResizeable{true};
 
     std::size_t requiredMemory{};
 
