@@ -81,10 +81,35 @@ private:
 
 // *********************************************************************************************************************
 
+class SamplerCreateInfo
+{
+public:
+    SamplerCreateInfo() :
+        SamplerCreateInfo{vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge}
+    {
+    }
+
+    SamplerCreateInfo(vk::Filter filter, vk::SamplerAddressMode mode) :
+        magFilter{filter},
+        minFilter{filter},
+        addressModeU{mode},
+        addressModeV{mode},
+        addressModeW{mode},
+        normalizedCoords{false}
+    {}
+
+    vk::Filter magFilter;
+    vk::Filter minFilter;
+    vk::SamplerAddressMode addressModeU;
+    vk::SamplerAddressMode addressModeV;
+    vk::SamplerAddressMode addressModeW;
+    bool normalizedCoords;
+};
+
 class Sampler
 {
 public:
-    Sampler(Renderer* renderer, vk::Filter filter, vk::SamplerAddressMode mode, bool unnormalizedCoords = false);
+    Sampler(Renderer* renderer, const SamplerCreateInfo& createInfo);
     ~Sampler();
 
     const vk::Sampler& handle() const { return sampler_; }

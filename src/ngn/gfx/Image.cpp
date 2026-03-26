@@ -172,28 +172,28 @@ ImageView::~ImageView()
 
 // *********************************************************************************************************************
 
-Sampler::Sampler(Renderer* renderer, vk::Filter filter, vk::SamplerAddressMode mode, bool unnormalizedCoords) :
+Sampler::Sampler(Renderer* renderer, const SamplerCreateInfo& createInfo) :
     renderer_{renderer}
 {
-    vk::SamplerCreateInfo createInfo{
-        .magFilter = filter,
-        .minFilter = filter,
-        .mipmapMode = unnormalizedCoords ? vk::SamplerMipmapMode::eNearest : vk::SamplerMipmapMode::eLinear,
-        .addressModeU = mode,
-        .addressModeV = mode,
-        .addressModeW = mode,
+    vk::SamplerCreateInfo samplerCreateInfo{
+        .magFilter = createInfo.magFilter,
+        .minFilter = createInfo.minFilter,
+        .mipmapMode = createInfo.normalizedCoords ? vk::SamplerMipmapMode::eLinear : vk::SamplerMipmapMode::eNearest,
+        .addressModeU = createInfo.addressModeU,
+        .addressModeV = createInfo.addressModeV,
+        .addressModeW = createInfo.addressModeW,
         .mipLodBias = 0.0f,
-        .anisotropyEnable = !unnormalizedCoords,
+        .anisotropyEnable = createInfo.normalizedCoords,
         .maxAnisotropy = renderer_->physicalDeviceProperties().limits.maxSamplerAnisotropy,
         .compareEnable = false,
         .compareOp = vk::CompareOp::eAlways,
         .minLod = 0.0f,
         .maxLod = 0.0f,
         .borderColor = vk::BorderColor::eIntOpaqueBlack,
-        .unnormalizedCoordinates = unnormalizedCoords,
+        .unnormalizedCoordinates = !createInfo.normalizedCoords,
     };
 
-    sampler_ = renderer_->device().createSampler(createInfo);
+    sampler_ = renderer_->device().createSampler(samplerCreateInfo);
 }
 
 Sampler::~Sampler()

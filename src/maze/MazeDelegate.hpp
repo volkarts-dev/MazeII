@@ -15,7 +15,8 @@ class GameStage;
 class Resources
 {
 public:
-    ngn::ImageId textureAtlas;
+    ngn::TextureId spriteTexture;
+    ngn::TextureId uiTexture;
     ngn::AudioBuffer* playerShotSoundData;
     ngn::AudioBuffer* enemyShotSoundData;
     ngn::AudioBuffer* explosionOneSoundData;

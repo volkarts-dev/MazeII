@@ -5,9 +5,10 @@
 
 #include "Macros.hpp"
 #include "Types.hpp"
-#include "SpritePipeline.hpp"
-#include "Uniforms.hpp"
 #include "gfx/GfxIds.hpp"
+#include "gfx/Image.hpp"
+#include "gfx/SpritePipeline.hpp"
+#include "gfx/Uniforms.hpp"
 #include <entt/fwd.hpp>
 
 namespace ngn {
@@ -23,15 +24,31 @@ class Sampler;
 class SpriteRenderer
 {
 public:
+    class Texture
+    {
+    public:
+        const Image* image{};
+        const ImageView* view{};
+        const Sampler* sampler{};
+        bool ownsImage{};
+        bool ownsView{};
+    };
+
+public:
     SpriteRenderer(Renderer* renderer, uint32_t batchSize);
     virtual ~SpriteRenderer();
 
     SpritePipeline* pipeline() const { return spritePipeline_; }
+    const FontCollection* fontCollection() const { return fontCollection_; }
 
-    ImageId reserveTextureSlot();
-    ImageId addImages(std::span<const BufferView> images);
-    ImageId addImages(std::span<const Image* const> images);
-    ImageId setFontCollection(FontCollection* fontCollection);
+    TextureId addTexture(const BufferView& image, const SamplerCreateInfo& samplerCreateInfo = {});
+    TextureId addTexture(const Image* image, const SamplerCreateInfo& samplerCreateInfo = {});
+    TextureId addTexture(const ImageView* image, const SamplerCreateInfo& samplerCreateInfo = {});
+    TextureId setFontCollection(FontCollection* fontCollection);
+    TextureId reserveTexture(const SamplerCreateInfo& samplerCreateInfo = {});
+    const Texture& texture(TextureId textureId) const;
+
+    void updateSamplerDescriptor(TextureId textureId, uint32_t frameIndex, const ImageView* imageView);
 
     void updateView(const glm::mat4& view);
     void updateView(const glm::mat4& view, uint32_t frameIndex);
@@ -39,7 +56,7 @@ public:
     void updateProj(const glm::mat4& proj, uint32_t frameIndex);
 
     void renderSprite(const SpriteVertex& vertex);
-    void renderText(FontId font, std::string_view text, uint32_t x, uint32_t y);
+    void renderText(FontId font, std::string_view text, glm::vec2 pos);
 
     void renderSpriteComponents(entt::registry* registry);
 
@@ -53,15 +70,6 @@ private:
         std::span<ViewProjection> mapped;
     };
 
-    class Texture
-    {
-    public:
-        const Image* image{};
-        const ImageView* view{};
-        const Sampler* sampler{};
-        bool owning{};
-    };
-
     class Batch
     {
     public:
@@ -71,7 +79,7 @@ private:
     };
 
 private:
-    void addImage(uint32_t index, const Image* image, bool owning);
+    void updateSamplerDescriptors(TextureId textureId);
 
 private:
     Renderer* renderer_;
@@ -79,7 +87,7 @@ private:
     std::array<UniformBuffer, MaxFramesInFlight> uniformBuffers_;
     std::vector<Texture> textures_;
     FontCollection* fontCollection_;
-    ImageId fontImageId_;
+    TextureId fontImageId_;
     std::array<Batch, MaxFramesInFlight> batches_;
 
     NGN_DISABLE_COPY_MOVE(SpriteRenderer)

@@ -5,7 +5,7 @@
 
 namespace ngn {
 
-enum class ImageId : uint32_t {};
+enum class TextureId : uint32_t {};
 enum class FontId : uint32_t {};
 
 } // namespace

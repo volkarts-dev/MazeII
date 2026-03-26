@@ -25,13 +25,13 @@ ngn::ApplicationConfig MazeDelegate::applicationConfig(ngn::Application* app)
         .spriteBatchCount = 16384, // TODO Set correct max sprite count
 
         .fontRenderer = true,
-        .fontBatchCount = 16384,
+        .fontBatchCount = 16384, // TODO Set correct max sprite count
 
         .audio = true,
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
         .debugRenderer = true,
-        .debugBatchCount = 65536
+        .debugBatchCount = 65536, // TODO Set correct max sprite count
 #endif
     };
 }
@@ -59,12 +59,14 @@ void MazeDelegate::onDone(ngn::Application* app)
 
 void MazeDelegate::loadAssets(ngn::Application* app)
 {
-    // TODO move asset loading and destroying off unshared resources into stages when there are more then one
+    resources_.spriteTexture = app->spriteRenderer()->addTexture(maze::assets::textures_png());
+    const auto& textureAtlas = app->spriteRenderer()->texture(resources_.spriteTexture);
 
-    resources_.textureAtlas = app->spriteRenderer()->addImages({{maze::assets::textures_png()}});
+    resources_.uiTexture = app->uiRenderer()->addTexture(textureAtlas.view);
 
     ngn::FontMaker fontMaker{app->renderer(), 256};
     fontMaker.addFont(maze::assets::liberation_mono_ttf(), 20);
+    fontMaker.addFont(maze::assets::liberation_mono_ttf(), 12);
     app->uiRenderer()->setFontCollection(fontMaker.compile());
 
     resources_.playerShotSoundData = app->audio()->loadOGG(maze::assets::shoot_ogg());

@@ -6,7 +6,6 @@
 #include "Buffer.hpp"
 #include "CommonComponents.hpp"
 #include "CommandBuffer.hpp"
-#include "Image.hpp"
 #include "Instrumentation.hpp"
 #include "gfx/FontCollection.hpp"
 #include "gfx/GfxComponents.hpp"
@@ -51,8 +50,9 @@ SpriteRenderer::SpriteRenderer(Renderer* renderer, uint32_t batchSize) :
 
     textures_[0].image = new Image{whiteTextureLoader};
     textures_[0].view = new ImageView{textures_[0].image};
-    textures_[0].sampler = new Sampler{renderer_, vk::Filter::eLinear, vk::SamplerAddressMode::eClampToEdge};
-    textures_[0].owning = true;
+    textures_[0].sampler = new Sampler{renderer_, {vk::Filter::eLinear, vk::SamplerAddressMode::eClampToEdge}};
+    textures_[0].ownsImage = true;
+    textures_[0].ownsView = true;
 
     vk::DescriptorImageInfo imageInfo{
         .sampler = textures_[0].sampler->handle(),
@@ -96,8 +96,11 @@ SpriteRenderer::~SpriteRenderer()
     for (uint32_t i = 0; i < textures_.size(); i++)
     {
         delete textures_[i].sampler;
-        delete textures_[i].view;
-        if (textures_[i].owning)
+
+        if (textures_[i].view && textures_[i].ownsView)
+            delete textures_[i].view;
+
+        if (textures_[i].image && textures_[i].ownsImage)
             delete textures_[i].image;
     }
 
@@ -110,59 +113,93 @@ SpriteRenderer::~SpriteRenderer()
     delete spritePipeline_;
 }
 
-ImageId SpriteRenderer::reserveTextureSlot()
+TextureId SpriteRenderer::addTexture(const BufferView& image, const SamplerCreateInfo& samplerCreateInfo)
 {
+    const auto index = static_cast<uint32_t>(textures_.size());
+    assert(index <= MaxSpritePipelineTextures);
+    const auto textureId = static_cast<TextureId>(index);
+
+    const auto textureAtlasLoader = ImageLoader::loadFromBuffer(renderer_, image);
+    const Image* img = new Image{textureAtlasLoader};
+
+    textures_.push_back({
+        .image = img,
+        .view = new ImageView{img},
+        .sampler = new Sampler{renderer_, samplerCreateInfo},
+        .ownsImage = true,
+        .ownsView = true,
+    });
+
+    updateSamplerDescriptors(textureId);
+
+    return textureId;
+}
+
+TextureId SpriteRenderer::addTexture(const Image* image, const SamplerCreateInfo& samplerCreateInfo)
+{
+    const auto index = static_cast<uint32_t>(textures_.size());
+    assert(index <= MaxSpritePipelineTextures);
+    const auto textureId = static_cast<TextureId>(index);
+
+    textures_.push_back({
+        .image = image,
+        .view = new ImageView{image},
+        .sampler = new Sampler{renderer_, samplerCreateInfo},
+        .ownsImage = false,
+        .ownsView = true,
+    });
+
+    updateSamplerDescriptors(textureId);
+
+    return textureId;
+}
+
+TextureId SpriteRenderer::addTexture(const ImageView* image, const SamplerCreateInfo& samplerCreateInfo)
+{
+    const auto index = static_cast<uint32_t>(textures_.size());
+    assert(index <= MaxSpritePipelineTextures);
+    const auto textureId = static_cast<TextureId>(index);
+
+    textures_.push_back({
+        .image = nullptr,
+        .view = image,
+        .sampler = new Sampler{renderer_, samplerCreateInfo},
+        .ownsImage = false,
+        .ownsView = false,
+    });
+
+    updateSamplerDescriptors(textureId);
+
+    return textureId;
+}
+
+TextureId SpriteRenderer::reserveTexture(const SamplerCreateInfo& samplerCreateInfo)
+{
+    const auto index = static_cast<uint32_t>(textures_.size());
+    assert(index <= MaxSpritePipelineTextures);
+    const auto textureId = static_cast<TextureId>(index);
+
     textures_.push_back({
         .image = nullptr,
         .view = nullptr,
-        .sampler = nullptr,
-        .owning = false,
+        .sampler = new Sampler{renderer_, samplerCreateInfo},
+        .ownsImage = false,
+        .ownsView = false,
     });
 
-    return static_cast<ImageId>(textures_.size() - 1);
+    return textureId;
 }
 
-ImageId SpriteRenderer::addImages(std::span<const BufferView> images)
-{
-    const uint32_t startIndex = static_cast<uint32_t>(textures_.size());
-    const uint32_t endIndex = startIndex + static_cast<uint32_t>(images.size());
-
-    assert(startIndex + images.size() <= MaxSpritePipelineTextures);
-
-    textures_.resize(startIndex + images.size());
-
-    for (uint32_t i = startIndex; i < endIndex; i++)
-    {
-        const auto textureAtlasLoader = ImageLoader::loadFromBuffer(renderer_, images[i - startIndex]);
-
-        addImage(i, new Image{textureAtlasLoader}, true);
-    }
-
-    return ImageId{startIndex};
-}
-
-ImageId SpriteRenderer::addImages(std::span<const Image* const> images)
-{
-    const uint32_t startIndex = static_cast<uint32_t>(textures_.size());
-    const uint32_t endIndex = startIndex + static_cast<uint32_t>(images.size());
-
-    assert(startIndex + images.size() <= MaxSpritePipelineTextures);
-
-    textures_.resize(startIndex + images.size());
-
-    for (uint32_t i = startIndex; i < endIndex; i++)
-    {
-        addImage(i, images[i - startIndex], false);
-    }
-
-    return ImageId{startIndex};
-}
-
-ImageId SpriteRenderer::setFontCollection(FontCollection* fontCollection)
+TextureId SpriteRenderer::setFontCollection(FontCollection* fontCollection)
 {
     fontCollection_ = fontCollection;
-    fontImageId_ = addImages({{fontCollection_->image()}});
+    fontImageId_ = addTexture(fontCollection_->image());
     return fontImageId_;
+}
+
+const SpriteRenderer::Texture& SpriteRenderer::texture(TextureId textureId) const
+{
+    return textures_[std::to_underlying(textureId)];
 }
 
 void SpriteRenderer::updateView(const glm::mat4& view)
@@ -187,18 +224,29 @@ void SpriteRenderer::updateProj(const glm::mat4& proj, uint32_t frameIndex)
     ubo.mapped[0].proj = proj;
 }
 
-void SpriteRenderer::addImage(uint32_t index, const Image* image, bool owning)
+void SpriteRenderer::updateSamplerDescriptor(TextureId textureId, uint32_t frameIndex, const ImageView* imageView)
 {
-    textures_[index].image = image;
-    textures_[index].view = new ImageView{textures_[index].image};
-    textures_[index].sampler = new Sampler{renderer_, vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, true};
-    textures_[index].owning = owning;
+    const auto index = std::to_underlying(textureId);
+
+    vk::DescriptorImageInfo imageInfo{
+        .sampler = textures_[index].sampler->handle(),
+        .imageView = imageView->handle(),
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+    };
+
+    spritePipeline_->updateDescriptorSet(imageInfo, frameIndex, 1, index);
+}
+
+void SpriteRenderer::updateSamplerDescriptors(TextureId textureId)
+{
+    const auto index = std::to_underlying(textureId);
 
     vk::DescriptorImageInfo imageInfo{
         .sampler = textures_[index].sampler->handle(),
         .imageView = textures_[index].view->handle(),
         .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
     };
+
     for (uint32_t f = 0; f < MaxFramesInFlight; f++)
     {
         spritePipeline_->updateDescriptorSet(imageInfo, f, 1, index);
@@ -218,10 +266,8 @@ void SpriteRenderer::renderSprite(const SpriteVertex& vertex)
     batch.count++;
 }
 
-void SpriteRenderer::renderText(FontId font, std::string_view text, uint32_t x, uint32_t y)
+void SpriteRenderer::renderText(FontId font, std::string_view text, glm::vec2 pos)
 {
-    glm::vec2 pos{x, y};
-
     for (uint32_t i = 0; i < text.size(); i++)
     {
         const auto& glyph = fontCollection_->glyphInfo(font)[static_cast<uint8_t>(text[i]) - 32];

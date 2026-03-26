@@ -27,6 +27,7 @@ public:
     ~FontCollection();
 
     const std::vector<GlyphInfo>& glyphInfo(FontId font) const { return glyphInfo_[std::to_underlying(font)]; }
+    glm::vec2 textDimension(FontId font, std::string_view text) const;
     const Image* image() const { return image_; }
 
 private:

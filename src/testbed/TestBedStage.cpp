@@ -26,10 +26,8 @@
 TestBedStage::TestBedStage(ngn::Application* app) :
     app_{app}
 {
-    app_->spriteRenderer()->addImages({{
-        testbed::assets::player_png(),
-        testbed::assets::barriers_png(),
-    }});
+    app_->spriteRenderer()->addTexture(testbed::assets::player_png());
+    app_->spriteRenderer()->addTexture(testbed::assets::barriers_png());
 
     ngn::FontMaker fontMaker{app_->renderer(), 256};
     fontMaker.addFont(testbed::assets::liberation_mono_ttf(), 20);
@@ -213,7 +211,7 @@ void TestBedStage::onUpdate(float deltaTime)
 
     // ****************************************************
 
-    app_->uiRenderer()->renderText(ngn::FontId{0}, "Hello Maze ][", 40, 50);
+    app_->uiRenderer()->renderText(ngn::FontId{0}, "Hello Maze ][", {40, 50});
 
     // ****************************************************
 
