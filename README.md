@@ -61,6 +61,7 @@ sudo apt-get install -y \
    Optional build flags:
    - `-DNGN_ENABLE_GRAPHICS_DEBUG_LAYER=ON` - Enable graphics debug layers
    - `-DNGN_ENABLE_VISUAL_DEBUGGING=ON` - Enable visual debugging display
+   - `-DNGN_ENABLE_DEVELOPER_HACKS=ON` - Enable some hacks to support development
    - `-DCMAKE_BUILD_TYPE=Release` - Release build
    - `-DCMAKE_BUILD_TYPE=Debug` - Debug build
 

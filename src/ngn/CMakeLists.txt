@@ -67,6 +67,10 @@ if(NGN_ENABLE_GRAPHICS_DEBUG_LAYER)
     target_compile_definitions(ngn PUBLIC NGN_ENABLE_GRAPHICS_DEBUG_LAYER)
 endif()
 
+if(NGN_ENABLE_DEVELOPER_HACKS)
+    target_compile_definitions(ngn PUBLIC NGN_ENABLE_DEVELOPER_HACKS)
+endif()
+
 if(NGN_ENABLE_VISUAL_DEBUGGING)
     target_compile_definitions(ngn PUBLIC NGN_ENABLE_VISUAL_DEBUGGING)
 

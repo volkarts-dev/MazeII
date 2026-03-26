@@ -220,6 +220,7 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
             return;
         }
 
+#if defined(NGN_ENABLE_DEVELOPER_HACKS)
         if (mods == ngn::InputMods::Ctrl && key == GLFW_KEY_K)
         {
             auto view = registry_->view<EnemyTag, ngn::ActiveTag>();
@@ -228,6 +229,7 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
                 killEnemy(e);
             }
         }
+#endif
 #endif
     }
 
