@@ -38,7 +38,10 @@ GameStage::GameStage(MazeDelegate* delegate) :
     overviewMap_{},
     halfViewSize_{},
     playerViewBounds_{},
+    points_{},
+    newPoints_{},
     level_{1},
+    newLevel_{},
     state_{},
     zoom_{1.0f}
 {
@@ -129,8 +132,8 @@ void GameStage::onActivate()
 #if !defined(NGN_ENABLE_INSTRUMENTATION)
     DialogData data{
         .size = {256, 256},
-        .title = "Welcome",
-        .text = "Welcome to Maze ][",
+        .title = "Welcome to Maze ][",
+        .text = "Version 1.0\nCreated 2026\nby VolkArts",
         .button1 = "Start",
         .button2 = "Quit",
         .defaultButton = DialogButton::One,
@@ -331,8 +334,10 @@ void GameStage::onDraw(float deltaTime)
 
     // ****************************************************
 
-    const auto levelInfo = fmt::format("Maze ][ - Lvl:{}", level_);
-    app_->uiRenderer()->renderText(ngn::FontId{0}, levelInfo, {10, 25});
+    const auto pointsInfo = fmt::format("Points: {}", level_);
+    app_->uiRenderer()->renderText(ngn::FontId{1}, pointsInfo, {10, 20});
+    const auto levelInfo = fmt::format("Level: {}", points_);
+    app_->uiRenderer()->renderText(ngn::FontId{1}, levelInfo, {10, 40});
 
     app_->uiRenderer()->renderSprite({
         .position = glm::vec2{1024 - 60, 60},
@@ -433,6 +438,7 @@ void GameStage::updateProjections()
 
 void GameStage::killEnemy(entt::entity enemy)
 {
+    points_ += 10 + level_ / 5;
     enemies_->killEnemy(enemy);
 }
 
@@ -440,6 +446,7 @@ void GameStage::killPlayer()
 {
     player_->kill();
 
+    newPoints_ = 0;
     newLevel_ = 1;
     state_ = State::LevelEnded;
 }
@@ -448,6 +455,7 @@ void GameStage::handleAllEnemiesDown()
 {
     player_->stop();
 
+    newPoints_ = points_;
     newLevel_ = level_ + 1;
     state_ = State::LevelEnded;
 }
@@ -457,6 +465,7 @@ void GameStage::resetGame()
     player_->reset();
     enemies_->reset();
     shots_->reset();
+    points_ = newPoints_;
     level_ = newLevel_;
     state_ = State::Active;
 }

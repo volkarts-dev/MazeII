@@ -107,6 +107,8 @@ private:
     entt::connection allEnemiesDownConn_;
     glm::vec2 halfViewSize_;
     glm::vec4 playerViewBounds_;
+    uint32_t points_;
+    uint32_t newPoints_;
     uint32_t level_;
     uint32_t newLevel_;
     State state_;
