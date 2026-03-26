@@ -66,7 +66,7 @@ void GameStage::onActivate()
 
     // ****************************************************
 
-    player_ = new Player{this, 6, 0.0f};
+    player_ = new Player{this, 126, ngn::math::PI};
 
     // ****************************************************
 
@@ -78,28 +78,28 @@ void GameStage::onActivate()
     //enemies_->createEnemy(27, ngn::math::PI);
 
     // BIG
-    //enemies_->createEnemy(320, ngn::math::PI);
-    //enemies_->createEnemy(322, ngn::math::PI);
-    //enemies_->createEnemy(324, ngn::math::PI);
-    //enemies_->createEnemy(326, ngn::math::PI);
-    //enemies_->createEnemy(328, ngn::math::PI);
-    //enemies_->createEnemy(332, ngn::math::PI);
-    //enemies_->createEnemy(334, ngn::math::PI);
-    //enemies_->createEnemy(336, ngn::math::PI);
-    //enemies_->createEnemy(338, ngn::math::PI);
-    //enemies_->createEnemy(340, ngn::math::PI);
+    //enemies_->createEnemy(0, 0.0f);
+    //enemies_->createEnemy(2, 0.0f);
+    //enemies_->createEnemy(4, 0.0f);
+    //enemies_->createEnemy(6, 0.0f);
+    //enemies_->createEnemy(8, 0.0f);
+    //enemies_->createEnemy(12, 0.0f);
+    //enemies_->createEnemy(14, 0.0f);
+    //enemies_->createEnemy(16, 0.0f);
+    //enemies_->createEnemy(18, 0.0f);
+    //enemies_->createEnemy(10, 0.0f);
 
     // SMALL
-    enemies_->createEnemy(80, ngn::math::PI);
-    enemies_->createEnemy(100, ngn::math::PI);
-    enemies_->createEnemy(120, ngn::math::PI);
-    enemies_->createEnemy(122, ngn::math::PI);
-    enemies_->createEnemy(124, ngn::math::PI);
-    enemies_->createEnemy(128, ngn::math::PI);
-    enemies_->createEnemy(130, ngn::math::PI);
-    enemies_->createEnemy(132, ngn::math::PI);
-    enemies_->createEnemy(112, ngn::math::PI);
-    enemies_->createEnemy(92, ngn::math::PI);
+    enemies_->createEnemy(40, 0.0f);
+    enemies_->createEnemy(20, 0.0f);
+    enemies_->createEnemy(0, 0.0f);
+    enemies_->createEnemy(2, 0.0f);
+    enemies_->createEnemy(4, 0.0f);
+    enemies_->createEnemy(8, 0.0f);
+    enemies_->createEnemy(10, 0.0f);
+    enemies_->createEnemy(12, 0.0f);
+    enemies_->createEnemy(32, 0.0f);
+    enemies_->createEnemy(52, 0.0f);
 
     // ****************************************************
 
