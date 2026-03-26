@@ -92,6 +92,12 @@ void Player::kill()
 
     registry_->remove<ngn::ActiveTag>(entity_);
 
+    stop();
+}
+
+void Player::stop()
+{
+    boosterActive_ = false;
     gameStage_->app()->spriteAnimationHandler()->stopAnimation(boosterEntity_);
 }
 

@@ -446,6 +446,8 @@ void GameStage::killPlayer()
 
 void GameStage::handleAllEnemiesDown()
 {
+    player_->stop();
+
     newLevel_ = level_ + 1;
     state_ = State::LevelEnded;
 }

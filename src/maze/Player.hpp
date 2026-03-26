@@ -23,6 +23,7 @@ public:
     void update(float deltaTime);
 
     void kill();
+    void stop();
     void reset();
 
 private:

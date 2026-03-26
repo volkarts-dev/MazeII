@@ -26,7 +26,9 @@ Explosions::~Explosions()
 
 bool Explosions::allDone() const
 {
-    return gameStage_->app()->spriteAnimationHandler()->runningCount() == 0;
+    // Use the (absent) sprite animator to determine ended explosion (animations)
+    auto view = registry_->view<const ngn::SpriteAnimator, ExplosionTag>();
+    return view.begin() == view.end();
 }
 
 void Explosions::doExplosion(const glm::vec2& position, Type type)
