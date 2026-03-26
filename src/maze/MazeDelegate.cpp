@@ -18,20 +18,22 @@ ngn::ApplicationConfig MazeDelegate::applicationConfig(ngn::Application* app)
         .windowWidth = 1024,
         .windowHeight = 768,
         .windowTitle = "Maze ][",
+        .windowResizeable = false,
 
-        .requiredMemory = 100 * 1024 * 1024, // TODO Set correct memory amount
+        // 1MB should be way to much for the game but nothing for a modern system
+        .requiredMemory = 1 * 1024 * 1024,
 
         .spriteRenderer = true,
-        .spriteBatchCount = 16384, // TODO Set correct max sprite count
+        .spriteBatchCount = 1024,
 
         .fontRenderer = true,
-        .fontBatchCount = 16384, // TODO Set correct max sprite count
+        .fontBatchCount = 128,
 
         .audio = true,
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
         .debugRenderer = true,
-        .debugBatchCount = 65536, // TODO Set correct max sprite count
+        .debugBatchCount = 65536,
 #endif
     };
 }
@@ -55,6 +57,9 @@ void MazeDelegate::onDone(ngn::Application* app)
 
     delete gameStage_;
     // delete loadingStage_;
+
+    ngn::log::debug("Max rendered sprites: {}", app->spriteRenderer()->maxRenderedSptrites());
+    ngn::log::debug("Max rendered font glyphs: {}", app->uiRenderer()->maxRenderedSptrites());
 }
 
 void MazeDelegate::loadAssets(ngn::Application* app)

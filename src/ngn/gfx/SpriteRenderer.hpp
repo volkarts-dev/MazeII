@@ -40,6 +40,7 @@ public:
 
     SpritePipeline* pipeline() const { return spritePipeline_; }
     const FontCollection* fontCollection() const { return fontCollection_; }
+    uint32_t maxRenderedSptrites() const { return maxRenderedSptrites_; }
 
     TextureId addTexture(const BufferView& image, const SamplerCreateInfo& samplerCreateInfo = {});
     TextureId addTexture(const Image* image, const SamplerCreateInfo& samplerCreateInfo = {});
@@ -89,6 +90,7 @@ private:
     FontCollection* fontCollection_;
     TextureId fontImageId_;
     std::array<Batch, MaxFramesInFlight> batches_;
+    uint32_t maxRenderedSptrites_;
 
     NGN_DISABLE_COPY_MOVE(SpriteRenderer)
 };

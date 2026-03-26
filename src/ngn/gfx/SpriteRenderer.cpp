@@ -328,6 +328,9 @@ void SpriteRenderer::draw(CommandBuffer* commandBuffer)
     commandBuffer->bindVertexBuffer(batch.buffer);
     commandBuffer->draw(batch.count);
 
+    if (batch.count > maxRenderedSptrites_)
+        maxRenderedSptrites_ = batch.count;
+
     batch.count = 0;
 }
 
