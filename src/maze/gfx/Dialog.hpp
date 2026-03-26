@@ -64,7 +64,6 @@ public:
 private:
     void drawButton(const glm::vec2& pos, const std::string_view& text, DialogButton button);
 
-    glm::vec2 dialogPos();
     glm::vec2 centerPos(ngn::FontId fontId, std::string_view text);
     void parseText(std::string_view text);
 

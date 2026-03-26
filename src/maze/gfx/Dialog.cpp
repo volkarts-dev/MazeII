@@ -88,7 +88,7 @@ void Dialog::draw()
     if (state_ != State::Active)
         return;
 
-    const auto pos = dialogPos();
+    const auto pos = gameStage_->app()->windowSize() * 0.5f + glm::vec2{0, -200};
 
     const glm::vec2 base{256, 0};
 
@@ -140,11 +140,6 @@ void Dialog::drawButton(const glm::vec2& pos, const std::string_view& text, Dial
 
     const auto btnTxtPos = pos - centerPos(ngn::FontId{1}, text);
     uiRenderer_->renderText(ngn::FontId{1}, text, btnTxtPos);
-}
-
-glm::vec2 Dialog::dialogPos()
-{
-    return gameStage_->app()->windowSize() * 0.5f;
 }
 
 inline glm::vec2 Dialog::centerPos(ngn::FontId fontId, std::string_view text)
