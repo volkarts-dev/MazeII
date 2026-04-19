@@ -334,9 +334,9 @@ void GameStage::onDraw(float deltaTime)
 
     // ****************************************************
 
-    const auto pointsInfo = fmt::format("Points: {}", level_);
+    const auto pointsInfo = fmt::format("Points: {}", points_);
     app_->uiRenderer()->renderText(ngn::FontId{1}, pointsInfo, {10, 20});
-    const auto levelInfo = fmt::format("Level: {}", points_);
+    const auto levelInfo = fmt::format("Level: {}", level_);
     app_->uiRenderer()->renderText(ngn::FontId{1}, levelInfo, {10, 40});
 
     app_->uiRenderer()->renderSprite({
