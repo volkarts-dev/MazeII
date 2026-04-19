@@ -9,7 +9,6 @@
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
 #include "gfx/FontMaker.hpp"
-#include "gfx/UiRenderer.hpp"
 #include "gfx/GfxComponents.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "CommonComponents.hpp"
@@ -26,12 +25,12 @@
 TestBedStage::TestBedStage(ngn::Application* app) :
     app_{app}
 {
-    app_->spriteRenderer()->addTexture(testbed::assets::player_png());
-    app_->spriteRenderer()->addTexture(testbed::assets::barriers_png());
+    app_->spriteRenderer(0)->addTexture(testbed::assets::player_png());
+    app_->spriteRenderer(0)->addTexture(testbed::assets::barriers_png());
 
     ngn::FontMaker fontMaker{app_->renderer(), 256};
     fontMaker.addFont(testbed::assets::liberation_mono_ttf(), 20);
-    app_->uiRenderer()->setFontCollection(fontMaker.compile());
+    app_->spriteRenderer(1)->setFontCollection(fontMaker.compile());
 
     auto* registry = app_->registry();
 
@@ -141,14 +140,14 @@ void TestBedStage::onWindowResize(const glm::vec2& windowSize)
 
     for (uint32_t i = 0; i < ngn::MaxFramesInFlight; i++)
     {
-        app_->spriteRenderer()->updateProj(proj, i);
+        app_->spriteRenderer(0)->updateProj(proj, i);
 
-        app_->uiRenderer()->updateView(glm::lookAt(
+        app_->spriteRenderer(1)->updateView(glm::lookAt(
             glm::vec3{halfSize, 0.5f},
             glm::vec3{halfSize, 0.0f},
             glm::vec3{0.0f, 1.0f, 0.0f}
         ), i);
-        app_->uiRenderer()->updateProj(proj, i);
+        app_->spriteRenderer(1)->updateProj(proj, i);
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
         app_->debugRenderer()->updateProj(proj, i);
@@ -168,7 +167,7 @@ void TestBedStage::onUpdate(float deltaTime)
 {
     NGN_UNUSED(deltaTime);
 
-    app_->spriteRenderer()->updateView(
+    app_->spriteRenderer(0)->updateView(
                 glm::lookAt(
                     glm::vec3(400.0f, 300.0f, 0.5f),
                     glm::vec3(400.0f, 300.0f, 0.0f),
@@ -207,11 +206,11 @@ void TestBedStage::onUpdate(float deltaTime)
 
     // ****************************************************
 
-    app_->spriteRenderer()->renderSpriteComponents(app_->registry());
+    app_->spriteRenderer(0)->renderSpriteComponents(app_->registry());
 
     // ****************************************************
 
-    app_->uiRenderer()->renderText(ngn::FontId{0}, "Hello Maze ][", {40, 50});
+    app_->spriteRenderer(1)->renderText(ngn::FontId{0}, "Hello Maze ][", {40, 50});
 
     // ****************************************************
 

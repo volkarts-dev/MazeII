@@ -3,22 +3,25 @@
 
 #pragma once
 
+#include "Buffer.hpp"
+#include "CommonComponents.hpp"
+#include "Instrumentation.hpp"
 #include "Macros.hpp"
 #include "Types.hpp"
+#include "gfx/GfxComponents.hpp"
 #include "gfx/GfxIds.hpp"
 #include "gfx/Image.hpp"
+#include "gfx/Renderer.hpp"
 #include "gfx/SpritePipeline.hpp"
 #include "gfx/Uniforms.hpp"
-#include <entt/fwd.hpp>
+#include <entt/entt.hpp>
 
 namespace ngn {
 
-class Buffer;
 class CommandBuffer;
 class FontCollection;
 class Image;
 class ImageView;
-class Renderer;
 class Sampler;
 
 class SpriteRenderer
@@ -59,6 +62,7 @@ public:
     void renderSprite(const SpriteVertex& vertex);
     void renderText(FontId font, std::string_view text, glm::vec2 pos);
 
+    template<typename... TagsT>
     void renderSpriteComponents(entt::registry* registry);
 
     void draw(CommandBuffer* commandBuffer);
@@ -94,5 +98,39 @@ private:
 
     NGN_DISABLE_COPY_MOVE(SpriteRenderer)
 };
+
+template<typename... TagsT>
+void SpriteRenderer::renderSpriteComponents(entt::registry* registry)
+{
+    NGN_INSTRUMENT_FUNCTION();
+
+    auto& batch = batches_[renderer_->currentFrame()];
+
+    auto sprites = registry->view<const Position, const Sprite, ActiveTag, TagsT...>();
+    for (auto [e, pos, spr] : sprites.each())
+    {
+        assert(batch.count < batch.buffer->size() / sizeof(SpriteVertex));
+
+        NGN_INSTRUMENT_BLOCK_BANDWIDTH_VAR(ls, "<load-sprite>", sizeof(Sprite));
+
+        auto [rot, sca] = registry->try_get<const Rotation, const Scale>(e);
+
+        NGN_SCOPETIMER_STOP(ls)
+
+        NGN_INSTRUMENT_BLOCK_BANDWIDTH_VAR(ps, "<push-sprite>", sizeof(SpriteVertex));
+
+        auto& v = batch.mapped[batch.count];
+        v.position = pos.value;
+        v.rotation = rot ? rot->angle : 0.0f;
+        v.scale = spr.size * (sca ? sca->value : glm::vec2{1, 1});
+        v.color = spr.color;
+        v.texCoords = spr.texCoords;
+        v.texIndex = spr.texture;
+
+        batch.count++;
+
+        NGN_SCOPETIMER_STOP(ps)
+    }
+}
 
 } // namesace ngn

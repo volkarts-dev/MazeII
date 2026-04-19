@@ -5,7 +5,7 @@
 
 #include "GameStage.hpp"
 #include "gfx/FontCollection.hpp"
-#include "gfx/UiRenderer.hpp"
+#include "gfx/SpriteRenderer.hpp"
 
 namespace {
 
@@ -15,7 +15,7 @@ constexpr auto LineHeightFactor = 2.0f;
 
 Dialog::Dialog(GameStage* gameStage) :
     gameStage_{gameStage},
-    uiRenderer_{gameStage_->app()->uiRenderer()},
+    uiRenderer_{gameStage_->app()->spriteRenderer(1)},
     resources_{gameStage_->delegate()->resources()}
 {
     reset();

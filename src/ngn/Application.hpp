@@ -4,10 +4,10 @@
 #pragma once
 
 #include "Allocators.hpp"
-#include "CommonComponents.hpp"
 #include "Input.hpp"
 #include "gfx/Renderer.hpp"
 #include "Macros.hpp"
+#include <glm/glm.hpp>
 #include <entt/fwd.hpp>
 #include <random>
 
@@ -40,11 +40,8 @@ public:
 
     std::size_t requiredMemory{};
 
-    bool spriteRenderer{};
-    uint32_t spriteBatchCount{};
-
-    bool fontRenderer{};
-    uint32_t fontBatchCount{};
+    std::array<uint32_t, 5> spriteBatchCounts{};
+    bool spriteAnimator{};
 
     bool audio{};
 
@@ -101,9 +98,8 @@ public:
     entt::registry* registry() const { return registry_; }
     World* world() const { return world_; }
 
-    SpriteRenderer* spriteRenderer() const { return spriteRenderer_; }
+    SpriteRenderer* spriteRenderer(uint32_t index) const { return spriteRenderers_[index]; }
     SpriteAnimator* spriteAnimationHandler() const { return spriteAnimationHandler_; }
-    UiRenderer* uiRenderer() const { return uiRenderer_; }
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer() const { return debugRenderer_; }
 #endif
@@ -140,9 +136,8 @@ private:
     Renderer* renderer_;
     MemoryArena* frameMemoryArena_;
 
-    SpriteRenderer* spriteRenderer_;
+    std::array<SpriteRenderer*, 5> spriteRenderers_;
     SpriteAnimator* spriteAnimationHandler_;
-    UiRenderer* uiRenderer_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer_;

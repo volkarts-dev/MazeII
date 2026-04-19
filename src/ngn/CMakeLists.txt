@@ -26,7 +26,7 @@ add_library(ngn STATIC
     gfx/SpriteAnimator.hpp gfx/SpriteAnimator.cpp
     gfx/SpritePipeline.cpp gfx/SpritePipeline.hpp
     gfx/SpriteRenderer.hpp gfx/SpriteRenderer.cpp
-    gfx/UiRenderer.hpp gfx/UiRenderer.cpp
+
     gfx/Uniforms.hpp
 
     phys/Collision.hpp

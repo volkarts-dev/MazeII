@@ -8,7 +8,6 @@
 #include "audio/Audio.hpp"
 #include "gfx/CommandBuffer.hpp"
 #include "gfx/FontMaker.hpp"
-#include "gfx/UiRenderer.hpp"
 #include "gfx/Pipeline.hpp"
 #include "gfx/SpriteAnimator.hpp"
 #include "gfx/SpriteRenderer.hpp"
@@ -46,9 +45,8 @@ Application::Application(ApplicationDelegate* delegate) :
     window_{},
     renderer_{},
     frameMemoryArena_{},
-    spriteRenderer_{},
+    spriteRenderers_{},
     spriteAnimationHandler_{},
-    uiRenderer_{},
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     debugRenderer_{},
 #endif
@@ -85,16 +83,17 @@ Application::Application(ApplicationDelegate* delegate) :
     glfwSetFramebufferSizeCallback(window_, framebufferResizeCallback);
     glfwSetKeyCallback(window_, keyCallback);
 
-    if (config.spriteRenderer)
+    for (std::size_t i = 0; i < config.spriteBatchCounts.size(); i++)
     {
-        spriteRenderer_ = new SpriteRenderer{renderer_, config.spriteBatchCount};
-
-        spriteAnimationHandler_ = new SpriteAnimator{registry_};
+        const auto size = config.spriteBatchCounts[i];
+        if (size == 0)
+            break;
+        spriteRenderers_[i] = new SpriteRenderer{renderer_, size};
     }
 
-    if (config.fontRenderer)
+    if (config.spriteAnimator)
     {
-        uiRenderer_ = new ngn::UiRenderer{renderer_, config.fontBatchCount};
+        spriteAnimationHandler_ = new SpriteAnimator{registry_};
     }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
@@ -131,11 +130,12 @@ Application::~Application()
     delete debugRenderer_;
 #endif
 
-    delete uiRenderer_;
-
     delete spriteAnimationHandler_;
 
-    delete spriteRenderer_;
+    for (auto* spriteRenderer : spriteRenderers_)
+    {
+        delete spriteRenderer;
+    }
 
     delete world_;
 
@@ -297,11 +297,12 @@ void Application::draw(float deltaTime)
 
     commandBuffer->beginRenderPass(renderer_->renderTarget(), imageIndex);
 
-    if (spriteRenderer_)
-        spriteRenderer_->draw(commandBuffer);
-
-    if (uiRenderer_)
-        uiRenderer_->draw(commandBuffer);
+    for (auto* spriteRenderer : spriteRenderers_)
+    {
+        if (!spriteRenderer)
+            break;
+        spriteRenderer->draw(commandBuffer);
+    }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     if (debugRenderer_)

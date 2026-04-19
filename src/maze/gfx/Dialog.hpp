@@ -8,10 +8,6 @@
 #include "utils/StaticVector.hpp"
 #include <entt/signal/delegate.hpp>
 
-namespace ngn {
-class UiRenderer;
-} // namespace ngn
-
 class GameStage;
 
 enum class DialogButton
@@ -69,7 +65,7 @@ private:
 
 private:
     GameStage* gameStage_;
-    ngn::UiRenderer* uiRenderer_;
+    ngn::SpriteRenderer* uiRenderer_;
     const Resources& resources_;
 
     DialogData data_{};

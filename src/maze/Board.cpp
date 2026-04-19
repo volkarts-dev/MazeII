@@ -3,6 +3,7 @@
 
 #include "Board.hpp"
 
+#include "CommonComponents.hpp"
 #include "Layers.hpp"
 #include "MazeComponents.hpp"
 #include "Application.hpp"

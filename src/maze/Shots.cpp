@@ -4,6 +4,7 @@
 #include "Shots.hpp"
 
 #include "Application.hpp"
+#include "CommonComponents.hpp"
 #include "GameStage.hpp"
 #include "Layers.hpp"
 #include "MazeComponents.hpp"

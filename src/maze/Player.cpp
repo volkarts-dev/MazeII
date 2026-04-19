@@ -4,6 +4,7 @@
 #include "Player.hpp"
 
 #include "Board.hpp"
+#include "CommonComponents.hpp"
 #include "Explosions.hpp"
 #include "GameStage.hpp"
 #include "Layers.hpp"

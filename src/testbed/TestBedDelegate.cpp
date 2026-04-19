@@ -20,11 +20,8 @@ ngn::ApplicationConfig TestBedDelegate::applicationConfig(ngn::Application* app)
 
         .requiredMemory = 100 * 1024 * 1024,
 
-        .spriteRenderer = true,
-        .spriteBatchCount = 1024,
-
-        .fontRenderer = true,
-        .fontBatchCount = 1024,
+        .spriteBatchCounts = {1024, 1024},
+        .spriteAnimator = false,
 
         .audio = false,
 

@@ -3,14 +3,8 @@
 
 #include "SpriteRenderer.hpp"
 
-#include "Buffer.hpp"
-#include "CommonComponents.hpp"
 #include "CommandBuffer.hpp"
-#include "Instrumentation.hpp"
 #include "gfx/FontCollection.hpp"
-#include "gfx/GfxComponents.hpp"
-#include "gfx/Renderer.hpp"
-#include <entt/entt.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace ngn {
@@ -285,38 +279,9 @@ void SpriteRenderer::renderText(FontId font, std::string_view text, glm::vec2 po
     }
 }
 
-void SpriteRenderer::renderSpriteComponents(entt::registry* registry)
-{
-    NGN_INSTRUMENT_FUNCTION();
 
-    auto& batch = batches_[renderer_->currentFrame()];
 
-    auto sprites = registry->view<const Position, const Sprite, ActiveTag>();
-    for (auto [e, pos, spr] : sprites.each())
-    {
-        assert(batch.count < batch.buffer->size() / sizeof(SpriteVertex));
 
-        NGN_INSTRUMENT_BLOCK_BANDWIDTH_VAR(ls, "<load-sprite>", sizeof(Sprite));
-
-        auto [rot, sca] = registry->try_get<const Rotation, const Scale>(e);
-
-        NGN_SCOPETIMER_STOP(ls)
-
-        NGN_INSTRUMENT_BLOCK_BANDWIDTH_VAR(ps, "<push-sprite>", sizeof(SpriteVertex));
-
-        auto& v = batch.mapped[batch.count];
-        v.position = pos.value;
-        v.rotation = rot ? rot->angle : 0.0f;
-        v.scale = spr.size * (sca ? sca->value : glm::vec2{1, 1});
-        v.color = spr.color;
-        v.texCoords = spr.texCoords;
-        v.texIndex = spr.texture;
-
-        batch.count++;
-
-        NGN_SCOPETIMER_STOP(ps)
-    }
-}
 
 void SpriteRenderer::draw(CommandBuffer* commandBuffer)
 {

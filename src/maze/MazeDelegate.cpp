@@ -5,7 +5,6 @@
 
 #include "audio/Audio.hpp"
 #include "gfx/FontMaker.hpp"
-#include "gfx/UiRenderer.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "GameStage.hpp"
 #include "MazeAssets.hpp"
@@ -23,11 +22,8 @@ ngn::ApplicationConfig MazeDelegate::applicationConfig(ngn::Application* app)
         // 1MB should be way to much for the game but nothing for a modern system
         .requiredMemory = 1 * 1024 * 1024,
 
-        .spriteRenderer = true,
-        .spriteBatchCount = 1024,
-
-        .fontRenderer = true,
-        .fontBatchCount = 128,
+        .spriteBatchCounts = {1024, 128},
+        .spriteAnimator = true,
 
         .audio = true,
 
@@ -58,21 +54,21 @@ void MazeDelegate::onDone(ngn::Application* app)
     delete gameStage_;
     // delete loadingStage_;
 
-    ngn::log::debug("Max rendered sprites: {}", app->spriteRenderer()->maxRenderedSptrites());
-    ngn::log::debug("Max rendered font glyphs: {}", app->uiRenderer()->maxRenderedSptrites());
+    ngn::log::debug("Max rendered sprites: {}", app->spriteRenderer(0)->maxRenderedSptrites());
+    ngn::log::debug("Max rendered font glyphs: {}", app->spriteRenderer(1)->maxRenderedSptrites());
 }
 
 void MazeDelegate::loadAssets(ngn::Application* app)
 {
-    resources_.spriteTexture = app->spriteRenderer()->addTexture(maze::assets::textures_png());
-    const auto& textureAtlas = app->spriteRenderer()->texture(resources_.spriteTexture);
+    resources_.spriteTexture = app->spriteRenderer(0)->addTexture(maze::assets::textures_png());
+    const auto& textureAtlas = app->spriteRenderer(0)->texture(resources_.spriteTexture);
 
-    resources_.uiTexture = app->uiRenderer()->addTexture(textureAtlas.view);
+    resources_.uiTexture = app->spriteRenderer(1)->addTexture(textureAtlas.view);
 
     ngn::FontMaker fontMaker{app->renderer(), 256};
     fontMaker.addFont(maze::assets::liberation_mono_ttf(), 20);
     fontMaker.addFont(maze::assets::liberation_mono_ttf(), 12);
-    app->uiRenderer()->setFontCollection(fontMaker.compile());
+    app->spriteRenderer(1)->setFontCollection(fontMaker.compile());
 
     resources_.playerShotSoundData = app->audio()->loadOGG(maze::assets::shoot_ogg());
     resources_.enemyShotSoundData = app->audio()->loadOGG(maze::assets::enemy_shoot_ogg());

@@ -13,7 +13,6 @@
 #include "gfx/Dialog.hpp"
 #include "gfx/Image.hpp"
 #include "gfx/OverviewMap.hpp"
-#include "gfx/UiRenderer.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -116,11 +115,11 @@ void GameStage::onActivate()
 
     overviewMap_ = new OverviewMap{this, glm::u32vec2{100, 100}, 16};
 
-    overviewMapTexture_ = app_->uiRenderer()->reserveTexture();
+    overviewMapTexture_ = app_->spriteRenderer(1)->reserveTexture();
 
     for (uint32_t f = 0; f < ngn::MaxFramesInFlight; f++)
     {
-        app_->uiRenderer()->updateSamplerDescriptor(overviewMapTexture_, f, overviewMap_->mapImageView(f));
+        app_->spriteRenderer(1)->updateSamplerDescriptor(overviewMapTexture_, f, overviewMap_->mapImageView(f));
     }
 
     // ****************************************************
@@ -324,9 +323,9 @@ void GameStage::onDraw(float deltaTime)
 
     // ****************************************************
 
-    app_->spriteRenderer()->updateView(playerView);
+    app_->spriteRenderer(0)->updateView(playerView);
 
-    app_->spriteRenderer()->renderSpriteComponents(registry_);
+    app_->spriteRenderer(0)->renderSpriteComponents(registry_);
 
     // ****************************************************
 
@@ -335,11 +334,11 @@ void GameStage::onDraw(float deltaTime)
     // ****************************************************
 
     const auto pointsInfo = fmt::format("Points: {}", points_);
-    app_->uiRenderer()->renderText(ngn::FontId{1}, pointsInfo, {10, 20});
+    app_->spriteRenderer(1)->renderText(ngn::FontId{1}, pointsInfo, {10, 20});
     const auto levelInfo = fmt::format("Level: {}", level_);
-    app_->uiRenderer()->renderText(ngn::FontId{1}, levelInfo, {10, 40});
+    app_->spriteRenderer(1)->renderText(ngn::FontId{1}, levelInfo, {10, 40});
 
-    app_->uiRenderer()->renderSprite({
+    app_->spriteRenderer(1)->renderSprite({
         .position = glm::vec2{1024 - 60, 60},
         .rotation = 0.0f,
         .scale = glm::vec2{100, 100},
@@ -421,14 +420,14 @@ void GameStage::updateProjections()
 
     for (uint32_t i = 0; i < ngn::MaxFramesInFlight; i++)
     {
-        app_->spriteRenderer()->updateProj(proj, i);
+        app_->spriteRenderer(0)->updateProj(proj, i);
 
-        app_->uiRenderer()->updateView(glm::lookAt(
+        app_->spriteRenderer(1)->updateView(glm::lookAt(
             glm::vec3{uiHalfSize, 0.5f},
             glm::vec3{uiHalfSize, 0.0f},
             glm::vec3{0.0f, 1.0f, 0.0f}
         ), i);
-        app_->uiRenderer()->updateProj(uiProj, i);
+        app_->spriteRenderer(1)->updateProj(uiProj, i);
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
         app_->debugRenderer()->updateProj(proj, i);
