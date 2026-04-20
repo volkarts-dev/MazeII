@@ -20,13 +20,15 @@ Player::Player(GameStage* gameStage, NavIndex startSector, float startOrientatio
     startSector_{startSector},
     startOrientation_{startOrientation}
 {
+    const auto textureId = gameStage_->delegate()->resources().spriteTexture;
+
     ActorCreateInfo createInfo{
         .position = gameStage_->board()->navigationGraph()->midPoint(startSector_),
         .rotation = startOrientation_,
         .sprite = {
             .texCoords = {0, 0, 38, 40},
             .size = {39, 41},
-            .texture = 1,
+            .texture = textureId,
         },
         .body = {
             .layers = LayerPlayer,
@@ -44,14 +46,15 @@ Player::Player(GameStage* gameStage, NavIndex startSector, float startOrientatio
     registry_->emplace<ngn::Sprite>(boosterEntity_, ngn::Sprite{
         .texCoords = {88, 0, 100, 10},
         .size{1, 1},
-        .texture = 1,
+        .texture = textureId,
     });
+    registry_->emplace<ngn::DynamicTag>(boosterEntity_);
     ngn::SpriteAnimationBuilder animationBuilder{};
     animationBuilder
-        .addFrame(glm::vec4{88, 0, 102, 11}, 1, 0.05f)
-        .addFrame(glm::vec4{88, 12, 102, 23}, 1, 0.05f)
-        .addFrame(glm::vec4{103, 0, 117, 11}, 1, 0.05f)
-        .addFrame(glm::vec4{103, 12, 117, 23}, 1, 0.05f)
+        .addFrame(glm::vec4{88, 0, 102, 11}, textureId, 0.05f)
+        .addFrame(glm::vec4{88, 12, 102, 23}, textureId, 0.05f)
+        .addFrame(glm::vec4{103, 0, 117, 11}, textureId, 0.05f)
+        .addFrame(glm::vec4{103, 12, 117, 23}, textureId, 0.05f)
         .setRepeat(true)
         ;
     gameStage_->app()->spriteAnimationHandler()->createAnimation(boosterEntity_, animationBuilder);

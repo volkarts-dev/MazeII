@@ -5,7 +5,7 @@
 
 #include "GameStage.hpp"
 #include "gfx/FontCollection.hpp"
-#include "gfx/UiRenderer.hpp"
+#include "gfx/SpriteRenderer.hpp"
 
 namespace {
 
@@ -98,7 +98,7 @@ void Dialog::draw()
         .scale = data_.size,
         .color = {1.0, 1.0, 1.0, 1.0},
         .texCoords = glm::vec4{base, base + data_.size},
-        .texIndex = std::to_underlying(resources_.uiTexture),
+        .texIndex = resources_.uiTexture,
     });
 
     const auto titlePos = pos - centerPos(ngn::FontId{0}, data_.title) + glm::vec2{0, -96};
@@ -135,7 +135,7 @@ void Dialog::drawButton(const glm::vec2& pos, const std::string_view& text, Dial
         .scale = {96, 25},
         .color = {1.0, 1.0, 1.0, 1.0},
         .texCoords = selected ? glm::vec4{352, 256, 448, 281} : glm::vec4{256, 256, 351, 281},
-        .texIndex = std::to_underlying(resources_.uiTexture),
+        .texIndex = resources_.uiTexture,
     });
 
     const auto btnTxtPos = pos - centerPos(ngn::FontId{1}, text);

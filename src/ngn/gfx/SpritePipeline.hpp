@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Macros.hpp"
+#include "gfx/GfxIds.hpp"
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 
@@ -43,7 +44,7 @@ public:
     glm::vec2 scale;
     glm::vec4 color{0.0f, 0.0f, 0.0f, 1.0f};
     glm::vec4 texCoords;
-    uint32_t texIndex;
+    TextureId texIndex;
 
     static auto description()
     {

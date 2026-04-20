@@ -23,7 +23,7 @@ public:
 
 } // namespace
 
-SpriteAnimationBuilder& SpriteAnimationBuilder::addFrame(glm::vec4 coords, uint32_t texture, float time)
+SpriteAnimationBuilder& SpriteAnimationBuilder::addFrame(glm::vec4 coords, TextureId texture, float time)
 {
     frames_.emplace_back(std::move(coords), texture, time);
     return *this;

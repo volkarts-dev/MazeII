@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "gfx/GfxIds.hpp"
 #include <entt/fwd.hpp>
 
 namespace ngn {
@@ -11,7 +12,7 @@ class SpriteAnimationFrame
 {
 public:
     glm::vec4 texCoords;
-    uint32_t texture;
+    TextureId texture;
     float time;
 };
 
@@ -20,7 +21,7 @@ public:
 class SpriteAnimationBuilder
 {
 public:
-    SpriteAnimationBuilder& addFrame(glm::vec4 coords, uint32_t texture, float time);
+    SpriteAnimationBuilder& addFrame(glm::vec4 coords, TextureId texture, float time);
     SpriteAnimationBuilder& setRepeat(bool repeat);
     SpriteAnimationBuilder& setStart(bool start);
 

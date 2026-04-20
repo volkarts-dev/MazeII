@@ -10,6 +10,7 @@
 #include "GameStage.hpp"
 #include "Layers.hpp"
 #include "Math.hpp"
+#include "MazeDelegate.hpp"
 #include "Shots.hpp"
 #include "ai/SteeringHelper.hpp"
 #include "phys/CollisionTests.hpp"
@@ -67,6 +68,8 @@ Enemies::~Enemies()
 
 void Enemies::createEnemy(NavIndex startSector, float startOrientation)
 {
+    const auto textureId = gameStage_->delegate()->resources().spriteTexture;
+
     const auto pos = navigationGraph_->midPoint(startSector);
 
     ActorCreateInfo createInfo{
@@ -75,7 +78,7 @@ void Enemies::createEnemy(NavIndex startSector, float startOrientation)
         .sprite = {
             .texCoords = {39, 0, 84, 35},
             .size = {46, 36},
-            .texture = 1,
+            .texture = textureId,
         },
         .body = {
             .layers = LayerEnemies,

@@ -3,10 +3,13 @@
 
 #include "Board.hpp"
 
+#include "GameStage.hpp"
 #include "Layers.hpp"
 #include "MazeComponents.hpp"
 #include "Application.hpp"
+#include "MazeDelegate.hpp"
 #include "gfx/GfxComponents.hpp"
+#include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
 #include <entt/entt.hpp>
 
@@ -71,9 +74,9 @@ const glm::vec4 ColorLightYellow = {1.0f, 1.0f, 0.5f, 0.2f};
 
 } // namespace
 
-Board::Board(ngn::Application *app) :
-    app_{app} ,
-    registry_{app_->registry()},
+Board::Board(GameStage* gameStage) :
+    gameStage_{gameStage} ,
+    registry_{gameStage_->app()->registry()},
     navigationGraph_{new ngn::NavigationGraph{}}
 {
     createWalls();
@@ -96,7 +99,7 @@ glm::vec2 Board::dimension() const
 
 void Board::createWalls()
 {
-    auto* world = app_->world();
+    auto* world = gameStage_->app()->world();
 
     ngn::BodyCreateInfo wallCreateInfo{
         .layers = LayerWalls,
@@ -163,13 +166,17 @@ void Board::createSprites()
     const glm::vec2 tileSize{32, 32};
     const glm::vec2 tileHalfSize = tileSize / 2.0f;
     const glm::vec2 tileOffset = Offset + tileHalfSize;
+    const auto textureId = gameStage_->delegate()->resources().spriteTexture;
 
-    auto createSprite = [this, &tileSize](const glm::vec2& pos, const glm::vec2& coordsBase)
+    auto createSprite = [this, &tileSize, textureId](const glm::vec2& pos, const glm::vec2& coordsBase)
     {
         const auto e = registry_->create();
         registry_->emplace<ngn::Position>(e, pos);
-        registry_->emplace<ngn::Sprite>(
-                    e, ngn::Sprite{.texCoords{coordsBase, coordsBase + tileSize}, .size = tileSize, .texture = 1});
+        registry_->emplace<ngn::Sprite>(e, ngn::Sprite{
+            .texCoords{coordsBase, coordsBase + tileSize},
+            .size = tileSize,
+            .texture = textureId
+        });
         registry_->emplace<ngn::ActiveTag>(e);
         registry_->emplace<ngn::StaticTag>(e);
     };
@@ -270,7 +277,7 @@ void Board::createNavigationGraph()
     constexpr auto SectorsPerRow = MazeSize * 2 + 1;
     constexpr auto PointsPerRow = SectorsPerRow + 1;
 
-    auto* world = app_->world();
+    auto* world = gameStage_->app()->world();
 
     for (uint32_t y = 0; y < PointsPerRow; y++)
     {

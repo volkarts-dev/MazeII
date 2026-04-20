@@ -42,6 +42,8 @@ void Explosions::doExplosion(const glm::vec2& position, Type type)
     }
     else
     {
+        const auto textureId = gameStage_->delegate()->resources().spriteTexture;
+
         entity = registry_->create();
 
         registry_->emplace<ngn::Position>(entity, position);
@@ -49,17 +51,17 @@ void Explosions::doExplosion(const glm::vec2& position, Type type)
         registry_->emplace<ngn::Sprite>(entity, ngn::Sprite{
             .texCoords = {0, 0, 64, 64},
             .size{64, 64},
-            .texture = 1,
+            .texture = textureId,
         });
 
         ngn::SpriteAnimationBuilder animationBuilder{};
         animationBuilder
-            .addFrame(glm::vec4{0, 137, 9, 146}, 1, 0.1f)
-            .addFrame(glm::vec4{0, 147, 16, 162}, 1, 0.1f)
-            .addFrame(glm::vec4{17, 137, 66, 183}, 1, 0.1f)
-            .addFrame(glm::vec4{115, 137, 166, 193}, 1, 0.1f)
-            .addFrame(glm::vec4{167, 137, 198, 165}, 1, 0.1f)
-            .addFrame(glm::vec4{167, 166, 197, 195}, 1, 0.1f)
+            .addFrame(glm::vec4{0, 137, 9, 146}, textureId, 0.1f)
+            .addFrame(glm::vec4{0, 147, 16, 162}, textureId, 0.1f)
+            .addFrame(glm::vec4{17, 137, 66, 183}, textureId, 0.1f)
+            .addFrame(glm::vec4{115, 137, 166, 193}, textureId, 0.1f)
+            .addFrame(glm::vec4{167, 137, 198, 165}, textureId, 0.1f)
+            .addFrame(glm::vec4{167, 166, 197, 195}, textureId, 0.1f)
             ;
         gameStage_->app()->spriteAnimationHandler()->createAnimation(entity, animationBuilder);
 

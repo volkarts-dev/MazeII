@@ -9,7 +9,6 @@
 #include "phys/PhysComponents.hpp"
 #include "phys/World.hpp"
 #include "gfx/FontMaker.hpp"
-#include "gfx/UiRenderer.hpp"
 #include "gfx/GfxComponents.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "CommonComponents.hpp"
@@ -66,7 +65,7 @@ TestBedStage::TestBedStage(ngn::Application* app) :
     registry->emplace<ngn::Sprite>(player_, ngn::Sprite{
         .texCoords = {0, 0, 64, 64},
         .size{64, 64},
-        .texture = 1,
+        .texture = ngn::TextureId{1},
     });
 
     createInfo.restitution = 1.5f;
@@ -79,7 +78,7 @@ TestBedStage::TestBedStage(ngn::Application* app) :
     registry->emplace<ngn::Sprite>(enemy_, ngn::Sprite{
         .texCoords = {0, 0, 64, 64},
         .size{64, 64},
-        .texture = 1,
+        .texture = ngn::TextureId{1},
     });
 
     createInfo.restitution = 1.5f;
@@ -102,15 +101,15 @@ TestBedStage::TestBedStage(ngn::Application* app) :
     registry->emplace<ngn::Sprite>(animation_, ngn::Sprite{
         .texCoords = {0, 0, 64, 64},
         .size{64, 64},
-        .texture = 1,
+        .texture = ngn::TextureId{1},
     });
 
     ngn::SpriteAnimationBuilder animationBuilder{};
     animationBuilder
-            .addFrame(glm::vec4{0, 0, 67, 67}, 2, 1.0f)
-            .addFrame(glm::vec4{68, 0, 135,  67}, 2, 1.0f)
-            .addFrame(glm::vec4{0, 68, 67, 135}, 2, 1.0f)
-            .addFrame(glm::vec4{68, 68, 135, 135}, 2, 1.0f)
+            .addFrame(glm::vec4{0, 0, 67, 67}, ngn::TextureId{2}, 1.0f)
+            .addFrame(glm::vec4{68, 0, 135,  67}, ngn::TextureId{2}, 1.0f)
+            .addFrame(glm::vec4{0, 68, 67, 135}, ngn::TextureId{2}, 1.0f)
+            .addFrame(glm::vec4{68, 68, 135, 135}, ngn::TextureId{2}, 1.0f)
             .setRepeat(true)
             .setStart(true)
             ;

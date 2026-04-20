@@ -38,10 +38,12 @@ void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
     }
     else
     {
+        const auto textureId = gameStage_->delegate()->resources().spriteTexture;
+
         ActorCreateInfo createInfo{
             .sprite = {
                 .size = {4, 12},
-                .texture = 1,
+                .texture = textureId,
             },
             .body = {
                 .layers = player ? LayerPlayerShots : LayerEnemyShots,
@@ -102,6 +104,8 @@ void Shots::fireLaser(const glm::vec2& position, float rotation, bool player)
 
 void Shots::update(float deltaTime)
 {
+    // TODO Handle game pause for shots
+
     NGN_UNUSED(deltaTime);
 
     auto view = registry_->view<const ngn::Position, ShotTag, ngn::ActiveTag>();

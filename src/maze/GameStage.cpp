@@ -65,7 +65,7 @@ void GameStage::onActivate()
 
     // ****************************************************
 
-    board_ = new Board{app_};
+    board_ = new Board{this};
 
     // ****************************************************
 
@@ -345,7 +345,7 @@ void GameStage::onDraw(float deltaTime)
         .scale = glm::vec2{100, 100},
         .color = {1.0f, 1.0f, 1.0f, 1.0f},
         .texCoords = glm::vec4{0, 0, 100, 100},
-        .texIndex = static_cast<uint32_t>(overviewMapTexture_),
+        .texIndex = overviewMapTexture_,
     });
 
     // ****************************************************

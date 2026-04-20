@@ -9,7 +9,6 @@
 
 namespace ngn {
 
-class Application;
 class NavigationGraph;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
@@ -18,10 +17,12 @@ class DebugRenderer;
 
 } // namespace ngn
 
+class GameStage;
+
 class Board
 {
 public:
-    Board(ngn::Application* app);
+    Board(GameStage* gameStage);
     ~Board();
 
     glm::vec2 dimension() const;
@@ -37,7 +38,7 @@ private:
     void createNavigationGraph();
 
 private:
-    ngn::Application* app_;
+    GameStage* gameStage_;
     entt::registry* registry_;
 
     std::vector<entt::entity> walls_;

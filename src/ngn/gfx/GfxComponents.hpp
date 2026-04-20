@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "gfx/GfxIds.hpp"
 #include <glm/glm.hpp>
 
 namespace ngn {
@@ -13,7 +14,7 @@ public:
     glm::vec4 color{1.0, 1.0, 1.0, 1.0};
     glm::vec4 texCoords{};
     glm::vec2 size{1, 1};
-    uint32_t texture{};
+    TextureId texture{};
 };
 
 } // namespace ngn

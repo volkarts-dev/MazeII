@@ -18,7 +18,8 @@ namespace ngn {
 SpriteRenderer::SpriteRenderer(Renderer* renderer, uint32_t batchSize) :
     renderer_{renderer},
     spritePipeline_{new SpritePipeline{renderer_}},
-    fontCollection_{}
+    fontCollection_{},
+    fontImageId_{},
 {
     BufferConfig uniformBufferConfig{
         renderer_,
@@ -278,7 +279,7 @@ void SpriteRenderer::renderText(FontId font, std::string_view text, glm::vec2 po
             .scale = glyph.size,
             .color = {1.0, 1.0, 1.0, 1.0},
             .texCoords = glyph.texCoords,
-            .texIndex = std::to_underlying(fontImageId_),
+            .texIndex = fontImageId_,
         });
 
         pos.x += glyph.advance;

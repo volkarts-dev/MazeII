@@ -90,6 +90,7 @@ private:
     FontCollection* fontCollection_;
     TextureId fontImageId_;
     std::array<Batch, MaxFramesInFlight> batches_;
+    uint32_t staticCount_;
     uint32_t maxRenderedSptrites_;
 
     NGN_DISABLE_COPY_MOVE(SpriteRenderer)
