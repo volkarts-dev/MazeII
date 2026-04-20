@@ -57,6 +57,8 @@ Application::Application(ApplicationDelegate* delegate) :
     nextStage_{},
     exitCode_{0}
 {
+    NGN_INSTRUMENTATION_MAIN_START();
+
     log::set_level(log::level::trace);
 
     if (!glfwInit())
@@ -205,8 +207,6 @@ int Application::exec()
     Timer statTimer;
     double frameCount{};
 
-    NGN_INSTRUMENTATION_MAIN_START();
-
     while (!glfwWindowShouldClose(window_))
     {
         frameMemoryArena_->reset();
@@ -234,13 +234,16 @@ int Application::exec()
         statTimer.update(deltaTime);
 
 #if defined(NGN_ENABLE_INSTRUMENTATION)
-        if (const auto stat = statTimer.elapsed(); frameCount >= 5000.0)
+        if (frameCount >= 100000.0)
+        {
+            const auto elapsedTime = statTimer.elapsedTime();
 #else
         if (const auto stat = statTimer.isElapsed(5.0f); stat.first)
-#endif
         {
+            const auto elapsedTime = stat.second;
+#endif
             ngn::log::info("FPS: {:.1f}, F-MEM: {}/{}, alloc: {} ({}), dealloc: {} ({})",
-               frameCount / stat.second,
+               frameCount / elapsedTime,
                Bytes{frameMemoryArena_->allocated()}, Bytes{frameMemoryArena_->capacity()},
                Bytes{frameMemoryArena_->statAllocatedSize()}, frameMemoryArena_->statAllocatedCount(),
                Bytes{frameMemoryArena_->statDeallocatedSize()}, frameMemoryArena_->statDeallocatedCount()

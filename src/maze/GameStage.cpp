@@ -231,9 +231,13 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
                 killEnemy(e);
             }
         }
-#endif
-#endif
     }
+#endif
+#else
+    NGN_UNUSED(action);
+    NGN_UNUSED(key);
+    NGN_UNUSED(mods);
+#endif
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     if (action == ngn::InputAction::Press)
