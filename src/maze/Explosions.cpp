@@ -64,6 +64,7 @@ void Explosions::doExplosion(const glm::vec2& position, Type type)
         gameStage_->app()->spriteAnimationHandler()->createAnimation(entity, animationBuilder);
 
         registry_->emplace<ngn::Sound>(entity);
+        registry_->emplace<ngn::DynamicTag>(entity);
         registry_->emplace<ExplosionTag>(entity);
     }
 

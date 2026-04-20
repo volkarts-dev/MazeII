@@ -171,6 +171,7 @@ void Board::createSprites()
         registry_->emplace<ngn::Sprite>(
                     e, ngn::Sprite{.texCoords{coordsBase, coordsBase + tileSize}, .size = tileSize, .texture = 1});
         registry_->emplace<ngn::ActiveTag>(e);
+        registry_->emplace<ngn::StaticTag>(e);
     };
 
     // outer sprites

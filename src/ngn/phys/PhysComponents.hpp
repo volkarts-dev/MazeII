@@ -7,6 +7,14 @@
 
 namespace ngn {
 
+class DynamicTag
+{
+};
+
+class StaticTag
+{
+};
+
 class Body
 {
 public:

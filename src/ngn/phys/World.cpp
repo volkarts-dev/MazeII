@@ -69,6 +69,11 @@ void World::createBody(entt::entity entity, const BodyCreateInfo& createInfo, Sh
         }
         registry_->emplace<LinearVelocity>(entity);
         registry_->emplace<AngularVelocity>(entity);
+        registry_->emplace<DynamicTag>(entity);
+    }
+    else
+    {
+        registry_->emplace<StaticTag>(entity);
     }
 
     if (const auto* pos = registry_->try_get<Position>(entity); !pos)
@@ -255,7 +260,7 @@ MovedList World::updateTree()
         dynamicTree_->updateObject(nodeInfo.nodeId, calculateAABB(shape));
 
         // only dynamic bodies can move
-        if (registry_->all_of<LinearVelocity>(e))
+        if (registry_->all_of<DynamicTag>(e))
             moved.push_back(nodeInfo.nodeId);
 
         registry_->remove<TransformChangedTag>(e);

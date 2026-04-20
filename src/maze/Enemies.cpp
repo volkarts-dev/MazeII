@@ -434,7 +434,7 @@ Enemies::FindObstacleResult Enemies::findObstacle(entt::entity self, const glm::
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
         registry_->get<EnemyDebugState>(self).closestCollision = closestCollision;
 #endif
-        const auto dynamic = registry_->all_of<const ngn::Body, const ngn::LinearVelocity>(closestEntity);
+        const auto dynamic = registry_->all_of<ngn::DynamicTag>(closestEntity);
 
         const auto ot = target - origin;
         const auto op = closestCollision.point - origin;
