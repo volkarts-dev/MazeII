@@ -23,8 +23,10 @@ ngn::ApplicationConfig TestBedDelegate::applicationConfig(ngn::Application* app)
         .spriteRenderer = true,
         .spriteBatchCount = 1024,
 
-        .fontRenderer = true,
-        .fontBatchCount = 1024,
+        .uiRenderer = true,
+        .uiBatchCount = 1024,
+
+        .spriteAnimator = true,
 
         .audio = false,
 

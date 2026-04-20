@@ -13,7 +13,6 @@
 #include "gfx/Dialog.hpp"
 #include "gfx/Image.hpp"
 #include "gfx/OverviewMap.hpp"
-#include "gfx/UiRenderer.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"

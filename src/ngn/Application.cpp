@@ -8,7 +8,6 @@
 #include "audio/Audio.hpp"
 #include "gfx/CommandBuffer.hpp"
 #include "gfx/FontMaker.hpp"
-#include "gfx/UiRenderer.hpp"
 #include "gfx/Pipeline.hpp"
 #include "gfx/SpriteAnimator.hpp"
 #include "gfx/SpriteRenderer.hpp"
@@ -47,8 +46,8 @@ Application::Application(ApplicationDelegate* delegate) :
     renderer_{},
     frameMemoryArena_{},
     spriteRenderer_{},
-    spriteAnimationHandler_{},
     uiRenderer_{},
+    spriteAnimationHandler_{},
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     debugRenderer_{},
 #endif
@@ -88,13 +87,16 @@ Application::Application(ApplicationDelegate* delegate) :
     if (config.spriteRenderer)
     {
         spriteRenderer_ = new SpriteRenderer{renderer_, config.spriteBatchCount};
-
-        spriteAnimationHandler_ = new SpriteAnimator{registry_};
     }
 
-    if (config.fontRenderer)
+    if (config.uiRenderer)
     {
-        uiRenderer_ = new ngn::UiRenderer{renderer_, config.fontBatchCount};
+        uiRenderer_ = new ngn::SpriteRenderer{renderer_, config.uiBatchCount};
+    }
+
+    if (config.spriteAnimator)
+    {
+        spriteAnimationHandler_ = new SpriteAnimator{registry_};
     }
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)

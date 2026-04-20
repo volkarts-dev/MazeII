@@ -9,7 +9,7 @@
 #include <entt/signal/delegate.hpp>
 
 namespace ngn {
-class UiRenderer;
+class SpriteRenderer;
 } // namespace ngn
 
 class GameStage;
@@ -69,7 +69,7 @@ private:
 
 private:
     GameStage* gameStage_;
-    ngn::UiRenderer* uiRenderer_;
+    ngn::SpriteRenderer* uiRenderer_;
     const Resources& resources_;
 
     DialogData data_{};

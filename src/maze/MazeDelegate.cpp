@@ -5,7 +5,6 @@
 
 #include "audio/Audio.hpp"
 #include "gfx/FontMaker.hpp"
-#include "gfx/UiRenderer.hpp"
 #include "gfx/SpriteRenderer.hpp"
 #include "GameStage.hpp"
 #include "MazeAssets.hpp"
@@ -26,8 +25,10 @@ ngn::ApplicationConfig MazeDelegate::applicationConfig(ngn::Application* app)
         .spriteRenderer = true,
         .spriteBatchCount = 1024,
 
-        .fontRenderer = true,
-        .fontBatchCount = 128,
+        .uiRenderer = true,
+        .uiBatchCount = 128,
+
+        .spriteAnimator = true,
 
         .audio = true,
 
@@ -58,8 +59,8 @@ void MazeDelegate::onDone(ngn::Application* app)
     delete gameStage_;
     // delete loadingStage_;
 
-    ngn::log::debug("Max rendered sprites: {}", app->spriteRenderer()->maxRenderedSptrites());
-    ngn::log::debug("Max rendered font glyphs: {}", app->uiRenderer()->maxRenderedSptrites());
+    ngn::log::debug("Max rendered sprites: {}", app->spriteRenderer()->maxRenderedSprites());
+    ngn::log::debug("Max rendered font glyphs: {}", app->uiRenderer()->maxRenderedSprites());
 }
 
 void MazeDelegate::loadAssets(ngn::Application* app)

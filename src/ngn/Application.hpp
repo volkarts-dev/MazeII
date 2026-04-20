@@ -21,7 +21,6 @@ class FontMaker;
 class MemoryArena;
 class SpriteRenderer;
 class SpriteAnimator;
-class UiRenderer;
 class World;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
@@ -43,8 +42,10 @@ public:
     bool spriteRenderer{};
     uint32_t spriteBatchCount{};
 
-    bool fontRenderer{};
-    uint32_t fontBatchCount{};
+    bool uiRenderer{};
+    uint32_t uiBatchCount{};
+
+    bool spriteAnimator{};
 
     bool audio{};
 
@@ -102,8 +103,8 @@ public:
     World* world() const { return world_; }
 
     SpriteRenderer* spriteRenderer() const { return spriteRenderer_; }
+    SpriteRenderer* uiRenderer() const { return uiRenderer_; }
     SpriteAnimator* spriteAnimationHandler() const { return spriteAnimationHandler_; }
-    UiRenderer* uiRenderer() const { return uiRenderer_; }
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer() const { return debugRenderer_; }
 #endif
@@ -141,8 +142,8 @@ private:
     MemoryArena* frameMemoryArena_;
 
     SpriteRenderer* spriteRenderer_;
+    SpriteRenderer* uiRenderer_;
     SpriteAnimator* spriteAnimationHandler_;
-    UiRenderer* uiRenderer_;
 
 #if defined(NGN_ENABLE_VISUAL_DEBUGGING)
     DebugRenderer* debugRenderer_;
