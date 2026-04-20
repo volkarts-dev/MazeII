@@ -124,6 +124,10 @@ void GameStage::onActivate()
 
     // ****************************************************
 
+    app_->spriteRenderer()->prepareStaticSpriteComponents(registry_);
+
+    // ****************************************************
+
     state_ = State::Active;
 
     // ****************************************************

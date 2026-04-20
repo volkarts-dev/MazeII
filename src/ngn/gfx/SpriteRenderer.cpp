@@ -5,11 +5,12 @@
 
 #include "Buffer.hpp"
 #include "CommonComponents.hpp"
-#include "CommandBuffer.hpp"
 #include "Instrumentation.hpp"
-#include "gfx/FontCollection.hpp"
+#include "CommandBuffer.hpp"
 #include "gfx/GfxComponents.hpp"
+#include "gfx/FontCollection.hpp"
 #include "gfx/Renderer.hpp"
+#include "phys/PhysComponents.hpp"
 #include <entt/entt.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -20,6 +21,9 @@ SpriteRenderer::SpriteRenderer(Renderer* renderer, uint32_t batchSize) :
     spritePipeline_{new SpritePipeline{renderer_}},
     fontCollection_{},
     fontImageId_{},
+    batches_{},
+    staticCount_{},
+    maxRenderedSprites_{}
 {
     BufferConfig uniformBufferConfig{
         renderer_,
@@ -286,13 +290,48 @@ void SpriteRenderer::renderText(FontId font, std::string_view text, glm::vec2 po
     }
 }
 
+#if 0
+// Splitting static and dynamic sprites leads to reduced upload time to the GPU
+// but the draw call tooks longer. As this need more invastivation, disbale it for now
+
+void SpriteRenderer::prepareStaticSpriteComponents(entt::registry* registry)
+{
+    for (uint32_t f = 0; f < MaxFramesInFlight; f++)
+    {
+        batches_[f].count = 0;
+        renderSpriteComponentsImpl<ngn::StaticTag>(registry, f);
+    }
+    staticCount_ = batches_[0].count;
+}
+
 void SpriteRenderer::renderSpriteComponents(entt::registry* registry)
+{
+    renderSpriteComponentsImpl<ngn::DynamicTag>(registry, renderer_->currentFrame());
+}
+
+#else
+// This enables the old behavior: Skip upload static sprite at startup and upload all sprites at every frame
+
+void SpriteRenderer::prepareStaticSpriteComponents(entt::registry* registry)
+{
+    NGN_UNUSED(registry);
+}
+
+void SpriteRenderer::renderSpriteComponents(entt::registry* registry)
+{
+    renderSpriteComponentsImpl(registry, renderer_->currentFrame());
+}
+
+#endif
+
+template<typename... TagsT>
+void SpriteRenderer::renderSpriteComponentsImpl(entt::registry* registry, uint32_t frame)
 {
     NGN_INSTRUMENT_FUNCTION();
 
-    auto& batch = batches_[renderer_->currentFrame()];
+    auto& batch = batches_[frame];
 
-    auto sprites = registry->view<const Position, const Sprite, ActiveTag>();
+    auto sprites = registry->view<const Position, const Sprite, ActiveTag, TagsT...>();
     for (auto [e, pos, spr] : sprites.each())
     {
         assert(batch.count < batch.buffer->size() / sizeof(SpriteVertex));
@@ -329,10 +368,10 @@ void SpriteRenderer::draw(CommandBuffer* commandBuffer)
     commandBuffer->bindVertexBuffer(batch.buffer);
     commandBuffer->draw(batch.count);
 
-    if (batch.count > maxRenderedSptrites_)
-        maxRenderedSptrites_ = batch.count;
+    if (batch.count > maxRenderedSprites_)
+        maxRenderedSprites_ = batch.count;
 
-    batch.count = 0;
+    batch.count = staticCount_;
 }
 
 } // namespace ngn
