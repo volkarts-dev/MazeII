@@ -2,15 +2,15 @@
 
 ## Project Overview
 
-**MazeII** is a simple arcade like game written in C++ using Vulkan for graphics, OpenAL for audio, and GLFW for windowing. It uses C++20 features but is compiled in C++23 mode to enhance securty. It's built with CMake and ninja.
-It's primariy target platform is x64 Linux. It should be possiilbe to compile for other platforms and architectures with some modifications.
+**MazeII** is a simple arcade-like game written in C++ using Vulkan for graphics, OpenAL for audio, and GLFW for windowing. It is compiled in C++23 mode. It's built with CMake (Ninja generator recommended).
+Its primary target platform is x64 Linux. It should be possible to compile for other platforms and architectures with some modifications.
 
 - **Repository Size**: ~700MB (with submodules)
 - **Language**: C++23
-- **Build System**: CMake 3.25+ required
-- **Target Platform**: Linux (tested on Ubuntu 24.04)
+- **Build System**: CMake
+- **Target Platform**: Linux (tested on Debian 13)
 - **Architecture**: x86-64
-- **Compiler**: GCC 13.3.0+ or Clang with C++23 support
+- **Compiler**: GCC or Clang with C++23 support
 - **Graphics**: Vulkan API
 - **Audio**: OpenAL
 - **Windowing**: GLFW
@@ -41,10 +41,12 @@ sudo apt-get install -y \
 ```
 
 **Package Versions**:
-- Freetype: 2.13+ required
-- OpenAL: 1.24+ required
-- Vulkan: Any modern version
-- glslc: Required for shader compilation
+- CMake 3.25+
+- GCC 14+ or Clang 19+
+- Freetype: 2.13+
+- OpenAL: 1.24+
+- Vulkan: 1.1+
+- glslc: 15+
 
 ### Build Process
 
@@ -68,23 +70,23 @@ sudo apt-get install -y \
    cmake ..
    ```
    
-   Additional build options:
-   - `-DNGN_ENABLE_GRAPHICS_DEBUG_LAYER=ON` - Enable Vulkan/OpenGL debug layers
-   - `-DNGN_ENABLE_VISUAL_DEBUGGING=ON` - Enable visual display of some internal state of the engine
+   Additional build options (all default to `OFF`, defined in the root `CMakeLists.txt`):
+   - `-DNGN_ENABLE_GRAPHICS_DEBUG_LAYER=ON` - Enable debug layers in Vulkan/OpenGL
+   - `-DNGN_ENABLE_VISUAL_DEBUGGING=ON` - Enable visual display of some internal state of the engine (e.g. physics AABBs)
    - `-DNGN_ENABLE_INSTRUMENTATION=ON` - Enable performance measurement (not to be used in regular builds)
+   - `-DNGN_ENABLE_DEVELOPER_HACKS=ON` - Enable some hacks to support development
    - `-DCMAKE_BUILD_TYPE=Release` - Release build (default)
    - `-DCMAKE_BUILD_TYPE=Debug` - Debug build
 
 4. **Build the Project**:
    ```bash
-   cmake --build . -j$(nproc)
+   cmake --build .
    ```
    Expected build time: ~2 minutes on modern hardware
    
-   **IMPORTANT**: The first build may fail with shader compilation errors if the `src/ngn/assets/shader` directory doesn't exist. If this happens:
    ```bash
    mkdir -p src/ngn/assets/shader
-   cmake --build . -j$(nproc)
+   cmake --build .
    ```
 
 5. **Run the Game**:
@@ -105,8 +107,7 @@ rm -rf build
 mkdir build
 cd build
 cmake ..
-mkdir -p src/ngn/assets/shader  # Prevent shader compilation failure
-cmake --build . -j$(nproc)
+cmake --build .
 ```
 
 ## Project Architecture
@@ -132,7 +133,6 @@ MazeII/
 │   ├── SimdSupport.cmake         # AVX2 SIMD enablement
 │   └── TargetAssets.cmake        # Asset bundling system
 ├── src/
-│   ├── ext/              # Third-party library wrappers (STB image/vorbis)
 │   ├── maze/             # Main game executable source
 │   ├── ngn/              # Game engine library
 │   └── testbed/          # Testing/debugging executable
@@ -147,21 +147,33 @@ MazeII/
 
 **src/maze/** - Main Game (executable: `build/src/maze/maze`)
 - `Main.cpp` - Entry point
-- `MazeDelegate.*` - Game initialization and lifecycle
-- `GameStage.*` - Main game logic
-- `Level.*` - Level generation and management
-- `Enemies.*`, `Shots.*`, `Explosions.*` - Game entities
+- `MazeDelegate.*` - Game initialization and lifecycle (application delegate)
+- `GameStage.*` - Main in-game stage/logic
+- `Board.*` - Playfield/maze board
+- `Player.*`, `Enemies.*`, `Shots.*`, `Explosions.*` - Game systems
+- `MazeComponents.hpp`, `Layers.hpp` - ECS components and rendering/physics layer definitions
+- `gfx/` - Game-specific UI (`Dialog`, `OverviewMap`)
 - `assets/` - Game assets (textures, sounds, fonts)
+- `MazeAssets.hpp.in` - Asset manifest template processed by `assetc`
 
 **src/ngn/** - Game Engine Library (static library: `build/src/ngn/libngn.a`)
-- `Application.*` - Application framework
-- `gfx/` - Graphics subsystem (Vulkan renderer, sprites, UI)
+- `Application.*` - Application framework / main loop
+- `Timer.*`, `Logging.*`, `Instrumentation.*`, `Allocators.*` - Core utilities
+- `Input.hpp`, `Math.hpp`, `Types.hpp`, `Macros.hpp`, `CommonComponents.hpp`
+- `gfx/` - Graphics subsystem (Vulkan)
   - `Renderer.*` - Main Vulkan renderer
-  - `SpriteRenderer.*`, `UiRenderer.*` - Specialized renderers
-  - `assets/shader/` - GLSL shaders (compiled to SPIR-V)
-- `audio/` - Audio subsystem (OpenAL)
-- `phys/` - Physics engine (collision detection, dynamics)
-- `utils/` - Utility classes
+  - `SpriteRenderer.*` / `SpritePipeline.*` - Sprite rendering
+  - `DebugRenderer.*` / `DebugPipeline.*` - Visual debug drawing (guarded by `NGN_ENABLE_VISUAL_DEBUGGING`)
+  - `FontCollection.*`, `FontMaker.*` - Freetype-based font handling
+  - `Buffer.*`, `Image.*`, `Pipeline.*`, `CommandBuffer.*`, `RenderTarget.*` - Vulkan wrappers
+  - `SpriteAnimator.*`, `SpriteAnimation.hpp` - Animation
+- `audio/` - Audio subsystem (`Audio`, `AudioBuffer`, `Sound`) on OpenAL
+- `phys/` - Physics engine (`World`, `Solver`, `DynamicTree`, `Shapes`, `Collision*`, `Intersection*`, `Functions`, `Layers`)
+- `ai/` - AI helpers (`NavigationGraph`, `SteeringHelper`)
+- `ext/` - Third-party library wrappers (`StbImage`, `StbVorbis`)
+- `utils/` - Utility containers (`Array`, `StaticVector`)
+- `assets/shader/` - GLSL shaders (`Sprite.{vert,geom,frag}`, `Debug.{vert,frag}`) compiled to SPIR-V
+- `Assets.hpp.in` - Engine asset manifest template
 
 **src/testbed/** - Testing Application (executable: `build/src/testbed/testbed`)
 
@@ -215,21 +227,13 @@ To test changes:
 ### Issue: Missing system packages (Freetype, OpenAL, Vulkan)
 **Solution**: Install all system dependencies listed above
 
-### Issue: "glslc: error: cannot open output file" with "No such file or directory"
-**Cause**: Missing shader output directory
-**Solution**: `mkdir -p build/src/ngn/assets/shader` then rebuild
-
-### Issue: Compilation error in World.cpp about 'aabb' not declared
-**Cause**: Known bug in code (see Known Build Issue section)
-**Solution**: Use `-DNGN_ENABLE_VISUAL_DEBUGGING=ON` flag
-
 ### Issue: Large files error when pushing (PCH files exceed GitHub limit)
 **Cause**: Build artifacts in commits
 **Solution**: Ensure `/build/` is in `.gitignore` and run `git rm -r --cached build`
 
 ## Validation Pipeline
 
-Currently there are **no GitHub Actions workflows** or CI/CD configured. When modifying the project:
+There is **no build/test CI**. When modifying the project:
 
 1. **Build validation**: Ensure clean build succeeds
 2. **Runtime validation**: Run both executables (maze, testbed)
@@ -249,8 +253,6 @@ Currently there are **no GitHub Actions workflows** or CI/CD configured. When mo
 1. **ALWAYS install system dependencies before building** - The build will fail without them
 2. **ALWAYS initialize submodules first** - Third-party code is not in the repository
 3. **ALWAYS use out-of-source builds** - Create a `build/` directory; in-source builds are blocked
-4. **ALWAYS use the `-DNGN_ENABLE_VISUAL_DEBUGGING=ON` flag** until the aabb bug is fixed
-5. **NEVER commit build artifacts** - `/build/` directory is in .gitignore
-6. **Shader directory creation**: May need `mkdir -p build/src/ngn/assets/shader` on first build
-7. **No tests to run**: Validation must be done by running the executables manually
-8. **Trust these instructions**: The build process has been validated and documented based on actual execution. Only search for additional information if these instructions are incomplete or incorrect.
+4. **NEVER commit build artifacts** - `/build/` directory is in .gitignore
+5. **No tests to run**: Validation must be done by running the executables manually
+6. **Trust these instructions**: The build process has been validated and documented based on actual execution. Only search for additional information if these instructions are incomplete or incorrect.
