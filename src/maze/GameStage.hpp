@@ -14,6 +14,7 @@ class Sampler;
 } // namespace ngn
 
 class Dialog;
+class DialogData;
 class Enemies;
 class Explosions;
 class KeyboardHandler;
@@ -86,6 +87,7 @@ public:
 #endif
 
 private:
+    void showDialog(const DialogData& data);
     void updateProjections();
     void handleAllEnemiesDown();
     void resetGame();

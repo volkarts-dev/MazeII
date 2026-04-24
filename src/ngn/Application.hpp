@@ -110,6 +110,9 @@ public:
 #endif
     Audio* audio() const { return audio_; }
 
+    bool isPaused() const { return paused_; }
+    void setPaused(bool paused) { paused_ = paused; }
+
     void activateStage(ApplicationStage* stage);
 
     void quit(int exitCode = 0);
@@ -158,6 +161,7 @@ private:
     ApplicationStage* nextStage_;
 
     int exitCode_;
+    bool paused_;
 
     NGN_DISABLE_COPY_MOVE(Application)
 };

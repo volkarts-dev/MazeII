@@ -142,7 +142,7 @@ void GameStage::onActivate()
         .defaultButton = DialogButton::One,
     };
     data.button2Callback.connect<&GameStage::triggerNormalQuit>(this);
-    dialog_->show(data);
+    showDialog(data);
 #endif
 }
 
@@ -208,7 +208,7 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
                 .button1 = "OK",
                 .defaultButton = DialogButton::One,
             };
-            dialog_->show(data);
+            showDialog(data);
             return;
         }
         else if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_P)
@@ -222,7 +222,7 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
                 .defaultButton = DialogButton::One,
             };
             data.button2Callback.connect<&GameStage::triggerNormalQuit>(this);
-            dialog_->show(data);
+            showDialog(data);
             return;
         }
 
@@ -268,12 +268,15 @@ void GameStage::onUpdate(float deltaTime)
     {
         // callbacks already fired
         dialog_->reset();
+        app_->setPaused(false);
     }
     else if (dialog_->isActive())
     {
         dialog_->update(deltaTime);
-        return;
     }
+
+    if (app_->isPaused())
+        return;
 
     if (state_ == State::LevelEnded)
     {
@@ -300,7 +303,7 @@ void GameStage::onUpdate(float deltaTime)
             }
             data.button1Callback.connect<&GameStage::resetGame>(this);
             data.button2Callback.connect<&GameStage::triggerNormalQuit>(this);
-            dialog_->show(data);
+            showDialog(data);
         }
         return;
     }
@@ -404,6 +407,12 @@ bool GameStage::testInSight(const glm::vec2& pos)
 void GameStage::triggerNormalQuit()
 {
     app_->quit(0);
+}
+
+void GameStage::showDialog(const DialogData& data)
+{
+    app_->setPaused(true);
+    dialog_->show(data);
 }
 
 void GameStage::updateProjections()

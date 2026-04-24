@@ -55,7 +55,8 @@ Application::Application(ApplicationDelegate* delegate) :
     world_{},
     stage_{},
     nextStage_{},
-    exitCode_{0}
+    exitCode_{0},
+    paused_{}
 {
     NGN_INSTRUMENTATION_MAIN_START();
 
@@ -277,6 +278,9 @@ void Application::update(float deltaTime)
     NGN_INSTRUMENT_FUNCTION();
 
     stage_->onUpdate(deltaTime);
+
+    if (paused_)
+        return;
 
     world_->update(deltaTime);
 
