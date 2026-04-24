@@ -543,12 +543,12 @@ void Renderer::copyBuffer(Buffer* src, Buffer* dest, std::size_t size, std::size
     endImmediateCommands(commandBuffer);
 }
 
-void Renderer::copyBuffer(Buffer* src, Image* dest, vk::Offset2D offset, vk::Extent2D size)
+void Renderer::copyBuffer(Buffer* src, Image* dest, vk::Extent2D size, std::size_t srcOff, vk::Offset2D dstOff)
 {
     auto commandBuffer = beginImmediateCommands();
 
     vk::BufferImageCopy region{
-        .bufferOffset = 0, // TODO support buffer offset
+        .bufferOffset = srcOff,
         .bufferRowLength = 0,
         .bufferImageHeight = 0,
         .imageSubresource = {
@@ -557,7 +557,7 @@ void Renderer::copyBuffer(Buffer* src, Image* dest, vk::Offset2D offset, vk::Ext
             .baseArrayLayer = 0,
             .layerCount = 1,
         },
-        .imageOffset = {offset.x, offset.y, 0},
+        .imageOffset = {dstOff.x, dstOff.y, 0},
         .imageExtent = {size.width, size.height, 1},
     };
     commandBuffer.copyBufferToImage(src->handle(), dest->handle(), vk::ImageLayout::eTransferDstOptimal, region);

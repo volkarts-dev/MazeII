@@ -84,7 +84,7 @@ public:
     void waitForDevice();
     uint32_t findMemoryType(uint32_t memoryTypes, vk::MemoryPropertyFlags memoryFlags);
     void copyBuffer(Buffer* src, Buffer* dest, std::size_t size, std::size_t srcOff = 0, std::size_t dstOff = 0);
-    void copyBuffer(Buffer* src, Image* dest, vk::Offset2D offset, vk::Extent2D size);
+    void copyBuffer(Buffer* src, Image* dest, vk::Extent2D size, std::size_t srcOff, vk::Offset2D dstOff);
     void transitionImageLayout(Image* image, vk::ImageLayout srcLayout, vk::ImageLayout destLayout);
 
 private:

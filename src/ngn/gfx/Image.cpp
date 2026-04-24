@@ -100,7 +100,6 @@ Image::Image(const ImageLoader& loader) :
         .sharingMode = vk::SharingMode::eExclusive,
         .initialLayout = vk::ImageLayout::eUndefined,
     };
-    // FIXME vk::ImageUsageFlagBits::eTransferDst is not needed when we have no data
 
     image_ = renderer_->device().createImage(createInfo);
 
@@ -120,7 +119,7 @@ Image::Image(const ImageLoader& loader) :
     if (loader.buffer_)
     {
         renderer_->transitionImageLayout(this, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-        renderer_->copyBuffer(loader.buffer_, this, {}, {loader.width_, loader.height_});
+        renderer_->copyBuffer(loader.buffer_, this, {loader.width_, loader.height_}, 0, {});
         renderer_->transitionImageLayout(this, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 }
