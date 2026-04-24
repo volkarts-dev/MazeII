@@ -235,8 +235,8 @@ void GameStage::onKeyEvent(ngn::InputAction action, int key, ngn::InputMods mods
                 killEnemy(e);
             }
         }
-    }
 #endif
+    }
 #else
     NGN_UNUSED(action);
     NGN_UNUSED(key);
