@@ -37,7 +37,7 @@ void resolveCollision(entt::registry* registry, const CollisionInfo& collision)
     if (r > 0.0f) // bodies are separating
         r = -r;
 
-    float e = glm::max(1.0f, glm::max(bodyA->restitution, bodyB->restitution));
+    float e = glm::max(bodyA->restitution, bodyB->restitution);
 
     float invMassSum = bodyA->invMass + bodyB->invMass;
 
