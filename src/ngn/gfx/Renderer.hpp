@@ -61,6 +61,14 @@ public:
     std::vector<vk::PresentModeKHR> presentModes;
 };
 
+class DescriptorSetAllocationInfo
+{
+public:
+    std::span<vk::DescriptorSetLayoutBinding> bindings;
+    vk::DescriptorSetLayout layout;
+    uint32_t count;
+};
+
 class Renderer
 {
 public:
@@ -75,7 +83,8 @@ public:
     void triggerFramebufferResized() { framebufferResized_ = true; }
     uint32_t currentFrame() const { return currentFrame_; }
     CommandBuffer* currentCommandBuffer() { return commandBuffers_[currentFrame_]; }
-    const vk::DescriptorPool& descriptorPool() const { return descriptorPool_; }
+
+    std::vector<vk::DescriptorSet> allocateDescriptorSets(const DescriptorSetAllocationInfo& allocInfo);
 
     uint32_t startFrame();
     void endFrame(uint32_t imageIndex);
@@ -98,11 +107,11 @@ private:
     void createSyncObjects();
     void createCommandPools();
     void createCommandBuffers();
-    void createDescriptorPool();
 
     void destroySwapChain();
     void recreateSwapChain();
 
+    vk::DescriptorPool createDescriptorPool(const DescriptorSetAllocationInfo& allocInfo);
     uint32_t calcDeviceScore(vk::PhysicalDevice device) const;
     DeviceQueueFamilies queryQueueFamilies(vk::PhysicalDevice device) const;
     DeviceSurfaceDetails queryDeviceSurfaceDetails(vk::PhysicalDevice device) const;
@@ -139,7 +148,10 @@ private:
     vk::CommandPool commandPool_;
     vk::CommandPool immediateCommandPool_;
     std::array<CommandBuffer*, MaxFramesInFlight> commandBuffers_;
-    vk::DescriptorPool descriptorPool_;
+
+    std::unordered_map<vk::DescriptorType, uint32_t> descriptorPoolSizes_;
+    uint32_t descriptorMaxSets_;
+    std::vector<vk::DescriptorPool> descriptorPools_;
 
     uint32_t currentFrame_;
     bool framebufferResized_;

@@ -196,17 +196,11 @@ Pipeline::Pipeline(const PipelineConfig& config) :
 
     // ****************************************************
 
-    std::array<vk::DescriptorSetLayout, MaxFramesInFlight> descriptorSetLayouts;
-    for (uint32_t i = 0; i < MaxFramesInFlight; i++)
-    {
-        descriptorSetLayouts[i] = descriptorSetLayout_;
-    };
-    vk::DescriptorSetAllocateInfo descriptorSetAllocInfo{
-        .descriptorPool = renderer_->descriptorPool(),
-    };
-    descriptorSetAllocInfo.setSetLayouts(descriptorSetLayouts);
-
-    descriptorSets_ = renderer_->device().allocateDescriptorSets(descriptorSetAllocInfo);
+    descriptorSets_ = renderer_->allocateDescriptorSets({
+        .bindings = config.descriptorSetLayout,
+        .layout = descriptorSetLayout_,
+        .count = MaxFramesInFlight,
+    });
 
     // ****************************************************
 

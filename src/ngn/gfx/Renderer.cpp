@@ -65,6 +65,7 @@ constexpr std::array DeviceExtensions{
 
 Renderer::Renderer(GLFWwindow* window) :
     window_{window},
+    descriptorMaxSets_{},
     currentFrame_{},
     framebufferResized_{false}
 {
@@ -78,7 +79,6 @@ Renderer::Renderer(GLFWwindow* window) :
     createSyncObjects();
     createCommandPools();
     createCommandBuffers();
-    createDescriptorPool();
 }
 
 void Renderer::createInstance()
@@ -372,53 +372,14 @@ void Renderer::createCommandBuffers()
     }
 }
 
-void Renderer::createDescriptorPool()
-{
-    // TODO Descriptor pool size calculations are QFS!
-
-    constexpr auto UboDescriptorCount = 0
-            + MaxFramesInFlight // Sprite pipeline
-            + MaxFramesInFlight // Font sprite pipeline
-            + MaxFramesInFlight // Debug triangle pipeline
-            + MaxFramesInFlight // Debug line pipeline
-            + MaxFramesInFlight // !!! Maze OverviewMap pipeline
-            ;
-    constexpr auto SamplerDescriptorCount = 0
-            + MaxFramesInFlight * MaxSpritePipelineTextures // Sprite pipeline
-            + MaxFramesInFlight * MaxSpritePipelineTextures // Font sprite pipeline
-            ;
-    constexpr auto MaxSets = 0
-            + MaxFramesInFlight // Sprite pipeline
-            + MaxFramesInFlight // Font sprite pipeline
-            + MaxFramesInFlight // Debug triangle pipeline
-            + MaxFramesInFlight // Debug line pipeline
-            + MaxFramesInFlight // !!! Maze OverviewMap pipeline
-            ;
-
-    std::array poolSizes{
-        vk::DescriptorPoolSize{
-            .type = vk::DescriptorType::eUniformBuffer,
-            .descriptorCount = UboDescriptorCount
-        },
-        vk::DescriptorPoolSize{
-            .type = vk::DescriptorType::eCombinedImageSampler,
-            .descriptorCount = SamplerDescriptorCount
-        },
-    };
-
-    vk::DescriptorPoolCreateInfo createInfo{
-        .maxSets = MaxSets,
-    };
-    createInfo.setPoolSizes(poolSizes);
-
-    descriptorPool_ = device_.createDescriptorPool(createInfo);
-}
-
 // *********************************************************************************************************************
 
 Renderer::~Renderer()
 {
-    device_.destroyDescriptorPool(descriptorPool_);
+    for (auto& descriptorPool : descriptorPools_)
+    {
+        device_.destroyDescriptorPool(descriptorPool);
+    }
 
     for (uint32_t i = 0; i < MaxFramesInFlight; i++)
     {
@@ -448,6 +409,43 @@ Renderer::~Renderer()
     instance_.destroySurfaceKHR(surface_);
 
     instance_.destroy();
+}
+
+std::vector<vk::DescriptorSet> Renderer::allocateDescriptorSets(const DescriptorSetAllocationInfo& allocInfo)
+{
+    if (descriptorPools_.empty())
+    {
+        descriptorPools_.push_back(createDescriptorPool(allocInfo));
+    }
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
+    descriptorSetLayouts.reserve(allocInfo.count);
+    for (uint32_t i = 0; i < allocInfo.count; i++)
+    {
+        descriptorSetLayouts.push_back(allocInfo.layout);
+    };
+    vk::DescriptorSetAllocateInfo descriptorSetAllocInfo{
+        .descriptorPool = descriptorPools_.back(),
+    };
+    descriptorSetAllocInfo.setSetLayouts(descriptorSetLayouts);
+
+    std::vector<vk::DescriptorSet> descriptorSets;
+    descriptorSets.resize(allocInfo.count);
+
+    const auto result = device_.allocateDescriptorSets(&descriptorSetAllocInfo, descriptorSets.data());
+    if (result == vk::Result::eErrorOutOfPoolMemory || result == vk::Result::eErrorFragmentedPool)
+    {
+        descriptorPools_.push_back(createDescriptorPool(allocInfo));
+
+        descriptorSetAllocInfo.descriptorPool = descriptorPools_.back();
+
+        descriptorSets = device_.allocateDescriptorSets(descriptorSetAllocInfo);
+    }
+    else
+    {
+        vk::detail::resultCheck(result, VULKAN_HPP_NAMESPACE_STRING "::Device::allocateDescriptorSets" );
+    }
+
+    return descriptorSets;
 }
 
 // *********************************************************************************************************************
@@ -646,6 +644,36 @@ void Renderer::recreateSwapChain()
 }
 
 // *********************************************************************************************************************
+
+vk::DescriptorPool Renderer::createDescriptorPool(const DescriptorSetAllocationInfo& allocInfo)
+{
+    constexpr uint32_t Multiplier = 2;
+
+    for (const auto& binding : allocInfo.bindings)
+    {
+        auto& size = descriptorPoolSizes_[binding.descriptorType];
+        size += binding.descriptorCount * allocInfo.count * Multiplier;
+    }
+    descriptorMaxSets_ += allocInfo.count * Multiplier;
+
+    std::vector<vk::DescriptorPoolSize> poolSizes;
+    poolSizes.reserve(descriptorPoolSizes_.size());
+
+    for (const auto& size : descriptorPoolSizes_)
+    {
+        poolSizes.push_back({
+            .type = size.first,
+            .descriptorCount = size.second,
+        });
+    }
+
+    vk::DescriptorPoolCreateInfo createInfo{
+        .maxSets = descriptorMaxSets_,
+    };
+    createInfo.setPoolSizes(poolSizes);
+
+    return device_.createDescriptorPool(createInfo);
+}
 
 uint32_t Renderer::calcDeviceScore(vk::PhysicalDevice device) const
 {
