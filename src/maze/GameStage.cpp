@@ -282,28 +282,7 @@ void GameStage::onUpdate(float deltaTime)
     {
         if (explosions_->allDone())
         {
-            DialogData data{
-                .size = {256, 256},
-            };
-            if (newLevel_ == 1)
-            {
-                data.title = "Game over";
-                data.text = "Ready to restart";
-                data.button1 = "Restart";
-                data.button2 = "Quit";
-                data.defaultButton = DialogButton::One;
-            }
-            else
-            {
-                data.title = "Excellent";
-                data.text = "Reached next level";
-                data.button1 = "Continue";
-                data.button2 = "Quit";
-                data.defaultButton = DialogButton::One;
-            }
-            data.button1Callback.connect<&GameStage::resetGame>(this);
-            data.button2Callback.connect<&GameStage::triggerNormalQuit>(this);
-            showDialog(data);
+            handleLevelEnded();
         }
         return;
     }
@@ -407,6 +386,32 @@ bool GameStage::testInSight(const glm::vec2& pos)
 void GameStage::triggerNormalQuit()
 {
     app_->quit(0);
+}
+
+void GameStage::handleLevelEnded()
+{
+    DialogData data{
+        .size = {256, 256},
+    };
+    if (newLevel_ == 1)
+    {
+        data.title = "Game over";
+        data.text = "Ready to restart";
+        data.button1 = "Restart";
+        data.button2 = "Quit";
+        data.defaultButton = DialogButton::One;
+    }
+    else
+    {
+        data.title = "Excellent";
+        data.text = "Reached next level";
+        data.button1 = "Continue";
+        data.button2 = "Quit";
+        data.defaultButton = DialogButton::One;
+    }
+    data.button1Callback.connect<&GameStage::resetGame>(this);
+    data.button2Callback.connect<&GameStage::triggerNormalQuit>(this);
+    showDialog(data);
 }
 
 void GameStage::showDialog(const DialogData& data)
