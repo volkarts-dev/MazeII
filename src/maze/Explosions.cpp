@@ -8,6 +8,7 @@
 #include "MazeComponents.hpp"
 #include "MazeDelegate.hpp"
 #include "audio/Sound.hpp"
+#include "gfx/SpriteAnimation.hpp"
 #include "gfx/SpriteAnimator.hpp"
 #include "phys/PhysComponents.hpp"
 
@@ -27,7 +28,7 @@ Explosions::~Explosions()
 bool Explosions::allDone() const
 {
     // Use the (absent) sprite animator to determine ended explosion (animations)
-    auto view = registry_->view<const ngn::SpriteAnimator, ExplosionTag>();
+    auto view = registry_->view<const ngn::SpriteAnimation, ExplosionTag>();
     return view.begin() == view.end();
 }
 
